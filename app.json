@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "GymClashApp",
-    "slug": "GymClashApp",
-    "version": "1.0.0",
+    "name": "GymClash",
+    "slug": "gymclash",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "gymclashapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "gymclash",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1A1A2E"
     },
     "ios": {
       "supportsTablet": true

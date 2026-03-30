@@ -1,0 +1,75 @@
+// Theme tokens — single source of truth for design values.
+// NativeWind handles most styling via Tailwind classes in tailwind.config.js.
+// These constants are for programmatic use (charts, animations, status bar, etc.)
+
+export const Colors = {
+  brand: {
+    DEFAULT: '#6C5CE7',
+    light: '#A29BFE',
+    dark: '#4A3DB5',
+  },
+  rank: {
+    bronze: '#CD7F32',
+    silver: '#C0C0C0',
+    gold: '#FFD700',
+    platinum: '#E5E4E2',
+    diamond: '#B9F2FF',
+    champion: '#FF6B6B',
+  },
+  surface: {
+    DEFAULT: '#1A1A2E',
+    raised: '#222240',
+    overlay: '#2A2A4A',
+    border: '#3A3A5C',
+  },
+  text: {
+    primary: '#FFFFFF',
+    secondary: '#A0A0C0',
+    muted: '#6A6A8A',
+  },
+  success: '#00D68F',
+  warning: '#FFAA00',
+  danger: '#FF3D71',
+  info: '#0095FF',
+} as const;
+
+export const Rank = {
+  bronze: { label: 'Bronze', color: Colors.rank.bronze, minXp: 0 },
+  silver: { label: 'Silver', color: Colors.rank.silver, minXp: 1000 },
+  gold: { label: 'Gold', color: Colors.rank.gold, minXp: 3000 },
+  platinum: { label: 'Platinum', color: Colors.rank.platinum, minXp: 7000 },
+  diamond: { label: 'Diamond', color: Colors.rank.diamond, minXp: 15000 },
+  champion: { label: 'Champion', color: Colors.rank.champion, minXp: 30000 },
+} as const;
+
+export const GameConfig = {
+  /** Max streak bonus multiplier (15% at 30+ days) */
+  MAX_STREAK_BONUS: 0.15,
+
+  /** Days at which streak bonus maxes out */
+  STREAK_MAX_DAYS: 30,
+
+  /** Grace period: missed days before streak resets */
+  STREAK_GRACE_DAYS: 1,
+
+  /** Base participation bonus for completing any workout */
+  PARTICIPATION_BONUS: 50,
+
+  /** Per-user daily contribution cap for clan wars (diminishing returns threshold) */
+  DAILY_CONTRIBUTION_CAP: 500,
+
+  /** Diminishing returns factor after cap */
+  DIMINISHING_RETURNS_FACTOR: 0.25,
+
+  /** Clan war score weights */
+  WAR_WEIGHT_OUTPUT: 0.3,
+  WAR_WEIGHT_PARTICIPATION: 0.3,
+  WAR_WEIGHT_CONSISTENCY: 0.2,
+  WAR_WEIGHT_DIVERSITY: 0.2,
+
+  /** Max clan members */
+  MAX_CLAN_MEMBERS: 30,
+
+  /** Season duration in weeks */
+  SEASON_DURATION_WEEKS: 10,
+} as const;
