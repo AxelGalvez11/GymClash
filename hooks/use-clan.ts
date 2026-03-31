@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchMyClan,
   fetchActiveWar,
+  fetchWarHistory,
+  fetchTopClans,
   createClan,
   joinClan,
   leaveClan,
@@ -57,6 +59,23 @@ export function useWarContributions(warId: string | undefined, clanId: string | 
     queryFn: () => fetchWarContributions(warId!, clanId!),
     enabled: !!warId && !!clanId,
     staleTime: 1000 * 30,
+  });
+}
+
+export function useWarHistory(clanId: string | undefined) {
+  return useQuery({
+    queryKey: ['war-history', clanId],
+    queryFn: () => fetchWarHistory(clanId!),
+    enabled: !!clanId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useTopClans() {
+  return useQuery({
+    queryKey: ['top-clans'],
+    queryFn: () => fetchTopClans(),
+    staleTime: 1000 * 60 * 5,
   });
 }
 

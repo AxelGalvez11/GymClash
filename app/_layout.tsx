@@ -11,6 +11,7 @@ import { View } from 'react-native';
 import { queryClient } from '@/services/query-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { supabase } from '@/services/supabase';
+import { useNeedsOnboarding } from '@/hooks/use-onboarding';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -20,6 +21,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, isLoading, setSession } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const { data: needsOnboarding } = useNeedsOnboarding();
 
   useEffect(() => {
     const {
@@ -35,13 +37,16 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inOnboarding = segments[1] === 'onboarding';
 
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/landing');
-    } else if (session && inAuthGroup) {
+    } else if (session && needsOnboarding && !inOnboarding) {
+      router.replace('/(auth)/onboarding');
+    } else if (session && !needsOnboarding && inAuthGroup) {
       router.replace('/(app)/home');
     }
-  }, [session, isLoading, segments, router]);
+  }, [session, isLoading, needsOnboarding, segments, router]);
 
   if (isLoading) {
     return <View className="flex-1 bg-surface" />;

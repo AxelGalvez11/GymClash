@@ -178,6 +178,28 @@ export async function fetchActiveWar() {
   return data;
 }
 
+export async function fetchWarHistory(clanId: string, limit = 10) {
+  const { data, error } = await supabase
+    .from('clan_wars')
+    .select('*')
+    .or(`clan_a_id.eq.${clanId},clan_b_id.eq.${clanId}`)
+    .eq('status', 'completed')
+    .order('ended_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchTopClans(limit = 20) {
+  const { data, error } = await supabase
+    .from('clans')
+    .select('*')
+    .order('member_count', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function createClan(name: string, tag: string, description: string) {
   const { data, error } = await supabase.rpc('create_clan', {
     p_name: name,

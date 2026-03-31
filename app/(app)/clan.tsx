@@ -22,6 +22,7 @@ import {
   useLeaveClan,
   useActiveWar,
   useWarContributions,
+  useWarHistory,
 } from '@/hooks/use-clan';
 import type { Rank as RankType, ClanRole } from '@/types';
 
@@ -69,6 +70,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   const { data: war } = useActiveWar();
   const myClanId = clan?.id;
   const { data: contributions } = useWarContributions(war?.id, myClanId);
+  const { data: warHistory } = useWarHistory(myClanId);
   const leaveMutation = useLeaveClan();
 
   function handleLeave() {
@@ -144,6 +146,55 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
               ))}
             </View>
           )}
+        </View>
+      )}
+
+      {/* War History */}
+      {warHistory && warHistory.length > 0 && (
+        <View className="mb-6">
+          <Text className="text-white text-lg font-bold mb-3">War History</Text>
+          <View className="gap-2">
+            {warHistory.slice(0, 5).map((w: any) => {
+              const isA = w.clan_a_id === myClanId;
+              const myScore = isA ? w.clan_a_score?.total : w.clan_b_score?.total;
+              const theirScore = isA ? w.clan_b_score?.total : w.clan_a_score?.total;
+              const won = w.winner_clan_id === myClanId;
+              const draw = w.winner_clan_id === null;
+
+              return (
+                <View
+                  key={w.id}
+                  className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-row items-center"
+                >
+                  <View className="flex-1">
+                    <Text className="text-text-muted text-xs">Week {w.week_number}</Text>
+                    <Text className="text-white font-bold">
+                      {myScore ?? 0} – {theirScore ?? 0}
+                    </Text>
+                  </View>
+                  <View
+                    className="px-3 py-1 rounded-full"
+                    style={{
+                      backgroundColor: draw
+                        ? Colors.text.muted + '30'
+                        : won
+                        ? Colors.success + '30'
+                        : Colors.danger + '30',
+                    }}
+                  >
+                    <Text
+                      className="font-bold text-xs"
+                      style={{
+                        color: draw ? Colors.text.muted : won ? Colors.success : Colors.danger,
+                      }}
+                    >
+                      {draw ? 'DRAW' : won ? 'WIN' : 'LOSS'}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
         </View>
       )}
 
