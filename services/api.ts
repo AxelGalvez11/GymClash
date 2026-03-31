@@ -40,14 +40,16 @@ export interface CreateWorkoutInput {
 }
 
 /**
- * Create and submit a workout.
+ * Create, submit, and trigger validation for a workout.
  *
  * Flow:
  * 1. Insert as 'draft' (client-permitted by RLS)
  * 2. Call submit_workout RPC to transition to 'submitted' (server-authoritative)
- * 3. A database webhook then triggers the validate-workout edge function
+ * 3. Invoke validate-workout edge function (server-authoritative scoring + anti-cheat)
+ * 4. Return the validated workout
  *
  * The client never directly sets status='submitted' — this is enforced by RLS.
+ * Validation runs server-side; the client only triggers it.
  */
 export async function createWorkout(input: CreateWorkoutInput) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -79,7 +81,40 @@ export async function createWorkout(input: CreateWorkoutInput) {
   );
   if (submitErr) throw submitErr;
 
+  // Step 3: Trigger server-side validation (async — don't block on failure)
+  triggerValidation(draft.id).catch((err) =>
+    console.warn('Validation trigger failed (will retry):', err)
+  );
+
   return submitted ?? draft;
+}
+
+/**
+ * Invoke the validate-workout edge function.
+ * This is the server-authoritative validation pipeline.
+ * The edge function uses the service_role internally — we call it
+ * with the user's anon token; the function authenticates via its own env.
+ */
+async function triggerValidation(workoutId: string): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  const response = await fetch(
+    `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/validate-workout`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ workout_id: workoutId }),
+    }
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Validation failed (${response.status}): ${body}`);
+  }
 }
 
 export async function fetchMyWorkouts(limit = 20) {
@@ -209,4 +244,40 @@ export async function createAppeal(workoutId: string, reason: string) {
     .single();
   if (error) throw error;
   return data;
+}
+
+// ─── Reports ─────────────────────────────────────────────
+
+export async function createReport(input: {
+  reported_user_id: string;
+  reported_workout_id?: string;
+  category: 'impossible_stats' | 'suspected_spoofing' | 'inappropriate_behavior' | 'other';
+  description: string;
+}) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('reports')
+    .insert({
+      reporter_id: user.id,
+      reported_user_id: input.reported_user_id,
+      reported_workout_id: input.reported_workout_id ?? null,
+      category: input.category,
+      description: input.description,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchMyReports() {
+  const { data, error } = await supabase
+    .from('reports')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return data ?? [];
 }

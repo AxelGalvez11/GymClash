@@ -13,6 +13,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 // ─── Constants (mirrors constants/theme.ts GameConfig) ───
@@ -104,9 +105,24 @@ function calculateRawScore(type: string, sets: any[] | null, routeData: any | nu
   return 0;
 }
 
-function calculateFinalScore(rawScore: number, streakDays: number, confidence: number): number {
+/**
+ * Normalize a raw score against the user's baseline.
+ * 60% absolute output + 40% relative effort.
+ * See lib/scoring/normalization.ts for the client-side equivalent.
+ */
+function normalizeScore(rawScore: number, baseline: number | null, populationMedian: number): number {
+  const effectiveBaseline = baseline ?? populationMedian;
+  if (effectiveBaseline <= 0) return rawScore;
+
+  const relativeComponent = Math.max(0.5, Math.min(2.0, rawScore / effectiveBaseline));
+  const absolutePart = rawScore * 0.6;
+  const relativePart = relativeComponent * populationMedian * 0.4;
+  return Math.round((absolutePart + relativePart) * 100) / 100;
+}
+
+function calculateFinalScore(normalizedScore: number, streakDays: number, confidence: number): number {
   const streakBonus = (Math.min(streakDays, STREAK_MAX_DAYS) / STREAK_MAX_DAYS) * MAX_STREAK_BONUS;
-  const withParticipation = rawScore + PARTICIPATION_BONUS;
+  const withParticipation = normalizedScore + PARTICIPATION_BONUS;
   const withStreak = withParticipation * (1 + streakBonus);
   return Math.round(withStreak * confidence * 100) / 100;
 }
@@ -115,11 +131,28 @@ function calculateFinalScore(rawScore: number, streakDays: number, confidence: n
 
 Deno.serve(async (req) => {
   try {
+    // Verify the caller is authenticated (anon JWT or service_role)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401 });
+    }
+
+    // Verify the JWT by creating a client with the caller's token
+    const callerToken = authHeader.replace('Bearer ', '');
+    const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${callerToken}` } },
+    });
+    const { data: { user }, error: authErr } = await callerClient.auth.getUser();
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
     const { workout_id } = await req.json();
     if (!workout_id) {
       return new Response(JSON.stringify({ error: 'workout_id required' }), { status: 400 });
     }
 
+    // Use service_role client for all DB operations (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch workout
@@ -131,6 +164,11 @@ Deno.serve(async (req) => {
 
     if (wErr || !workout) {
       return new Response(JSON.stringify({ error: 'Workout not found' }), { status: 404 });
+    }
+
+    // Verify the caller owns this workout
+    if (workout.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Not your workout' }), { status: 403 });
     }
 
     if (workout.status !== 'submitted') {
@@ -169,8 +207,37 @@ Deno.serve(async (req) => {
 
     await supabase.from('workout_validations').insert(validationRows);
 
-    // Calculate scores
+    // Calculate scores with normalization
     const rawScore = calculateRawScore(workout.type, workout.sets, workout.route_data);
+
+    // Fetch user's 30-day rolling average for this workout type
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentWorkouts } = await supabase
+      .from('workouts')
+      .select('raw_score')
+      .eq('user_id', workout.user_id)
+      .eq('type', workout.type)
+      .eq('status', 'validated')
+      .gte('created_at', thirtyDaysAgo);
+
+    const userBaseline = recentWorkouts && recentWorkouts.length > 0
+      ? recentWorkouts.reduce((sum: number, w: any) => sum + Number(w.raw_score), 0) / recentWorkouts.length
+      : null;
+
+    // Fetch population median for this workout type
+    const { data: medianResult } = await supabase
+      .from('workouts')
+      .select('raw_score')
+      .eq('type', workout.type)
+      .eq('status', 'validated')
+      .not('raw_score', 'is', null)
+      .order('raw_score', { ascending: true });
+
+    const populationMedian = medianResult && medianResult.length > 0
+      ? Number(medianResult[Math.floor(medianResult.length / 2)].raw_score)
+      : rawScore; // fallback to own score if no population data yet
+
+    const normalizedScore = normalizeScore(rawScore, userBaseline, populationMedian);
 
     // Fetch user profile for streak
     const { data: profile } = await supabase
@@ -179,7 +246,7 @@ Deno.serve(async (req) => {
       .eq('id', workout.user_id)
       .single();
 
-    const finalScore = calculateFinalScore(rawScore, profile?.current_streak ?? 0, confidence);
+    const finalScore = calculateFinalScore(normalizedScore, profile?.current_streak ?? 0, confidence);
 
     // Update workout with results
     const workoutStatus = validationStatus === 'rejected' ? 'rejected' : 'validated';
@@ -195,6 +262,7 @@ Deno.serve(async (req) => {
       .eq('id', workout_id);
 
     // Update user XP and streak if accepted
+    let clanContribution: number | null = null;
     if (validationStatus === 'accepted' || validationStatus === 'accepted_with_low_confidence') {
       const xpGain = Math.round(finalScore);
       await supabase.rpc('increment_user_xp', { p_user_id: workout.user_id, p_xp: xpGain });
@@ -207,6 +275,67 @@ Deno.serve(async (req) => {
         p_user_id: workout.user_id,
         p_workout_date: workoutDate,
       });
+
+      // ─── Clan War Contribution Pipeline ───
+      // Check if user is in a clan with an active war
+      if (validationStatus === 'accepted') {
+        const { data: membership } = await supabase
+          .from('clan_memberships')
+          .select('clan_id')
+          .eq('user_id', workout.user_id)
+          .single();
+
+        if (membership) {
+          const { data: activeWar } = await supabase
+            .from('clan_wars')
+            .select('id')
+            .eq('status', 'active')
+            .or(`clan_a_id.eq.${membership.clan_id},clan_b_id.eq.${membership.clan_id}`)
+            .order('started_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (activeWar) {
+            // Apply per-user daily contribution cap with diminishing returns
+            const DAILY_CAP = 500;
+            const DIMINISHING_FACTOR = 0.25;
+
+            // Get user's existing contributions for this war today
+            const todayStart = new Date();
+            todayStart.setUTCHours(0, 0, 0, 0);
+            const { data: todayContribs } = await supabase
+              .from('clan_war_contributions')
+              .select('contribution_points')
+              .eq('war_id', activeWar.id)
+              .eq('user_id', workout.user_id)
+              .gte('created_at', todayStart.toISOString());
+
+            const todayTotal = (todayContribs ?? []).reduce(
+              (sum: number, c: any) => sum + Number(c.contribution_points), 0
+            );
+
+            // Calculate contribution with diminishing returns
+            const remaining = Math.max(0, DAILY_CAP - todayTotal);
+            if (finalScore <= remaining) {
+              clanContribution = finalScore;
+            } else {
+              const overflow = finalScore - remaining;
+              clanContribution = remaining + overflow * DIMINISHING_FACTOR;
+            }
+
+            clanContribution = Math.round(clanContribution * 100) / 100;
+
+            // Insert contribution
+            await supabase.from('clan_war_contributions').insert({
+              war_id: activeWar.id,
+              user_id: workout.user_id,
+              clan_id: membership.clan_id,
+              workout_id: workout_id,
+              contribution_points: clanContribution,
+            });
+          }
+        }
+      }
     }
 
     return new Response(JSON.stringify({
@@ -215,6 +344,7 @@ Deno.serve(async (req) => {
       confidence_score: Math.round(confidence * 1000) / 1000,
       raw_score: rawScore,
       final_score: finalScore,
+      clan_contribution: clanContribution,
       checks: checks.length,
     }), {
       status: 200,
