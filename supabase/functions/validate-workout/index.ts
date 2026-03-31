@@ -542,25 +542,28 @@ Deno.serve(async (req) => {
       const wilks = wilksCoefficient(profile?.body_weight_kg, profile?.biological_sex);
       rawScore = Math.round(rawScore * wilks * 100) / 100;
 
-      // Normalization
+      // Normalization — filter by scoring_version=2 to avoid mixing V1/V2 scales
+      const SCORING_VERSION = 2;
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: recent } = await supabase
         .from('workouts').select('raw_score')
         .eq('user_id', workout.user_id).eq('type', 'strength').eq('status', 'validated')
+        .eq('scoring_version', SCORING_VERSION)
         .gte('created_at', thirtyDaysAgo);
 
       const baseline = recent?.length ? recent.reduce((s: number, w: any) => s + Number(w.raw_score), 0) / recent.length : null;
 
       const { data: medianResult } = await supabase
         .from('workouts').select('raw_score')
-        .eq('type', 'strength').eq('status', 'validated').not('raw_score', 'is', null)
+        .eq('type', 'strength').eq('status', 'validated').eq('scoring_version', SCORING_VERSION)
+        .not('raw_score', 'is', null)
         .order('raw_score', { ascending: true });
 
       const median = medianResult?.length ? Number(medianResult[Math.floor(medianResult.length / 2)].raw_score) : rawScore;
       const normalized = normalizeScore(rawScore, baseline, median);
       const finalScore = calculateFinalScore(normalized, profile?.current_streak ?? 0, confidence);
 
-      // Update workout
+      // Update workout with scoring_version tag
       const workoutStatus = validationStatus === 'rejected' ? 'rejected' : 'validated';
       await supabase.from('workouts').update({
         status: workoutStatus,
@@ -568,6 +571,7 @@ Deno.serve(async (req) => {
         final_score: finalScore,
         confidence_score: Math.round(confidence * 1000) / 1000,
         validation_status: validationStatus,
+        scoring_version: SCORING_VERSION,
       }).eq('id', workout_id);
 
       // Post-validation actions for accepted workouts
@@ -604,7 +608,8 @@ Deno.serve(async (req) => {
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
     } else {
-      // Scout path
+      // Scout path (scoring version 2 — scout raw hasn't changed formula but tag for consistency)
+      const SCORING_VERSION = 2;
       rawScore = calculateScoutRaw(workout.route_data ?? {});
 
       const { data: profile } = await supabase
@@ -614,13 +619,15 @@ Deno.serve(async (req) => {
       const { data: recent } = await supabase
         .from('workouts').select('raw_score')
         .eq('user_id', workout.user_id).eq('type', 'scout').eq('status', 'validated')
+        .eq('scoring_version', SCORING_VERSION)
         .gte('created_at', thirtyDaysAgo);
 
       const baseline = recent?.length ? recent.reduce((s: number, w: any) => s + Number(w.raw_score), 0) / recent.length : null;
 
       const { data: medianResult } = await supabase
         .from('workouts').select('raw_score')
-        .eq('type', 'scout').eq('status', 'validated').not('raw_score', 'is', null)
+        .eq('type', 'scout').eq('status', 'validated').eq('scoring_version', SCORING_VERSION)
+        .not('raw_score', 'is', null)
         .order('raw_score', { ascending: true });
 
       const median = medianResult?.length ? Number(medianResult[Math.floor(medianResult.length / 2)].raw_score) : rawScore;
@@ -631,6 +638,7 @@ Deno.serve(async (req) => {
       await supabase.from('workouts').update({
         status: workoutStatus, raw_score: rawScore, final_score: finalScore,
         confidence_score: Math.round(confidence * 1000) / 1000, validation_status: validationStatus,
+        scoring_version: SCORING_VERSION,
       }).eq('id', workout_id);
 
       let clanContribution: number | null = null;

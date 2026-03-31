@@ -99,8 +99,10 @@ export interface Workout {
   readonly validation_status: ValidationStatus | null;
   readonly source: EvidenceSource;
   readonly idempotency_key: string;
-  readonly strength_sets: readonly StrengthSet[] | null;
+  /** DB column is `sets` (jsonb). Matches the actual Supabase column name. */
+  readonly sets: readonly StrengthSet[] | null;
   readonly route_data: RouteData | null;
+  readonly scoring_version: number | null;
 }
 
 export interface WorkoutEvidence {
