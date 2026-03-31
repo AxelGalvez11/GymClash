@@ -13,6 +13,8 @@ export const REASON_CODE_LABELS: Record<ReasonCode, string> = {
   impossible_rest: 'Rest periods are impossibly short',
   suspicious_edit: 'Manual edits to validated data detected',
   effort_biometric_mismatch: 'Claimed effort does not match biometric data',
+  one_rm_plausibility: 'Estimated 1RM exceeds 125% of personal best',
+  active_recovery_too_short: 'Active recovery session is too short',
   clean: 'No issues detected',
 };
 
@@ -29,5 +31,7 @@ export const REASON_CODE_SEVERITY: Record<ReasonCode, 'critical' | 'warning' | '
   impossible_rest: 'critical',
   suspicious_edit: 'warning',
   effort_biometric_mismatch: 'info',
+  one_rm_plausibility: 'warning',
+  active_recovery_too_short: 'critical',
   clean: 'info',
 };

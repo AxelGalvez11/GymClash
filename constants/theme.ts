@@ -42,6 +42,61 @@ export const Rank = {
   champion: { label: 'Champion', color: Colors.rank.champion, minXp: 30000 },
 } as const;
 
+// ─── Arena System ────────────────────────────────────────
+
+export type ArenaTier = 'rustyard' | 'iron_forge' | 'titan_vault' | 'apex_colosseum';
+
+export const Arena: Record<
+  ArenaTier,
+  { label: string; accent: string; badge: string; minTrophies: number }
+> = {
+  rustyard: {
+    label: 'Rustyard',
+    accent: '#8B7355',
+    badge: '🔩',
+    minTrophies: 0,
+  },
+  iron_forge: {
+    label: 'Iron Forge',
+    accent: '#C0C0C0',
+    badge: '⚒️',
+    minTrophies: 300,
+  },
+  titan_vault: {
+    label: 'Titan Vault',
+    accent: '#FFD700',
+    badge: '🏛️',
+    minTrophies: 700,
+  },
+  apex_colosseum: {
+    label: 'Apex Colosseum',
+    accent: '#FF6B6B',
+    badge: '🏆',
+    minTrophies: 1200,
+  },
+} as const;
+
+export function getArenaTier(trophyRating: number): ArenaTier {
+  if (trophyRating >= 1200) return 'apex_colosseum';
+  if (trophyRating >= 700) return 'titan_vault';
+  if (trophyRating >= 300) return 'iron_forge';
+  return 'rustyard';
+}
+
+// ─── Trophy Rewards ──────────────────────────────────────
+
+export const TrophyRewards = {
+  ACCEPTED_WORKOUT: 12,
+  LOW_CONFIDENCE_WORKOUT: 8,
+  DAILY_GOAL_COMPLETE: 6,
+  ACTIVE_RECOVERY: 4,
+  CLAN_WAR_WIN: 30,
+  CLAN_WAR_LOSS: -15,
+  MISSED_DAY_DECAY: -5,
+} as const;
+
+// ─── Game Config ─────────────────────────────────────────
+
 export const GameConfig = {
   /** Max streak bonus multiplier (15% at 30+ days) */
   MAX_STREAK_BONUS: 0.15,
@@ -61,6 +116,9 @@ export const GameConfig = {
   /** Diminishing returns factor after cap */
   DIMINISHING_RETURNS_FACTOR: 0.25,
 
+  /** Per-user weekly contribution cap for clan wars (hard cap) */
+  WEEKLY_CONTRIBUTION_CAP: 20000,
+
   /** Clan war score weights */
   WAR_WEIGHT_OUTPUT: 0.3,
   WAR_WEIGHT_PARTICIPATION: 0.3,
@@ -72,4 +130,10 @@ export const GameConfig = {
 
   /** Season duration in weeks */
   SEASON_DURATION_WEEKS: 10,
+
+  /** 1RM plausibility: flag if new 1RM exceeds stored best by this factor */
+  ONE_RM_PLAUSIBILITY_FACTOR: 1.25,
+
+  /** Active recovery minimum duration in seconds */
+  ACTIVE_RECOVERY_MIN_DURATION: 600,
 } as const;

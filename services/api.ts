@@ -12,7 +12,6 @@ export async function fetchMyProfile() {
 /**
  * Update profile display fields via server RPC.
  * Only display_name and avatar_url are client-writable.
- * Direct UPDATE on profiles table is blocked by RLS (no UPDATE policy).
  */
 export async function updateProfile(updates: {
   display_name?: string;
@@ -24,6 +23,42 @@ export async function updateProfile(updates: {
   });
   if (error) throw error;
   return data;
+}
+
+/**
+ * Update biodata fields via dedicated server RPC.
+ * Restricted to biodata-only fields. Server-readable for scoring.
+ */
+export async function updateBiodata(updates: {
+  body_weight_kg?: number | null;
+  height_cm?: number | null;
+  birth_date?: string | null;
+  biological_sex?: string | null;
+}) {
+  const { data, error } = await supabase.rpc('update_my_biodata', {
+    p_body_weight_kg: updates.body_weight_kg ?? null,
+    p_height_cm: updates.height_cm ?? null,
+    p_birth_date: updates.birth_date ?? null,
+    p_biological_sex: updates.biological_sex ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+// ─── Daily Goals ─────────────────────────────────────────
+
+export async function fetchOrCreateDailyGoal() {
+  const { data, error } = await supabase.rpc('get_or_create_daily_goal');
+  if (error) throw error;
+  return data;
+}
+
+// ─── 1RM Records ─────────────────────────────────────────
+
+export async function fetchMy1RMRecords() {
+  const { data, error } = await supabase.rpc('get_my_1rm_records');
+  if (error) throw error;
+  return data ?? [];
 }
 
 // ─── Workouts ────────────────────────────────────────────

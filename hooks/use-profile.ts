@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchMyProfile, updateProfile } from '@/services/api';
+import { fetchMyProfile, updateProfile, updateBiodata } from '@/services/api';
 import { useAuthStore } from '@/stores/auth-store';
 
 export function useProfile() {
@@ -19,6 +19,20 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: updateProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['profile', session?.user?.id],
+      });
+    },
+  });
+}
+
+export function useUpdateBiodata() {
+  const queryClient = useQueryClient();
+  const { session } = useAuthStore();
+
+  return useMutation({
+    mutationFn: updateBiodata,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['profile', session?.user?.id],

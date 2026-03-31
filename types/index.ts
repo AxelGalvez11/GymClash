@@ -1,6 +1,6 @@
 // ─── Enums ───────────────────────────────────────────────
 
-export type WorkoutType = 'strength' | 'scout';
+export type WorkoutType = 'strength' | 'scout' | 'active_recovery';
 
 export type ValidationStatus =
   | 'accepted'
@@ -20,6 +20,8 @@ export type Rank =
   | 'platinum'
   | 'diamond'
   | 'champion';
+
+export type ArenaTier = 'rustyard' | 'iron_forge' | 'titan_vault' | 'apex_colosseum';
 
 export type ClanRole = 'leader' | 'officer' | 'member';
 
@@ -47,6 +49,8 @@ export type EvidenceType =
   | 'wearable_sync'
   | 'manual_note';
 
+export type DailyGoalType = 'complete_any_workout' | 'strength_intensity';
+
 // ─── Data Structures ─────────────────────────────────────
 
 export interface StrengthSet {
@@ -72,6 +76,13 @@ export interface Profile {
   readonly current_streak: number;
   readonly longest_streak: number;
   readonly last_workout_date: string | null;
+  readonly trophy_rating: number;
+  readonly arena_tier: ArenaTier;
+  readonly body_weight_kg: number | null;
+  readonly height_cm: number | null;
+  readonly birth_date: string | null;
+  readonly biological_sex: string | null;
+  readonly last_trophy_decay_date: string | null;
 }
 
 export interface Workout {
@@ -142,6 +153,32 @@ export interface Appeal {
   readonly status: AppealStatus;
 }
 
+export interface User1RMRecord {
+  readonly id: string;
+  readonly user_id: string;
+  readonly exercise: string;
+  readonly best_estimated_1rm: number;
+  readonly best_weight_kg: number;
+  readonly best_reps: number;
+  readonly achieved_at: string;
+  readonly workout_id: string | null;
+}
+
+export interface DailyGoal {
+  readonly id: string;
+  readonly user_id: string;
+  readonly goal_date: string;
+  readonly goal_type: DailyGoalType;
+  readonly goal_metadata: {
+    readonly exercise?: string;
+    readonly target_1rm?: number;
+    readonly threshold_pct?: number;
+  };
+  readonly completed: boolean;
+  readonly completed_at: string | null;
+  readonly trophy_awarded: boolean;
+}
+
 // ─── Scoring Types ───────────────────────────────────────
 
 export interface ScoreModifiers {
@@ -179,4 +216,6 @@ export type ReasonCode =
   | 'impossible_rest'
   | 'suspicious_edit'
   | 'effort_biometric_mismatch'
+  | 'one_rm_plausibility'
+  | 'active_recovery_too_short'
   | 'clean';

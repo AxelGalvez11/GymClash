@@ -74,3 +74,21 @@ export function calculateClanWarScore(input: {
     final_score: Math.round(finalScore * 10000) / 10000,
   };
 }
+
+/**
+ * Apply weekly per-user clan contribution cap.
+ * Once a user has contributed WEEKLY_CONTRIBUTION_CAP points in a war week,
+ * additional workouts contribute 0 to the clan war.
+ * Personal XP and trophies are still earned.
+ */
+export function applyWeeklyContributionCap(
+  proposedContribution: number,
+  weeklyTotalSoFar: number
+): number {
+  const cap = GameConfig.WEEKLY_CONTRIBUTION_CAP;
+  const remaining = Math.max(0, cap - weeklyTotalSoFar);
+
+  if (remaining <= 0) return 0;
+
+  return Math.min(proposedContribution, remaining);
+}
