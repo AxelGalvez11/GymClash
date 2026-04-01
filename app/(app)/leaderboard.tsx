@@ -40,8 +40,8 @@ function MedalIcon({ position }: { readonly position: number }) {
   if (position === 1) return <Text className="text-lg">🥈</Text>;
   if (position === 2) return <Text className="text-lg">🥉</Text>;
   return (
-    <View className="w-7 h-7 rounded-full bg-surface-overlay items-center justify-center">
-      <Text className="text-text-muted text-xs font-bold">{position + 1}</Text>
+    <View className="w-7 h-7 rounded-full bg-[#23233f] items-center justify-center">
+      <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs font-bold">{position + 1}</Text>
     </View>
   );
 }
@@ -71,23 +71,23 @@ function ClanRow({
 
   return (
     <View
-      className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-2 flex-row items-center"
+      className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center"
       style={[zoneBg, zoneBorder]}
     >
       <ZoneIndicator zone={zone} />
       <MedalIcon position={index} />
       <View className="flex-1 ml-3">
         <View className="flex-row items-center gap-2">
-          <Text className="text-white font-bold">{item.name}</Text>
-          <Text className="text-white/60 text-sm">[{item.tag}]</Text>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.name}</Text>
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }} className="text-sm">[{item.tag}]</Text>
         </View>
-        <Text className="text-text-muted text-xs">
+        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
           {item.member_count} members · {item.war_wins ?? 0}W / {item.wars_played ?? 0} wars
         </Text>
       </View>
       <View className="items-end">
-        <Text className="text-white font-bold">{item.total_trophies ?? 0}</Text>
-        <Text className="text-text-muted text-xs">🏆</Text>
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{item.total_trophies ?? 0}</Text>
+        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">🏆</Text>
       </View>
     </View>
   );
@@ -127,23 +127,23 @@ function PlayerRow({
   return (
     <Pressable
       onPress={onPress}
-      className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-2 flex-row items-center active:opacity-80"
+      className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center active:scale-[0.98]"
       style={[zoneBg, zoneBorder]}
     >
       <ZoneIndicator zone={zone} />
       <MedalIcon position={index} />
       <View className="flex-1 ml-3">
-        <Text className="text-white font-bold">{item.display_name || 'Warrior'}</Text>
-        <Text className="text-text-muted text-xs">
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.display_name || 'Warrior'}</Text>
+        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
           <Text style={{ color: rankConfig.color }}>{rankConfig.label}</Text> · Lv.{item.level ?? 1} · {item.current_streak ?? 0}d streak
         </Text>
       </View>
       <View className="flex-row items-center gap-2">
         <View className="items-end">
-          <Text className="text-white font-bold">{trophies}</Text>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{trophies}</Text>
           <Text className="text-xs" style={{ color: arenaConfig.accent }}>{arenaConfig.badge}</Text>
         </View>
-        <FontAwesome name="chevron-right" size={12} color={Colors.text.muted} />
+        <FontAwesome name="chevron-right" size={12} color="#74738b" />
       </View>
     </Pressable>
   );
@@ -167,7 +167,7 @@ function StickyYouRow({
 
   return (
     <View
-      className="bg-surface-overlay rounded-t-xl px-4 py-3 flex-row items-center"
+      className="bg-[#23233f] rounded-t-xl px-4 py-3 flex-row items-center"
       style={{
         borderLeftColor: accentColor,
         borderLeftWidth: 3,
@@ -180,31 +180,31 @@ function StickyYouRow({
     >
       {isRanked ? (
         <>
-          <View className="w-7 h-7 rounded-full bg-surface-raised items-center justify-center">
-            <Text className="text-white text-xs font-bold">{userIndex + 1}</Text>
+          <View className="w-7 h-7 rounded-full bg-[#1d1d37] items-center justify-center">
+            <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="text-xs font-bold">{userIndex + 1}</Text>
           </View>
           <View className="flex-1 ml-3">
             <View className="flex-row items-center gap-2">
-              <Text className="text-white font-bold text-sm">You</Text>
-              <Text className="text-text-secondary text-xs">{profile.display_name}</Text>
+              <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold text-sm">You</Text>
+              <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">{profile.display_name}</Text>
             </View>
-            <Text className="text-text-muted text-xs">
+            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
               <Text style={{ color: rankConfig.color }}>{rankConfig.label}</Text> · Lv.{profile.level ?? 1}
             </Text>
           </View>
           <View className="items-end">
-            <Text className="text-white font-bold">{userEntry?.trophy_rating ?? profile.trophy_rating ?? 0}</Text>
-            <Text className="text-text-muted text-xs">🏆</Text>
+            <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{userEntry?.trophy_rating ?? profile.trophy_rating ?? 0}</Text>
+            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">🏆</Text>
           </View>
         </>
       ) : (
         <>
-          <View className="w-7 h-7 rounded-full bg-surface-raised items-center justify-center">
-            <Text className="text-text-muted text-xs font-bold">—</Text>
+          <View className="w-7 h-7 rounded-full bg-[#1d1d37] items-center justify-center">
+            <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs font-bold">—</Text>
           </View>
           <View className="flex-1 ml-3">
-            <Text className="text-white font-bold text-sm">Unranked</Text>
-            <Text className="text-text-muted text-xs">Complete your biodata and log workouts to appear here</Text>
+            <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold text-sm">Unranked</Text>
+            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">Complete your biodata and log workouts to appear here</Text>
           </View>
         </>
       )}
@@ -286,13 +286,13 @@ export default function LeaderboardScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-black" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Pressable onPress={() => router.back()}>
-            <Text className="text-white/60 text-base">← Back</Text>
+            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }} className="text-base">← Back</Text>
           </Pressable>
-          <Text className="text-white text-lg font-bold">Leaderboard</Text>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold">Leaderboard</Text>
           <View className="w-12" />
         </View>
 
@@ -305,12 +305,15 @@ export default function LeaderboardScreen() {
             <Pressable
               key={key}
               className={`flex-1 flex-row items-center justify-center gap-2 py-2 rounded-full ${
-                tab === key ? 'bg-white' : 'bg-surface-raised border border-surface-border'
+                tab === key ? 'bg-[#ce96ff]' : 'bg-[#23233f]'
               }`}
               onPress={() => setTab(key)}
             >
-              <FontAwesome name={icon} size={14} color={tab === key ? '#000' : Colors.text.secondary} />
-              <Text className={tab === key ? 'text-black font-bold' : 'text-text-secondary'}>
+              <FontAwesome name={icon} size={14} color={tab === key ? '#000' : '#aaa8c3'} />
+              <Text
+                style={{ fontFamily: 'Lexend-SemiBold' }}
+                className={tab === key ? 'text-black font-bold' : 'text-[#aaa8c3]'}
+              >
                 {label}
               </Text>
             </Pressable>
@@ -320,7 +323,7 @@ export default function LeaderboardScreen() {
 
       <Animated.View style={fadeList.style} className="flex-1">
       {isLoading ? (
-        <ActivityIndicator color={accent.DEFAULT} className="mt-8" />
+        <ActivityIndicator color="#ce96ff" className="mt-8" />
       ) : (
         <FlatList
           data={data ?? []}
@@ -331,12 +334,12 @@ export default function LeaderboardScreen() {
           renderItem={renderItem}
           ListEmptyComponent={
             <View className="items-center py-12">
-              <FontAwesome name="trophy" size={32} color={Colors.text.muted} />
-              <Text className="text-text-muted text-lg mt-3">
+              <FontAwesome name="trophy" size={32} color="#74738b" />
+              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-lg mt-3">
                 {tab === 'clans' ? 'No clans yet' : 'No ranked players yet'}
               </Text>
               {tab === 'players' && (
-                <Text className="text-text-muted text-sm mt-1 text-center px-8">
+                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-sm mt-1 text-center px-8">
                   Complete your biodata and log 10 workouts to appear here
                 </Text>
               )}

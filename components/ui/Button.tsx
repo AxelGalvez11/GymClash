@@ -1,7 +1,5 @@
-import { Pressable, Text, ActivityIndicator, View } from 'react-native';
+import { Platform, Pressable, Text, ActivityIndicator, View } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useAccent } from '@/stores/accent-store';
-import { Colors } from '@/constants/theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -34,6 +32,10 @@ const ICON_SIZE: Record<ButtonSize, number> = {
   lg: 16,
 };
 
+const PRIMARY_SHADOW = Platform.OS === 'ios'
+  ? { shadowColor: '#ce96ff', shadowRadius: 20, shadowOpacity: 0.3, shadowOffset: { width: 0, height: 0 } }
+  : { elevation: 8 };
+
 export function Button({
   label,
   onPress,
@@ -43,22 +45,23 @@ export function Button({
   disabled = false,
   loading = false,
 }: ButtonProps) {
-  const accent = useAccent();
   const isDisabled = disabled || loading;
 
   const containerStyle = (() => {
     switch (variant) {
       case 'primary':
         return {
-          backgroundColor: isDisabled ? accent.dark : accent.DEFAULT,
+          // TODO: Replace solid bg with expo-linear-gradient when available
+          backgroundColor: isDisabled ? '#7a28bf' : '#a434ff',
           borderWidth: 0,
           borderColor: 'transparent',
+          ...(isDisabled ? {} : PRIMARY_SHADOW),
         };
       case 'secondary':
         return {
-          backgroundColor: 'transparent',
+          backgroundColor: '#23233f',
           borderWidth: 1,
-          borderColor: isDisabled ? Colors.surface.border : '#ffffff',
+          borderColor: isDisabled ? 'transparent' : 'rgba(70, 70, 92, 0.2)',
         };
       case 'ghost':
         return {
@@ -70,7 +73,7 @@ export function Button({
         return {
           backgroundColor: 'transparent',
           borderWidth: 1,
-          borderColor: isDisabled ? Colors.surface.border : Colors.danger,
+          borderColor: isDisabled ? 'transparent' : 'rgba(255, 110, 132, 0.2)',
         };
     }
   })();
@@ -80,21 +83,22 @@ export function Button({
       case 'primary':
         return '#FFFFFF';
       case 'secondary':
-        return isDisabled ? Colors.text.muted : '#FFFFFF';
+        return isDisabled ? '#aaa8c3' : '#e5e3ff';
       case 'ghost':
-        return isDisabled ? Colors.text.muted : Colors.text.secondary;
+        return isDisabled ? '#aaa8c3' : '#aaa8c3';
       case 'danger':
-        return isDisabled ? Colors.text.muted : Colors.danger;
+        return isDisabled ? '#aaa8c3' : '#ff6e84';
     }
   })();
 
-  const spinnerColor = variant === 'primary' ? '#FFFFFF' : accent.DEFAULT;
+  const fontFamily = variant === 'ghost' ? 'BeVietnamPro-Medium' : 'Epilogue-Bold';
+  const spinnerColor = '#ce96ff';
 
   return (
     <Pressable
       onPress={onPress}
       disabled={isDisabled}
-      className={`flex-row items-center justify-center gap-2 rounded-xl active:opacity-70 ${SIZE_CLASSES[size]}`}
+      className={`flex-row items-center justify-center gap-2 rounded-[2rem] active:scale-[0.98] ${SIZE_CLASSES[size]}`}
       style={[containerStyle, isDisabled && { opacity: 0.6 }]}
     >
       {loading ? (
@@ -104,7 +108,7 @@ export function Button({
           {icon && <FontAwesome name={icon} size={ICON_SIZE[size]} color={textColor} />}
           <Text
             className={`font-bold ${TEXT_SIZE[size]}`}
-            style={{ color: textColor, fontFamily: 'SpaceMono', letterSpacing: 1 }}
+            style={{ color: textColor, fontFamily, letterSpacing: 1.2 }}
           >
             {label.toUpperCase()}
           </Text>

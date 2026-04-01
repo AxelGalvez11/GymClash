@@ -5,36 +5,79 @@
 import type { StreakTierConfig, WarChatReaction, ConfettiConfig } from '@/types';
 
 export const Colors = {
-  /** Brand/accent — use useAccent() for the dynamic user-selected accent. */
-  brand: {
-    DEFAULT: '#8B5CF6',
-    light: '#A78BFA',
-    dark: '#6D28D9',
+  // Victory Peak surface system (purple-tinted midnight void)
+  surface: {
+    DEFAULT: '#0c0c1f',       // Base layer (midnight void)
+    container: '#17172f',      // Section layer
+    containerLow: '#111127',   // Secondary sections
+    containerHigh: '#1d1d37',  // Interactive cards
+    containerHighest: '#23233f', // Active/elevated
+    containerLowest: '#000000', // Recessed inputs
+    bright: '#292948',         // Floating elements
+    variant: '#23233f',        // Alternative grouping
+    tint: '#ce96ff',           // Chromatic glow tint
+    // Backward compat aliases
+    raised: '#17172f',
+    overlay: '#1d1d37',
+    border: '#46465c',
+  },
+  text: {
+    primary: '#e5e3ff',        // on-background (soft lavender)
+    secondary: '#aaa8c3',      // on-surface-variant
+    muted: '#74738b',          // outline
+  },
+  // Elixir Purple system
+  primary: {
+    DEFAULT: '#ce96ff',
+    dim: '#a434ff',
+    fixed: '#c583ff',
+    fixedDim: '#bb6fff',
+    container: '#c583ff',
+    onPrimary: '#48007a',
+  },
+  // Victory Gold system
+  secondary: {
+    DEFAULT: '#ffd709',
+    dim: '#efc900',
+    fixed: '#ffd709',
+    container: '#705d00',
+    onSecondary: '#5b4b00',
+  },
+  // Battle Blue system
+  tertiary: {
+    DEFAULT: '#81ecff',
+    dim: '#00d4ec',
+    fixed: '#00e3fd',
+    container: '#00e3fd',
+    onTertiary: '#005762',
+  },
+  success: '#10B981',
+  warning: '#ffd709',     // Same as secondary
+  danger: '#ff6e84',      // Error
+  info: '#81ecff',        // Same as tertiary
+  error: {
+    DEFAULT: '#ff6e84',
+    dim: '#d73357',
+    container: '#a70138',
+  },
+  outline: {
+    DEFAULT: '#74738b',
+    variant: '#46465c',
   },
   rank: {
     bronze: '#CD7F32',
     silver: '#C0C0C0',
-    gold: '#FFD700',
+    gold: '#ffd709',       // Victory Gold
     platinum: '#E5E4E2',
-    diamond: '#B9F2FF',
-    champion: '#FF6B6B',
+    diamond: '#81ecff',    // Battle Blue
+    champion: '#ff6e84',   // Error pink
   },
-  /** Black-first surface system — no purple tint. */
-  surface: {
-    DEFAULT: '#0A0A0A',
-    raised: '#141414',
-    overlay: '#1C1C1C',
-    border: '#2A2A2A',
+  // Keep brand for backward compat but point to primary
+  brand: {
+    DEFAULT: '#ce96ff',
+    light: '#c583ff',
+    dark: '#a434ff',
   },
-  text: {
-    primary: '#FFFFFF',
-    secondary: '#A0A0A0',
-    muted: '#666666',
-  },
-  success: '#10B981',
-  warning: '#F59E0B',
-  danger: '#EF4444',
-  info: '#3B82F6',
 } as const;
 
 export const Rank = {
@@ -182,7 +225,7 @@ export const WAR_CHAT_REACTIONS: Record<WarChatReaction, { emoji: string; label:
 
 export const DEFAULT_CONFETTI: ConfettiConfig = {
   particleCount: 25,
-  colors: ['#FFD700', '#FF6B6B', '#3B82F6', '#10B981', '#8B5CF6'],
+  colors: ['#ffd709', '#ff6e84', '#81ecff', '#10B981', '#ce96ff'],
   duration: 2000,
   spread: 60,
 } as const;

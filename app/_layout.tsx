@@ -2,6 +2,22 @@ import '../global.css';
 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
+import {
+  Epilogue_700Bold,
+  Epilogue_800ExtraBold,
+  Epilogue_900Black,
+} from '@expo-google-fonts/epilogue';
+import {
+  BeVietnamPro_400Regular,
+  BeVietnamPro_500Medium,
+  BeVietnamPro_600SemiBold,
+  BeVietnamPro_700Bold,
+} from '@expo-google-fonts/be-vietnam-pro';
+import {
+  Lexend_400Regular,
+  Lexend_600SemiBold,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -63,7 +79,16 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Epilogue_700Bold,
+    Epilogue_800ExtraBold,
+    Epilogue_900Black,
+    BeVietnamPro_400Regular,
+    BeVietnamPro_500Medium,
+    BeVietnamPro_600SemiBold,
+    BeVietnamPro_700Bold,
+    Lexend_400Regular,
+    Lexend_600SemiBold,
+    Lexend_700Bold,
     ...FontAwesome.font,
   });
 

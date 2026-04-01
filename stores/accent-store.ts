@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type AccentKey = 'purple' | 'blue' | 'red' | 'green' | 'amber';
+export type AccentKey = 'purple' | 'blue' | 'red' | 'green' | 'gold';
 
 export interface AccentPalette {
   readonly DEFAULT: string;
@@ -11,11 +11,11 @@ export interface AccentPalette {
 }
 
 export const ACCENT_OPTIONS: Record<AccentKey, AccentPalette> = {
-  purple: { DEFAULT: '#8B5CF6', light: '#A78BFA', dark: '#6D28D9' },
-  blue: { DEFAULT: '#3B82F6', light: '#60A5FA', dark: '#1D4ED8' },
-  red: { DEFAULT: '#EF4444', light: '#F87171', dark: '#B91C1C' },
+  purple: { DEFAULT: '#ce96ff', light: '#c583ff', dark: '#a434ff' },
+  blue: { DEFAULT: '#81ecff', light: '#00e3fd', dark: '#00d4ec' },
+  red: { DEFAULT: '#ff6e84', light: '#ffb2b9', dark: '#d73357' },
   green: { DEFAULT: '#10B981', light: '#34D399', dark: '#047857' },
-  amber: { DEFAULT: '#F59E0B', light: '#FBBF24', dark: '#B45309' },
+  gold: { DEFAULT: '#ffd709', light: '#efc900', dark: '#705d00' },
 } as const;
 
 interface AccentState {

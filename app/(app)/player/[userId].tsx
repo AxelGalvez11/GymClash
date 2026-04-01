@@ -21,8 +21,8 @@ export default function PublicProfileScreen() {
 
   if (isLoading || !profile) {
     return (
-      <SafeAreaView className="flex-1 bg-surface items-center justify-center">
-        <ActivityIndicator color={Colors.brand.DEFAULT} size="large" />
+      <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
+        <ActivityIndicator color="#ce96ff" size="large" />
       </SafeAreaView>
     );
   }
@@ -38,55 +38,55 @@ export default function PublicProfileScreen() {
   const arenaConfig = Arena[arenaTier];
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
-        <Pressable onPress={() => router.back()} className="py-4">
-          <Text className="text-white/60 text-base">← Back</Text>
+        <Pressable onPress={() => router.back()} className="py-4 active:scale-[0.98]">
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
         </Pressable>
 
         {/* Header */}
         <Animated.View style={fadeCharacter.style} className="items-center mb-6">
-          <View className="w-20 h-20 rounded-full bg-surface-overlay items-center justify-center mb-3">
-            <FontAwesome name="user" size={32} color={Colors.text.secondary} />
+          <View className="w-20 h-20 rounded-full bg-[#23233f] items-center justify-center mb-3">
+            <FontAwesome name="user" size={32} color="#aaa8c3" />
           </View>
-          <Text className="text-white text-2xl font-bold">
+          <Text className="text-2xl" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>
             {profile.display_name || 'Warrior'}
           </Text>
-          <Text className="text-lg font-bold mt-1" style={{ color: rankConfig.color }}>
-            {rankConfig.label} — Level {profile.level ?? 1}
+          <Text className="text-lg mt-1" style={{ color: rankConfig.color, fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>
+            {rankConfig.label} -- Level {profile.level ?? 1}
           </Text>
           <View className="flex-row items-center gap-2 mt-2">
             <Text className="text-lg">{arenaConfig.badge}</Text>
-            <Text className="font-bold" style={{ color: arenaConfig.accent }}>
+            <Text style={{ color: arenaConfig.accent, fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>
               {arenaConfig.label}
             </Text>
-            <Text className="text-text-secondary">· {trophies} 🏆</Text>
+            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>-- {trophies} trophies</Text>
           </View>
         </Animated.View>
 
         {/* Stats */}
         <Animated.View style={fadeStats.style}>
         <View className="flex-row gap-3 mb-4">
-          <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-text-secondary text-xs uppercase mb-1">Level</Text>
-            <Text className="text-white text-2xl font-bold">{profile.level ?? 1}</Text>
+          <View className="bg-[#1d1d37] rounded-xl p-4 flex-1 items-center">
+            <Text className="text-xs uppercase mb-1" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>Level</Text>
+            <Text className="text-2xl" style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>{profile.level ?? 1}</Text>
           </View>
-          <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-text-secondary text-xs uppercase mb-1">XP</Text>
-            <Text className="text-white text-2xl font-bold">{profile.xp ?? 0}</Text>
+          <View className="bg-[#1d1d37] rounded-xl p-4 flex-1 items-center">
+            <Text className="text-xs uppercase mb-1" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>XP</Text>
+            <Text className="text-2xl" style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>{profile.xp ?? 0}</Text>
           </View>
-          <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-text-secondary text-xs uppercase mb-1">Streak</Text>
-            <Text className="text-white text-2xl font-bold">{profile.current_streak ?? 0}</Text>
+          <View className="bg-[#1d1d37] rounded-xl p-4 flex-1 items-center">
+            <Text className="text-xs uppercase mb-1" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>Streak</Text>
+            <Text className="text-2xl" style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>{profile.current_streak ?? 0}</Text>
           </View>
         </View>
 
         {/* Report */}
         <Pressable
-          className="border border-surface-border rounded-xl py-3 items-center active:bg-surface-raised mt-4"
+          className="bg-[#1d1d37] rounded-xl py-3 items-center mt-4 active:scale-[0.98]"
           onPress={() => router.push(`/(app)/report/${userId}`)}
         >
-          <Text className="text-text-secondary text-sm">Report User</Text>
+          <Text className="text-sm" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>Report User</Text>
         </Pressable>
         </Animated.View>
       </ScrollView>

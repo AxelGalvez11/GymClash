@@ -10,7 +10,7 @@ import { useProfile } from '@/hooks/use-profile';
 import { useAccent, useAccentStore, ACCENT_OPTIONS, type AccentKey } from '@/stores/accent-store';
 import { useAuthStore } from '@/stores/auth-store';
 
-// ─── Animated Settings Row ──────────────────────────────
+// --- Animated Settings Row ---
 
 function SettingsRow({
   icon,
@@ -40,41 +40,41 @@ function SettingsRow({
   return (
     <Animated.View style={{ opacity, transform: [{ translateX }] }}>
       <Pressable
-        className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-row items-center active:opacity-60"
+        className="bg-[#1d1d37] rounded-xl p-4 flex-row items-center active:scale-[0.98]"
         onPress={onPress}
       >
-        <FontAwesome name={icon} size={16} color={color ?? Colors.text.secondary} />
-        <Text className="text-white font-bold ml-3 flex-1 text-sm">{label}</Text>
+        <FontAwesome name={icon} size={16} color={color ?? '#aaa8c3'} />
+        <Text className="ml-3 flex-1 text-sm" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>{label}</Text>
         {detail && (
-          <Text className="text-text-muted text-xs mr-2">{detail}</Text>
+          <Text className="text-xs mr-2" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>{detail}</Text>
         )}
-        <FontAwesome name="chevron-right" size={12} color={Colors.text.muted} />
+        <FontAwesome name="chevron-right" size={12} color="#74738b" />
       </Pressable>
     </Animated.View>
   );
 }
 
-// ─── Section Label ──────────────────────────────────────
+// --- Section Label ---
 
 function SectionLabel({ text }: { readonly text: string }) {
   return (
     <Text
-      className="text-text-muted text-xs uppercase mb-2 ml-1"
-      style={{ fontFamily: 'SpaceMono', fontSize: 9, letterSpacing: 2 }}
+      className="text-xs uppercase mb-2 ml-1"
+      style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 9, letterSpacing: 2 }}
     >
       {text}
     </Text>
   );
 }
 
-// ─── Accent Color Picker ────────────────────────────────
+// --- Accent Color Picker ---
 
 const ACCENT_LABELS: Record<AccentKey, string> = {
   purple: 'Purple',
   blue: 'Blue',
   red: 'Red',
   green: 'Green',
-  amber: 'Amber',
+  gold: 'Gold',
 };
 
 function AccentColorPicker() {
@@ -83,9 +83,9 @@ function AccentColorPicker() {
   const setAccent = useAccentStore((s) => s.setAccent);
 
   return (
-    <View className="bg-surface-raised border border-surface-border rounded-xl p-4">
-      <Text className="text-white font-bold text-sm mb-3">Accent Color</Text>
-      <Text className="text-text-muted text-xs mb-4">
+    <View className="bg-[#1d1d37] rounded-xl p-4">
+      <Text className="text-sm mb-3" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>Accent Color</Text>
+      <Text className="text-xs mb-4" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
         Choose your preferred accent color for the app
       </Text>
       <View className="flex-row gap-3 justify-center">
@@ -95,7 +95,7 @@ function AccentColorPicker() {
             return (
               <Pressable
                 key={key}
-                className="items-center gap-1.5 active:opacity-70"
+                className="items-center gap-1.5 active:scale-[0.98]"
                 onPress={() => setAccent(key)}
               >
                 <View
@@ -103,18 +103,23 @@ function AccentColorPicker() {
                   style={{
                     backgroundColor: palette.DEFAULT,
                     borderWidth: isSelected ? 2.5 : 0,
-                    borderColor: '#ffffff',
+                    borderColor: '#e5e3ff',
+                    shadowColor: isSelected ? palette.DEFAULT : 'transparent',
+                    shadowOpacity: isSelected ? 0.5 : 0,
+                    shadowRadius: 10,
+                    shadowOffset: { width: 0, height: 0 },
+                    elevation: isSelected ? 8 : 0,
                   }}
                 >
                   {isSelected && (
-                    <FontAwesome name="check" size={14} color="#ffffff" />
+                    <FontAwesome name="check" size={14} color="#e5e3ff" />
                   )}
                 </View>
                 <Text
                   className="text-xs"
                   style={{
-                    color: isSelected ? palette.DEFAULT : Colors.text.muted,
-                    fontFamily: 'SpaceMono',
+                    color: isSelected ? palette.DEFAULT : '#74738b',
+                    fontFamily: 'Lexend-SemiBold',
                     fontSize: 8,
                     letterSpacing: 1,
                   }}
@@ -130,7 +135,7 @@ function AccentColorPicker() {
   );
 }
 
-// ─── Main Settings Screen ───────────────────────────────
+// --- Main Settings Screen ---
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -155,14 +160,14 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center px-5 pt-3 pb-5">
-          <Pressable onPress={() => router.back()} className="mr-4 active:opacity-60">
-            <FontAwesome name="arrow-left" size={18} color={Colors.text.secondary} />
+          <Pressable onPress={() => router.back()} className="mr-4 active:scale-[0.98]">
+            <FontAwesome name="arrow-left" size={18} color="#aaa8c3" />
           </Pressable>
-          <Text className="text-white text-lg font-bold" style={{ fontFamily: 'SpaceMono', letterSpacing: 1 }}>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, letterSpacing: 1 }}>
             Settings
           </Text>
         </View>
@@ -204,7 +209,7 @@ export default function SettingsScreen() {
               label="Body Data"
               detail={biodataStatus}
               onPress={() => router.push('/(app)/settings/biodata')}
-              color={biodataStatus === 'Incomplete' ? accent.DEFAULT : Colors.text.secondary}
+              color={biodataStatus === 'Incomplete' ? accent.DEFAULT : '#aaa8c3'}
               delay={100}
             />
           </View>
@@ -223,11 +228,11 @@ export default function SettingsScreen() {
 
           {/* Sign Out */}
           <Pressable
-            className="rounded-xl py-3 items-center active:opacity-60"
+            className="rounded-xl py-3 items-center active:scale-[0.98]"
             style={{ borderWidth: 0.5, borderColor: Colors.danger + '40' }}
             onPress={handleSignOut}
           >
-            <Text className="text-danger font-bold text-sm" style={{ fontFamily: 'SpaceMono', letterSpacing: 1 }}>
+            <Text className="text-danger text-sm" style={{ fontFamily: 'Lexend-SemiBold', fontWeight: '700', letterSpacing: 1 }}>
               SIGN OUT
             </Text>
           </Pressable>

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { Animated, type ViewStyle } from 'react-native';
-import { Colors } from '@/constants/theme';
 
 interface SkeletonProps {
   readonly width: number | string;
@@ -30,7 +29,7 @@ function SkeletonBase({ width, height, borderRadius = 8, style }: SkeletonProps)
           width,
           height,
           borderRadius,
-          backgroundColor: Colors.surface.raised,
+          backgroundColor: '#1d1d37',
           opacity,
         },
         style,
@@ -45,7 +44,7 @@ export function Skeleton(props: SkeletonProps) {
 
 /** Preset: card-shaped skeleton */
 export function SkeletonCard({ style }: { readonly style?: ViewStyle }) {
-  return <SkeletonBase width="100%" height={80} borderRadius={12} style={style} />;
+  return <SkeletonBase width="100%" height={80} borderRadius={16} style={style} />;
 }
 
 /** Preset: single line of text */

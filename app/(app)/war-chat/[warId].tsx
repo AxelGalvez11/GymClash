@@ -27,13 +27,13 @@ function parseReaction(content: string): { emoji: string; label: string } | null
 
 function QuickReactionBar({ onSelect }: { readonly onSelect: (key: WarChatReaction) => void }) {
   return (
-    <View className="flex-row justify-evenly px-4 py-2 border-t border-surface-border">
+    <View className="flex-row justify-evenly px-4 py-2" style={{ borderTopWidth: 1, borderTopColor: '#23233f' }}>
       {REACTION_KEYS.map((key) => {
         const reaction = WAR_CHAT_REACTIONS[key];
         return (
           <Pressable
             key={key}
-            className="w-10 h-10 rounded-full bg-surface-raised items-center justify-center active:opacity-70"
+            className="w-10 h-10 rounded-full bg-[#23233f] items-center justify-center active:scale-[0.98]"
             onPress={() => onSelect(key)}
           >
             <Text style={{ fontSize: 20 }}>{reaction.emoji}</Text>
@@ -130,13 +130,13 @@ export default function WarChatScreen() {
   const myClanId = myClan?.id;
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      <View className="px-4 py-3 border-b border-surface-border flex-row items-center">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
+      <View className="px-4 py-3 flex-row items-center" style={{ borderBottomWidth: 1, borderBottomColor: '#23233f' }}>
         <Pressable onPress={() => router.back()}>
-          <Text className="text-white/60 text-base">← Back</Text>
+          <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }} className="text-base">← Back</Text>
         </Pressable>
-        <Text className="text-white text-lg font-bold ml-4 flex-1">War Chat</Text>
-        <Text className="text-text-muted text-xs">{(messages ?? []).length} messages</Text>
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold ml-4 flex-1">War Chat</Text>
+        <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs">{(messages ?? []).length} messages</Text>
       </View>
 
       <KeyboardAvoidingView
@@ -161,11 +161,17 @@ export default function WarChatScreen() {
                 <View className={`mb-2 ${isMe ? 'items-end' : 'items-start'}`}>
                   <View className="items-center px-2 py-1">
                     <Text style={{ fontSize: 36 }}>{reaction.emoji}</Text>
-                    <Text className={isMyClan ? 'text-white text-xs mt-0.5' : 'text-danger text-xs mt-0.5'}>
+                    <Text
+                      style={{
+                        color: isMyClan ? '#ce96ff' : '#ff6e84',
+                        fontFamily: 'Lexend-SemiBold',
+                      }}
+                      className="text-xs mt-0.5"
+                    >
                       {isMe ? 'You' : item.user_id.slice(0, 8)}
                     </Text>
                   </View>
-                  <Text className="text-text-muted text-xs mt-0.5">
+                  <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs mt-0.5">
                     {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
@@ -177,16 +183,28 @@ export default function WarChatScreen() {
                 <View
                   className={`rounded-xl px-3 py-2 max-w-[80%] ${
                     isMyClan
-                      ? 'bg-white/10 border border-white/20'
-                      : 'bg-surface-raised border border-surface-border'
+                      ? 'bg-[#17172f]'
+                      : 'bg-[#1d1d37]'
                   }`}
+                  style={!isMyClan ? {
+                    shadowColor: '#ff6e84',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.08,
+                    shadowRadius: 6,
+                  } : undefined}
                 >
-                  <Text className={isMyClan ? 'text-white text-xs font-bold mb-0.5' : 'text-danger text-xs font-bold mb-0.5'}>
+                  <Text
+                    style={{
+                      color: isMyClan ? '#ce96ff' : '#ff6e84',
+                      fontFamily: 'Lexend-SemiBold',
+                    }}
+                    className="text-xs font-bold mb-0.5"
+                  >
                     {isMe ? 'You' : item.user_id.slice(0, 8)}
                   </Text>
-                  <Text className="text-white text-sm">{item.content}</Text>
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }} className="text-sm">{item.content}</Text>
                 </View>
-                <Text className="text-text-muted text-xs mt-0.5">
+                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs mt-0.5">
                   {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
@@ -194,9 +212,9 @@ export default function WarChatScreen() {
           }}
           ListEmptyComponent={
             <View className="items-center py-12">
-              <FontAwesome name="comments-o" size={32} color={Colors.text.muted} />
-              <Text className="text-text-muted text-lg mt-3">No messages yet</Text>
-              <Text className="text-text-muted text-sm mt-1">Start the war talk!</Text>
+              <FontAwesome name="comments-o" size={32} color="#74738b" />
+              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-lg mt-3">No messages yet</Text>
+              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-sm mt-1">Start the war talk!</Text>
             </View>
           }
         />
@@ -205,11 +223,12 @@ export default function WarChatScreen() {
         <QuickReactionBar onSelect={handleReaction} />
 
         {/* Input */}
-        <View className="px-4 py-2 border-t border-surface-border flex-row items-center gap-2">
+        <View className="px-4 py-2 flex-row items-center gap-2" style={{ borderTopWidth: 1, borderTopColor: '#23233f' }}>
           <TextInput
-            className="flex-1 bg-surface-raised border border-surface-border rounded-xl px-4 py-2 text-white text-base"
+            className="flex-1 bg-[#000000] rounded-xl px-4 py-2 text-base"
+            style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
             placeholder="Send a message..."
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor="#74738b"
             value={message}
             onChangeText={setMessage}
             maxLength={500}
@@ -217,11 +236,19 @@ export default function WarChatScreen() {
             onSubmitEditing={handleSend}
           />
           <Pressable
-            className="bg-white rounded-full w-10 h-10 items-center justify-center active:opacity-70"
+            className="rounded-full w-10 h-10 items-center justify-center active:scale-[0.98]"
+            style={{
+              backgroundColor: '#a434ff',
+              shadowColor: '#a434ff',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.5,
+              shadowRadius: 10,
+              elevation: 8,
+            }}
             onPress={handleSend}
             disabled={sending || !message.trim()}
           >
-            <FontAwesome name="send" size={16} color="#000" />
+            <FontAwesome name="send" size={16} color="#e5e3ff" />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

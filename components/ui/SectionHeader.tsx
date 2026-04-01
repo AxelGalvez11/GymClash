@@ -1,5 +1,4 @@
 import { View, Text, Pressable } from 'react-native';
-import { Colors } from '@/constants/theme';
 
 interface SectionHeaderProps {
   readonly title: string;
@@ -13,16 +12,14 @@ export function SectionHeader({ title, action }: SectionHeaderProps) {
   return (
     <View className="flex-row items-center justify-between mb-2">
       <Text
-        className="text-text-secondary uppercase"
-        style={{ fontFamily: 'SpaceMono', fontSize: 11, letterSpacing: 1 }}
+        style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, letterSpacing: 1.5, color: '#aaa8c3', textTransform: 'uppercase' }}
       >
         {title}
       </Text>
       {action && (
         <Pressable onPress={action.onPress} hitSlop={8}>
           <Text
-            className="text-text-muted"
-            style={{ fontFamily: 'SpaceMono', fontSize: 11, letterSpacing: 0.5 }}
+            style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, letterSpacing: 0.5, color: '#aaa8c3' }}
           >
             {action.label}
           </Text>

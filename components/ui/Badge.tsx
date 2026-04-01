@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import { Colors, Rank } from '@/constants/theme';
 import type { Rank as RankType, CosmeticRarity } from '@/types';
 
@@ -56,19 +56,28 @@ function resolveColor(props: BadgeProps): string {
   }
 }
 
+const chromaticShadow = (color: string) =>
+  Platform.OS === 'ios'
+    ? {
+        shadowColor: color,
+        shadowRadius: 8,
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 0 },
+      }
+    : { elevation: 4 };
+
 export function Badge(props: BadgeProps) {
   const color = resolveColor(props);
 
   return (
     <View
       className="rounded-full px-2.5 py-0.5"
-      style={{ backgroundColor: color + '20' }}
+      style={[{ backgroundColor: color + '20' }, chromaticShadow(color)]}
     >
       <Text
-        className="text-xs font-bold uppercase"
-        style={{ color, fontFamily: 'SpaceMono', letterSpacing: 0.5 }}
+        style={{ color, fontFamily: 'Lexend-Bold', fontSize: 10, letterSpacing: 1.5 }}
       >
-        {props.label}
+        {props.label.toUpperCase()}
       </Text>
     </View>
   );

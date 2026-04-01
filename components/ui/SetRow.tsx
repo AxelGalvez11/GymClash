@@ -13,16 +13,16 @@ export function SetRow({ set, index, onRemove }: SetRowProps) {
   const tonnage = set.sets * set.reps * set.weight_kg;
 
   return (
-    <View className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-row items-center">
+    <View className="bg-[#1d1d37] rounded-xl p-3 flex-row items-center">
       <View className="flex-1">
-        <Text className="text-white font-bold">{set.exercise}</Text>
-        <Text className="text-text-secondary text-sm">
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>{set.exercise}</Text>
+        <Text className="text-sm" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
           {set.sets} × {set.reps} @ {set.weight_kg}kg — {tonnage}kg total
         </Text>
       </View>
       <Pressable
         onPress={() => onRemove(index)}
-        className="p-2 active:opacity-50"
+        className="p-2 active:scale-[0.98]"
       >
         <FontAwesome name="trash-o" size={18} color={Colors.danger} />
       </Pressable>

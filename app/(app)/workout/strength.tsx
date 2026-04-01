@@ -83,8 +83,17 @@ function ScoreBadge({ score, visible }: { readonly score: number; readonly visib
       className="absolute right-4 top-2"
       style={{ opacity, transform: [{ translateY }] }}
     >
-      <View className="bg-white/20 border border-white/40 rounded-full px-3 py-1">
-        <Text className="text-white font-bold text-sm">+{Math.round(score)} pts</Text>
+      <View
+        className="rounded-full px-3 py-1"
+        style={{
+          backgroundColor: 'rgba(206, 150, 255, 0.2)',
+          shadowColor: '#ce96ff',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.6,
+          shadowRadius: 12,
+        }}
+      >
+        <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>+{Math.round(score)} pts</Text>
       </View>
     </Animated.View>
   );
@@ -281,24 +290,25 @@ export default function StrengthWorkoutScreen() {
   const provisionalScore = calculateStrengthRawScore([...strengthSets]);
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center justify-between py-4">
-          <Pressable onPress={handleDiscard}>
-            <Text className="text-danger text-base">Cancel</Text>
+          <Pressable onPress={handleDiscard} className="active:scale-[0.98]">
+            <Text className="text-danger text-base" style={{ fontFamily: 'BeVietnamPro-Regular' }}>Cancel</Text>
           </Pressable>
           <View className="items-center">
-            <Text className="text-white text-lg font-bold">Strength</Text>
-            <Text className="text-text-muted text-xs" style={{ fontFamily: 'SpaceMono' }}>
+            <Text style={{ color: '#e5e3ff', fontSize: 18, fontFamily: 'Epilogue-Bold' }}>Strength</Text>
+            <Text style={{ color: '#74738b', fontSize: 12, fontFamily: 'Lexend-SemiBold' }}>
               {`${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
             </Text>
           </View>
           <Pressable
             onPress={handleFinishWorkout}
             disabled={submitWorkout.isPending}
+            className="active:scale-[0.98]"
           >
-            <Text className="text-success text-base font-bold">
+            <Text className="text-success text-base" style={{ fontFamily: 'Epilogue-Bold' }}>
               {submitWorkout.isPending ? 'Saving...' : 'Finish'}
             </Text>
           </Pressable>
@@ -306,22 +316,33 @@ export default function StrengthWorkoutScreen() {
 
         {/* Guest indicator */}
         {isGuest && (
-          <View className="bg-warning/10 border border-warning/30 rounded-xl p-3 mb-4">
-            <Text className="text-warning text-xs text-center font-bold">
+          <View className="bg-warning/10 rounded-xl p-3 mb-4">
+            <Text className="text-warning text-xs text-center" style={{ fontFamily: 'Lexend-SemiBold' }}>
               Guest mode — {5 - guestWorkouts.length} workouts remaining
             </Text>
           </View>
         )}
 
         {/* Provisional Score */}
-        <View className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-4 items-center relative">
-          <Text className="text-white/50 text-xs uppercase mb-1">
+        <View
+          className="bg-[#1d1d37] rounded-xl p-4 mb-4 items-center relative"
+          style={{
+            shadowColor: '#ce96ff',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.3,
+            shadowRadius: 20,
+          }}
+        >
+          <Text
+            className="text-xs uppercase mb-1"
+            style={{ color: '#81ecff', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}
+          >
             Estimated Score
           </Text>
-          <Text className="text-white text-3xl font-bold">
+          <Text style={{ color: '#e5e3ff', fontSize: 32, fontFamily: 'Lexend-SemiBold' }}>
             {Math.round(provisionalScore)}
           </Text>
-          <Text className="text-text-muted text-xs">
+          <Text className="text-xs" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
             Provisional — final score calculated server-side
           </Text>
           <ScoreBadge score={lastAddedScore} visible={showScoreBadge} />
@@ -330,7 +351,7 @@ export default function StrengthWorkoutScreen() {
         {/* Logged Sets */}
         {strengthSets.length > 0 && (
           <View className="mb-4">
-            <Text className="text-white text-lg font-bold mb-2">
+            <Text className="text-lg mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>
               Logged Sets ({strengthSets.length})
             </Text>
             <View className="gap-2">
@@ -342,45 +363,49 @@ export default function StrengthWorkoutScreen() {
         )}
 
         {/* Add Set Form */}
-        <View className="bg-surface-overlay border border-surface-border rounded-xl p-4">
-          <Text className="text-white text-lg font-bold mb-3">Add Exercise</Text>
+        <View className="bg-[#23233f] rounded-xl p-4">
+          <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>Add Exercise</Text>
 
           {/* Exercise Picker */}
-          <Text className="text-white/50 text-xs uppercase mb-1">
+          <Text
+            className="text-xs uppercase mb-1"
+            style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}
+          >
             Exercise
           </Text>
           <Pressable
-            className="bg-surface-raised border border-surface-border rounded-lg px-3 py-3 mb-3"
+            className="bg-[#000000] rounded-lg px-3 py-3 mb-3 active:scale-[0.98]"
             onPress={() => setShowExercises((v) => !v)}
           >
-            <Text className={exercise ? 'text-white' : 'text-text-muted'}>
+            <Text style={{ color: exercise ? '#e5e3ff' : '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
               {exercise || 'Select exercise...'}
               {exercise && isBodyweight ? '  (bodyweight)' : ''}
             </Text>
           </Pressable>
 
           {showExercises && (
-            <View className="bg-surface-raised border border-surface-border rounded-lg mb-3 max-h-48">
+            <View className="bg-[#000000] rounded-lg mb-3 max-h-48">
               <ScrollView nestedScrollEnabled>
                 {COMMON_EXERCISES.map((ex) => (
                   <Pressable
                     key={ex}
-                    className="px-3 py-2 border-b border-surface-border active:bg-surface-overlay flex-row items-center"
+                    className="px-3 py-2 active:bg-[#23233f] flex-row items-center"
                     onPress={() => {
                       setExercise(ex);
                       setShowExercises(false);
                     }}
                   >
-                    <Text className="text-white flex-1">{ex}</Text>
+                    <Text className="flex-1" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}>{ex}</Text>
                     {BODYWEIGHT_EXERCISES.has(ex) && (
-                      <Text className="text-text-muted text-xs">BW</Text>
+                      <Text className="text-xs" style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }}>BW</Text>
                     )}
                   </Pressable>
                 ))}
                 <TextInput
-                  className="px-3 py-2 text-white"
+                  className="px-3 py-2"
+                  style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
                   placeholder="Or type custom..."
-                  placeholderTextColor={Colors.text.muted}
+                  placeholderTextColor="#74738b"
                   value={exercise}
                   onChangeText={setExercise}
                   onSubmitEditing={() => setShowExercises(false)}
@@ -391,8 +416,8 @@ export default function StrengthWorkoutScreen() {
 
           {/* Bodyweight notice */}
           {isBodyweight && (
-            <View className="bg-white/5 border border-white/20 rounded-lg p-2 mb-3">
-              <Text className="text-white text-xs text-center">
+            <View className="bg-[#1d1d37] rounded-lg p-2 mb-3">
+              <Text className="text-xs text-center" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
                 {profile?.body_weight_kg
                   ? `Bodyweight exercise — using ${profile.body_weight_kg} kg from your profile`
                   : 'Bodyweight exercise — enter your weight or set it in Body Data settings'}
@@ -413,12 +438,18 @@ export default function StrengthWorkoutScreen() {
           </View>
 
           <Pressable
-            className="py-3.5 items-center active:opacity-70"
-            style={{ borderWidth: 1, borderColor: '#ffffff' }}
+            className="py-3.5 items-center rounded-lg active:scale-[0.98]"
+            style={{
+              backgroundColor: '#ce96ff',
+              shadowColor: '#ce96ff',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 12,
+            }}
             onPress={handleAddSet}
           >
-            <Text className="text-white font-bold">
-              <FontAwesome name="plus" size={14} color="#fff" /> Add Set
+            <Text style={{ color: '#000000', fontFamily: 'Epilogue-Bold', fontSize: 15 }}>
+              <FontAwesome name="plus" size={14} color="#000" /> Add Set
             </Text>
           </Pressable>
         </View>

@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { View, Text, Animated } from 'react-native';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { Platform, View, Text, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 
@@ -30,9 +30,7 @@ function ToastItem({ toast, onDone }: { readonly toast: ToastMessage; readonly o
   const translateY = useRef(new Animated.Value(-60)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
-  const enteredRef = useRef(false);
-  if (!enteredRef.current) {
-    enteredRef.current = true;
+  useEffect(() => {
     Animated.parallel([
       Animated.timing(translateY, { toValue: 0, duration: 250, useNativeDriver: true }),
       Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
@@ -44,9 +42,13 @@ function ToastItem({ toast, onDone }: { readonly toast: ToastMessage; readonly o
         ]).start(onDone);
       }, 2500);
     });
-  }
+  }, [translateY, opacity, onDone]);
 
   const color = TYPE_COLORS[toast.type];
+
+  const accentShadow = Platform.OS === 'ios'
+    ? { shadowColor: color, shadowRadius: 10, shadowOpacity: 0.25, shadowOffset: { width: 0, height: 2 } }
+    : { elevation: 6 };
 
   return (
     <Animated.View
@@ -57,10 +59,18 @@ function ToastItem({ toast, onDone }: { readonly toast: ToastMessage; readonly o
       }}
     >
       <View
-        className="bg-surface-overlay rounded-xl px-4 py-3 flex-row items-center"
-        style={{ borderLeftWidth: 3, borderLeftColor: color }}
+        className="rounded-xl px-4 py-3 flex-row items-center"
+        style={[
+          { backgroundColor: 'rgba(41, 41, 72, 0.9)', borderLeftWidth: 3, borderLeftColor: color },
+          accentShadow,
+        ]}
       >
-        <Text className="text-white text-sm flex-1">{toast.message}</Text>
+        <Text
+          className="text-sm flex-1"
+          style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
+        >
+          {toast.message}
+        </Text>
       </View>
     </Animated.View>
   );

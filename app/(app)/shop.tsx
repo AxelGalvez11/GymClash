@@ -11,10 +11,17 @@ import { useFadeSlide } from '@/hooks/use-fade-slide';
 import type { CosmeticRarity } from '@/types';
 
 const RARITY_COLORS: Record<CosmeticRarity, string> = {
-  common: Colors.text.secondary,
-  rare: Colors.info,
-  epic: Colors.brand.DEFAULT,
-  legendary: Colors.warning,
+  common: '#aaa8c3',
+  rare: '#81ecff',
+  epic: '#ce96ff',
+  legendary: '#ffd709',
+};
+
+const RARITY_GLOW: Record<CosmeticRarity, { shadowColor: string; shadowOpacity: number }> = {
+  common: { shadowColor: '#aaa8c3', shadowOpacity: 0.15 },
+  rare: { shadowColor: '#81ecff', shadowOpacity: 0.3 },
+  epic: { shadowColor: '#ce96ff', shadowOpacity: 0.4 },
+  legendary: { shadowColor: '#ffd709', shadowOpacity: 0.5 },
 };
 
 function useCatalog() {
@@ -98,13 +105,19 @@ export default function ShopScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-white text-lg font-bold">Shop</Text>
+          <Text
+            style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}
+          >
+            Shop
+          </Text>
           <View className="flex-row items-center gap-1">
-            <FontAwesome name="circle" size={10} color={Colors.warning} />
-            <Text className="text-white font-bold">{profile?.gym_coins ?? 0}</Text>
+            <FontAwesome name="circle" size={10} color="#ffd709" />
+            <Text style={{ color: '#ffd709', fontFamily: 'Lexend-Bold', fontWeight: '700' }}>
+              {profile?.gym_coins ?? 0}
+            </Text>
           </View>
         </View>
       </Animated.View>
@@ -121,21 +134,33 @@ export default function ShopScreen() {
           contentContainerClassName="pb-8 gap-2"
           renderItem={({ item }) => {
             const owned = ownedIds.has(item.id);
-            const rarityColor = RARITY_COLORS[item.rarity as CosmeticRarity] ?? Colors.text.muted;
+            const rarityColor = RARITY_COLORS[item.rarity as CosmeticRarity] ?? '#74738b';
+            const glow = RARITY_GLOW[item.rarity as CosmeticRarity] ?? RARITY_GLOW.common;
 
             return (
               <Pressable
-                className="flex-1 bg-surface-raised border rounded-xl p-3 active:opacity-80"
-                style={{ borderColor: rarityColor + '40' }}
+                className="flex-1 bg-[#1d1d37] rounded-xl p-3 active:scale-[0.98]"
+                style={{
+                  shadowColor: glow.shadowColor,
+                  shadowOpacity: glow.shadowOpacity,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 0 },
+                  elevation: 8,
+                }}
                 onPress={() => !owned && item.price_coins && handlePurchase(item)}
                 disabled={owned || !item.price_coins}
               >
                 <View className="items-center mb-2">
-                  <View className="w-16 h-16 bg-surface-overlay rounded-lg items-center justify-center">
+                  <View className="w-16 h-16 bg-[#23233f] rounded-lg items-center justify-center">
                     <FontAwesome name="gift" size={24} color={rarityColor} />
                   </View>
                 </View>
-                <Text className="text-white font-bold text-sm text-center">{item.name}</Text>
+                <Text
+                  className="text-sm text-center"
+                  style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}
+                >
+                  {item.name}
+                </Text>
                 <Text className="text-xs text-center capitalize mt-0.5" style={{ color: rarityColor }}>
                   {item.rarity}
                 </Text>
@@ -145,20 +170,22 @@ export default function ShopScreen() {
                   </View>
                 ) : item.price_coins ? (
                   <View className="flex-row items-center justify-center gap-1 mt-2">
-                    <FontAwesome name="circle" size={8} color={Colors.warning} />
-                    <Text className="text-white text-xs font-bold">{item.price_coins}</Text>
+                    <FontAwesome name="circle" size={8} color="#ffd709" />
+                    <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-Bold', fontWeight: '700', fontSize: 12 }}>
+                      {item.price_coins}
+                    </Text>
                   </View>
                 ) : (
-                  <Text className="text-text-muted text-xs text-center mt-2">Crate only</Text>
+                  <Text className="text-xs text-center mt-2" style={{ color: '#74738b' }}>Crate only</Text>
                 )}
               </Pressable>
             );
           }}
           ListEmptyComponent={
             <View className="items-center py-12 px-4">
-              <FontAwesome name="shopping-bag" size={32} color={Colors.text.muted} />
-              <Text className="text-text-muted text-lg mt-3">Shop coming soon</Text>
-              <Text className="text-text-muted text-sm mt-1 text-center">
+              <FontAwesome name="shopping-bag" size={32} color="#74738b" />
+              <Text className="text-lg mt-3" style={{ color: '#74738b' }}>Shop coming soon</Text>
+              <Text className="text-sm mt-1 text-center" style={{ color: '#74738b' }}>
                 Cosmetic items will appear here as they are released
               </Text>
             </View>

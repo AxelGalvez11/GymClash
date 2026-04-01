@@ -38,17 +38,20 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <View className="flex-1 px-8 justify-center">
         {/* Header */}
-        <Pressable onPress={() => router.back()} className="mb-8 active:opacity-60">
-          <Text className="text-white/60 text-base" style={{ fontFamily: 'SpaceMono' }}>← BACK</Text>
+        <Pressable onPress={() => router.back()} className="mb-8 active:scale-[0.98]">
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} BACK</Text>
         </Pressable>
 
-        <Text className="text-3xl font-bold text-white mb-2">
+        <Text
+          className="text-3xl mb-2"
+          style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}
+        >
           {isSignUp ? 'Create Account' : 'Welcome Back'}
         </Text>
-        <Text className="text-text-secondary mb-8">
+        <Text className="mb-8" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
           {isSignUp
             ? 'Start your fitness RPG journey'
             : 'Continue your training'}
@@ -57,9 +60,16 @@ export default function LoginScreen() {
         {/* Form */}
         <View className="gap-4 mb-8">
           <TextInput
-            className="bg-surface-raised border border-surface-border rounded-xl px-4 py-4 text-white text-base"
+            className="bg-[#000000] rounded-xl px-4 py-4 text-base"
+            style={{
+              color: '#e5e3ff',
+              fontFamily: 'BeVietnamPro-Regular',
+              shadowColor: '#a434ff',
+              shadowOpacity: 0,
+              shadowRadius: 0,
+            }}
             placeholder="Email"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor="#74738b"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -67,9 +77,13 @@ export default function LoginScreen() {
             textContentType="emailAddress"
           />
           <TextInput
-            className="bg-surface-raised border border-surface-border rounded-xl px-4 py-4 text-white text-base"
+            className="bg-[#000000] rounded-xl px-4 py-4 text-base"
+            style={{
+              color: '#e5e3ff',
+              fontFamily: 'BeVietnamPro-Regular',
+            }}
             placeholder="Password"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor="#74738b"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -79,23 +93,27 @@ export default function LoginScreen() {
 
         {/* Submit */}
         <Pressable
-          className="py-3.5 items-center active:bg-white mb-4"
-          style={{ borderWidth: 1, borderColor: '#ffffff' }}
+          className="py-3.5 items-center rounded-[2rem] mb-4 active:scale-[0.98]"
+          style={{
+            backgroundColor: '#a434ff',
+            shadowColor: '#a434ff',
+            shadowOpacity: 0.4,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 10,
+          }}
           onPress={handleAuth}
           disabled={loading}
         >
-          {({ pressed }) => (
-            <Text
-              className={`text-sm font-bold ${pressed ? 'text-black' : 'text-white'}`}
-              style={{ fontFamily: 'SpaceMono', letterSpacing: 2 }}
-            >
-              {loading
-                ? 'LOADING...'
-                : isSignUp
-                ? 'SIGN UP'
-                : 'LOG IN'}
-            </Text>
-          )}
+          <Text
+            style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 14, letterSpacing: 2 }}
+          >
+            {loading
+              ? 'LOADING...'
+              : isSignUp
+              ? 'SIGN UP'
+              : 'LOG IN'}
+          </Text>
         </Pressable>
 
         {/* Forgot Password */}
@@ -124,8 +142,8 @@ export default function LoginScreen() {
             className="items-center mb-6"
             disabled={loading || resetSent}
           >
-            <Text className="text-text-secondary text-sm">
-              {resetSent ? 'Reset link sent ✓' : 'Forgot password?'}
+            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 14 }}>
+              {resetSent ? 'Reset link sent' : 'Forgot password?'}
             </Text>
           </Pressable>
         )}
@@ -137,11 +155,11 @@ export default function LoginScreen() {
           onPress={() => setIsSignUp((prev) => !prev)}
           className="items-center"
         >
-          <Text className="text-text-secondary">
+          <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
             {isSignUp
               ? 'Already have an account? '
               : "Don't have an account? "}
-            <Text className="text-white font-bold">
+            <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>
               {isSignUp ? 'Log In' : 'Sign Up'}
             </Text>
           </Text>

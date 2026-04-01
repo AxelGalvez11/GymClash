@@ -39,6 +39,12 @@ const ROLE_LABELS: Record<ClanRole, string> = {
   member: 'Member',
 };
 
+const ROLE_COLORS: Record<ClanRole, string> = {
+  leader: '#ffd709',
+  officer: '#ce96ff',
+  member: '#74738b',
+};
+
 function MemberRow({
   userId,
   displayName,
@@ -58,20 +64,20 @@ function MemberRow({
 
   return (
     <Pressable
-      className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-row items-center active:opacity-80"
+      className="bg-[#1d1d37] rounded-xl p-3 flex-row items-center active:scale-[0.98]"
       onPress={onPress}
     >
-      <View className="w-8 h-8 rounded-full bg-surface-overlay items-center justify-center">
-        <FontAwesome name="user" size={14} color={Colors.text.secondary} />
+      <View className="w-8 h-8 rounded-full bg-[#23233f] items-center justify-center">
+        <FontAwesome name="user" size={14} color="#aaa8c3" />
       </View>
       <View className="flex-1 ml-3">
-        <Text className="text-white font-bold">{displayName || 'Warrior'}</Text>
-        <Text className="text-text-muted text-xs">
+        <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }} className="font-bold">{displayName || 'Warrior'}</Text>
+        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
           Lv.{level} · <Text style={{ color: rankConfig.color }}>{rankConfig.label}</Text>
         </Text>
       </View>
-      <Text className="text-white/50 text-xs mr-2">{ROLE_LABELS[role]}</Text>
-      <FontAwesome name="chevron-right" size={10} color={Colors.text.muted} />
+      <Text style={{ color: ROLE_COLORS[role], fontFamily: 'Lexend-SemiBold' }} className="text-xs mr-2">{ROLE_LABELS[role]}</Text>
+      <FontAwesome name="chevron-right" size={10} color="#74738b" />
     </Pressable>
   );
 }
@@ -80,10 +86,10 @@ function MemberRow({
 
 function getCountdownUrgency(ms: number): { color: string; pulse: boolean } {
   const hours = ms / (1000 * 60 * 60);
-  if (hours < 3) return { color: Colors.danger, pulse: true };
-  if (hours < 12) return { color: Colors.danger, pulse: false };
-  if (hours < 24) return { color: Colors.warning, pulse: false };
-  return { color: Colors.text.muted, pulse: false };
+  if (hours < 3) return { color: '#ff6e84', pulse: true };
+  if (hours < 12) return { color: '#ff6e84', pulse: false };
+  if (hours < 24) return { color: '#ffd709', pulse: false };
+  return { color: '#74738b', pulse: false };
 }
 
 function WarCountdown({ endedAt }: { readonly endedAt: string }) {
@@ -147,7 +153,7 @@ function WarCountdown({ endedAt }: { readonly endedAt: string }) {
       {urgency.pulse && (
         <FontAwesome name="exclamation-circle" size={12} color={urgency.color} />
       )}
-      <Text style={{ color: urgency.color }} className="text-xs text-center">
+      <Text style={{ color: urgency.color, fontFamily: 'Lexend-SemiBold' }} className="text-xs text-center">
         {timeLabel}
       </Text>
     </Animated.View>
@@ -202,14 +208,14 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       {/* Clan Header */}
       <Animated.View style={fadeHeader.style} className="items-center py-6">
         <Text className="text-4xl mb-2">⚔️</Text>
-        <Text className="text-white text-2xl font-bold">{clan.name}</Text>
-        <Text className="text-white font-bold text-lg">[{clan.tag}]</Text>
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-2xl font-bold">{clan.name}</Text>
+        <Text style={{ color: '#ffd709', fontFamily: 'Epilogue-Bold' }} className="font-bold text-lg">[{clan.tag}]</Text>
         {clan.description ? (
-          <Text className="text-white/50 text-center mt-2 px-4">
+          <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-center mt-2 px-4">
             {clan.description}
           </Text>
         ) : null}
-        <Text className="text-text-muted text-sm mt-2">
+        <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-sm mt-2">
           {clan.member_count} / {clan.max_members} members · Your role: {ROLE_LABELS[clan.my_role as ClanRole]}
         </Text>
       </Animated.View>
@@ -218,28 +224,28 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       <Animated.View style={fadeWar.style}>
       {incomingChallenges.length > 0 && (
         <View className="mb-4">
-          <Text className="text-white text-lg font-bold mb-3">War Challenges</Text>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold mb-3">War Challenges</Text>
           {incomingChallenges.map((c: any) => (
-            <View key={c.id} className="bg-warning/10 border border-warning/30 rounded-xl p-4 mb-2">
-              <Text className="text-white font-bold mb-1">Challenge Received!</Text>
-              <Text className="text-white/50 text-sm mb-3">
+            <View key={c.id} className="bg-[#ffd709]/10 rounded-xl p-4 mb-2">
+              <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold mb-1">Challenge Received!</Text>
+              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-sm mb-3">
                 Type: {WAR_TYPE_LABELS[c.war_type] ?? 'Mixed'}
               </Text>
               <View className="flex-row gap-2">
                 <Pressable
-                  className="flex-1 py-2 items-center active:opacity-70"
-                  style={{ borderWidth: 1, borderColor: '#ffffff', borderRadius: 12 }}
+                  className="flex-1 py-2 items-center rounded-xl active:scale-[0.98]"
+                  style={{ backgroundColor: '#a434ff' }}
                   onPress={() => respondMutation.mutate({ challengeId: c.id, accept: true })}
                   disabled={respondMutation.isPending}
                 >
-                  <Text className="text-white font-bold">Accept</Text>
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">Accept</Text>
                 </Pressable>
                 <Pressable
-                  className="flex-1 border border-surface-border rounded-xl py-2 items-center active:bg-surface-raised"
+                  className="flex-1 bg-[#23233f] rounded-xl py-2 items-center active:scale-[0.98]"
                   onPress={() => respondMutation.mutate({ challengeId: c.id, accept: false })}
                   disabled={respondMutation.isPending}
                 >
-                  <Text className="text-white/50 font-bold">Decline</Text>
+                  <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="font-bold">Decline</Text>
                 </Pressable>
               </View>
             </View>
@@ -249,28 +255,37 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
 
       {/* War Status */}
       {war && (
-        <View className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-4">
+        <View
+          className="bg-[#1d1d37] rounded-xl p-4 mb-4"
+          style={{
+            shadowColor: '#a434ff',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            elevation: 8,
+          }}
+        >
           <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-white font-bold text-lg">Active War — Week {war.week_number}</Text>
+            <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold text-lg">Active War — Week {war.week_number}</Text>
             {war.war_type && war.war_type !== 'mixed' && (
-              <View className="bg-white/20 rounded-full px-2 py-0.5">
-                <Text className="text-white text-xs font-bold">{WAR_TYPE_LABELS[war.war_type]}</Text>
+              <View className="bg-[#23233f] rounded-full px-2 py-0.5">
+                <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="text-xs font-bold">{WAR_TYPE_LABELS[war.war_type]}</Text>
               </View>
             )}
           </View>
           <View className="flex-row items-center justify-between">
             <View className="items-center flex-1">
-              <Text className="text-white/50 text-xs">Your Clan</Text>
-              <Text className="text-white text-2xl font-bold">
+              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs">Your Clan</Text>
+              <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }} className="text-2xl font-bold">
                 {war.clan_a_id === myClanId
                   ? (war.clan_a_score?.total ?? 0)
                   : (war.clan_b_score?.total ?? 0)}
               </Text>
             </View>
-            <Text className="text-text-muted text-xl mx-4">vs</Text>
+            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xl mx-4">vs</Text>
             <View className="items-center flex-1">
-              <Text className="text-white/50 text-xs">Opponent</Text>
-              <Text className="text-danger text-2xl font-bold">
+              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs">Opponent</Text>
+              <Text style={{ color: '#ff6e84', fontFamily: 'Lexend-SemiBold' }} className="text-2xl font-bold">
                 {war.clan_a_id === myClanId
                   ? (war.clan_b_score?.total ?? 0)
                   : (war.clan_a_score?.total ?? 0)}
@@ -283,24 +298,24 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
 
           {/* War Chat link */}
           <Pressable
-            className="bg-white/5 border border-white/20 rounded-lg py-2 items-center mt-3 active:bg-white/10"
+            className="bg-[#a434ff]/10 rounded-lg py-2 items-center mt-3 active:scale-[0.98]"
             onPress={() => router.push(`/(app)/war-chat/${war.id}` as any)}
           >
-            <Text className="text-white font-bold text-sm">
-              <FontAwesome name="comments" size={14} color={Colors.text.primary} />  War Chat
+            <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold text-sm">
+              <FontAwesome name="comments" size={14} color="#ce96ff" />  War Chat
             </Text>
           </Pressable>
 
           {/* Top contributors */}
           {contributions && contributions.length > 0 && (
-            <View className="mt-4 border-t border-surface-border pt-3">
-              <Text className="text-white/50 text-xs uppercase mb-2">Top Contributors</Text>
+            <View className="mt-4 pt-3" style={{ borderTopWidth: 1, borderTopColor: '#23233f' }}>
+              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs uppercase mb-2">Top Contributors</Text>
               {contributions.slice(0, 5).map((c: any, i: number) => (
                 <View key={c.user_id} className="flex-row justify-between py-1">
-                  <Text className="text-white">
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}>
                     {i + 1}. {c.display_name || 'Warrior'}
                   </Text>
-                  <Text className="text-white font-bold">
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">
                     {Math.round(c.contribution_points)} pts ({c.workout_count} workouts)
                   </Text>
                 </View>
@@ -315,7 +330,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       <Animated.View style={fadeHistory.style}>
       {warHistory && warHistory.length > 0 && (
         <View className="mb-6">
-          <Text className="text-white text-lg font-bold mb-3">War History</Text>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold mb-3">War History</Text>
           <View className="gap-2">
             {warHistory.slice(0, 5).map((w: any) => {
               const isA = w.clan_a_id === myClanId;
@@ -327,11 +342,11 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
               return (
                 <View
                   key={w.id}
-                  className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-row items-center"
+                  className="bg-[#1d1d37] rounded-xl p-3 flex-row items-center"
                 >
                   <View className="flex-1">
-                    <Text className="text-text-muted text-xs">Week {w.week_number}</Text>
-                    <Text className="text-white font-bold">
+                    <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs">Week {w.week_number}</Text>
+                    <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">
                       {myScore ?? 0} – {theirScore ?? 0}
                     </Text>
                   </View>
@@ -339,16 +354,17 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
                     className="px-3 py-1 rounded-full"
                     style={{
                       backgroundColor: draw
-                        ? Colors.text.muted + '30'
+                        ? '#74738b' + '30'
                         : won
                         ? Colors.success + '30'
-                        : Colors.danger + '30',
+                        : '#ff6e84' + '30',
                     }}
                   >
                     <Text
                       className="font-bold text-xs"
                       style={{
-                        color: draw ? Colors.text.muted : won ? Colors.success : Colors.danger,
+                        color: draw ? '#74738b' : won ? Colors.success : '#ff6e84',
+                        fontFamily: 'Lexend-SemiBold',
                       }}
                     >
                       {draw ? 'DRAW' : won ? 'WIN' : 'LOSS'}
@@ -366,18 +382,18 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       {/* Leaderboard Link */}
       <Animated.View style={fadeRoster.style}>
       <Pressable
-        className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-4 flex-row items-center active:opacity-80"
+        className="bg-[#1d1d37] rounded-xl p-4 mb-4 flex-row items-center active:scale-[0.98]"
         onPress={() => router.push('/(app)/leaderboard' as any)}
       >
-        <FontAwesome name="trophy" size={18} color={Colors.warning} />
-        <Text className="text-white font-bold ml-3 flex-1">Clan Leaderboard</Text>
-        <FontAwesome name="chevron-right" size={14} color={Colors.text.muted} />
+        <FontAwesome name="trophy" size={18} color="#ffd709" />
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold ml-3 flex-1">Clan Leaderboard</Text>
+        <FontAwesome name="chevron-right" size={14} color="#74738b" />
       </Pressable>
 
       {/* Roster */}
-      <Text className="text-white text-lg font-bold mb-3">Members</Text>
+      <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold mb-3">Members</Text>
       {rosterLoading ? (
-        <ActivityIndicator color={Colors.text.primary} />
+        <ActivityIndicator color="#ce96ff" />
       ) : (
         <View className="gap-2 mb-6">
           {(roster ?? []).map((m: any) => (
@@ -396,11 +412,12 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
 
       {/* Leave */}
       <Pressable
-        className="border border-danger rounded-xl py-3 items-center active:bg-danger/10"
+        className="rounded-xl py-3 items-center active:scale-[0.98]"
+        style={{ borderWidth: 1, borderColor: '#ff6e84' }}
         onPress={handleLeave}
         disabled={leaveMutation.isPending}
       >
-        <Text className="text-danger font-bold">
+        <Text style={{ color: '#ff6e84', fontFamily: 'Lexend-SemiBold' }} className="font-bold">
           {leaveMutation.isPending ? 'Leaving...' : 'Leave Clan'}
         </Text>
       </Pressable>
@@ -434,35 +451,36 @@ function SearchView({ onJoined }: { onJoined: () => void }) {
   return (
     <View className="flex-1 px-4">
       <TextInput
-        className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base mb-4"
+        className="bg-[#000000] rounded-xl px-4 py-3 text-base mb-4"
+        style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
         placeholder="Search clans by name or tag..."
-        placeholderTextColor={Colors.text.muted}
+        placeholderTextColor="#74738b"
         value={query}
         onChangeText={setQuery}
       />
       {isLoading ? (
-        <ActivityIndicator color={Colors.text.primary} />
+        <ActivityIndicator color="#ce96ff" />
       ) : (
         <FlatList
           data={results ?? []}
           keyExtractor={(item: any) => item.id}
           renderItem={({ item }: { item: any }) => (
             <Pressable
-              className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-2 flex-row items-center"
+              className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center active:scale-[0.98]"
               onPress={() => handleJoin(item.id, item.name)}
             >
               <View className="flex-1">
-                <Text className="text-white font-bold">{item.name}</Text>
-                <Text className="text-white text-sm">[{item.tag}]</Text>
-                <Text className="text-text-muted text-xs">
+                <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.name}</Text>
+                <Text style={{ color: '#ffd709', fontFamily: 'Lexend-SemiBold' }} className="text-sm">[{item.tag}]</Text>
+                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
                   {item.member_count}/{item.max_members} members
                 </Text>
               </View>
-              <FontAwesome name="plus-circle" size={24} color={Colors.text.primary} />
+              <FontAwesome name="plus-circle" size={24} color="#ce96ff" />
             </Pressable>
           )}
           ListEmptyComponent={
-            <Text className="text-text-muted text-center py-8">
+            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-center py-8">
               {query ? 'No clans found' : 'Search for a clan or create your own'}
             </Text>
           }
@@ -523,27 +541,29 @@ function CreateView({ onCreated }: { onCreated: () => void }) {
     <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
       <View className="gap-4 mb-6">
         <View>
-          <Text className="text-white/50 text-xs uppercase mb-1">Clan Name</Text>
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }} className="text-xs uppercase mb-1">Clan Name</Text>
           <TextInput
-            className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base"
+            className="bg-[#000000] rounded-xl px-4 py-3 text-base"
+            style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
             placeholder="Iron Wolves"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor="#74738b"
             value={name}
             onChangeText={setName}
           />
           {autoTag && (
-            <View className="bg-surface-raised border border-surface-border rounded-lg px-3 py-2 mt-2 mb-1">
-              <Text className="text-text-muted text-xs uppercase mb-0.5">Auto-generated Tag</Text>
-              <Text className="text-white font-bold text-lg">[{autoTag}]</Text>
+            <View className="bg-[#1d1d37] rounded-lg px-3 py-2 mt-2 mb-1">
+              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs uppercase mb-0.5">Auto-generated Tag</Text>
+              <Text style={{ color: '#ffd709', fontFamily: 'Epilogue-Bold' }} className="font-bold text-lg">[{autoTag}]</Text>
             </View>
           )}
         </View>
         <View>
-          <Text className="text-white/50 text-xs uppercase mb-1">Description (optional)</Text>
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }} className="text-xs uppercase mb-1">Description (optional)</Text>
           <TextInput
-            className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base"
+            className="bg-[#000000] rounded-xl px-4 py-3 text-base"
+            style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
             placeholder="We train hard and compete harder"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor="#74738b"
             value={description}
             onChangeText={setDescription}
             multiline
@@ -552,12 +572,12 @@ function CreateView({ onCreated }: { onCreated: () => void }) {
       </View>
 
       <Pressable
-        className="py-3.5 items-center active:opacity-70"
-        style={{ borderWidth: 1, borderColor: '#ffffff' }}
+        className="py-3.5 items-center rounded-xl active:scale-[0.98]"
+        style={{ backgroundColor: '#a434ff' }}
         onPress={handleCreate}
         disabled={createMutation.isPending}
       >
-        <Text className="text-white text-lg font-bold">
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold">
           {createMutation.isPending ? 'Creating...' : 'Create Clan'}
         </Text>
       </Pressable>
@@ -573,8 +593,8 @@ export default function ClanScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator color={Colors.text.primary} size="large" />
+      <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
+        <ActivityIndicator color="#ce96ff" size="large" />
       </SafeAreaView>
     );
   }
@@ -582,7 +602,7 @@ export default function ClanScreen() {
   // If user has a clan, show it
   if (clan) {
     return (
-      <SafeAreaView className="flex-1 bg-black" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
         <MyClanView clan={clan} onLeave={() => refetch()} />
       </SafeAreaView>
     );
@@ -590,22 +610,28 @@ export default function ClanScreen() {
 
   // No clan — show search/create
   return (
-    <SafeAreaView className="flex-1 bg-black" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       {/* Tab Switcher */}
-      <View className="flex-row border-b border-surface-border">
+      <View className="flex-row">
         <Pressable
-          className={`flex-1 py-3 items-center ${view === 'search' ? 'border-b-2 border-white' : ''}`}
+          className={`flex-1 py-3 items-center ${view === 'search' ? 'bg-[#ce96ff]' : 'bg-[#23233f]'}`}
           onPress={() => setView('search')}
         >
-          <Text className={view === 'search' ? 'text-white font-bold' : 'text-white/50'}>
+          <Text
+            style={{ fontFamily: 'Lexend-SemiBold' }}
+            className={view === 'search' ? 'text-black font-bold' : 'text-[#aaa8c3]'}
+          >
             Find Clan
           </Text>
         </Pressable>
         <Pressable
-          className={`flex-1 py-3 items-center ${view === 'create' ? 'border-b-2 border-white' : ''}`}
+          className={`flex-1 py-3 items-center ${view === 'create' ? 'bg-[#ce96ff]' : 'bg-[#23233f]'}`}
           onPress={() => setView('create')}
         >
-          <Text className={view === 'create' ? 'text-white font-bold' : 'text-white/50'}>
+          <Text
+            style={{ fontFamily: 'Lexend-SemiBold' }}
+            className={view === 'create' ? 'text-black font-bold' : 'text-[#aaa8c3]'}
+          >
             Create Clan
           </Text>
         </Pressable>

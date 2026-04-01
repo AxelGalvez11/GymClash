@@ -73,8 +73,8 @@ export default function WorkoutReviewScreen() {
 
   if (isLoading || !data) {
     return (
-      <SafeAreaView className="flex-1 bg-surface items-center justify-center">
-        <ActivityIndicator color={Colors.brand.DEFAULT} size="large" />
+      <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
+        <ActivityIndicator color="#ce96ff" size="large" />
       </SafeAreaView>
     );
   }
@@ -101,29 +101,36 @@ export default function WorkoutReviewScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Back button */}
-        <Pressable onPress={() => router.back()} className="py-4">
-          <Text className="text-white/60 text-base">← Back</Text>
+        <Pressable onPress={() => router.back()} className="py-4 active:scale-[0.98]">
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
         </Pressable>
 
         {/* Header */}
         <Animated.View style={fadeHeaderAnim.style}>
-        <Text className="text-white text-2xl font-bold mb-1">
+        <Text className="text-2xl mb-1" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>
           Workout Review
         </Text>
-        <Text className="text-text-secondary text-sm mb-6">
-          {workout.type === 'strength' ? 'Strength' : 'Run'} —{' '}
-          {new Date(workout.created_at).toLocaleDateString()} — ID: {workoutId}
+        <Text className="text-sm mb-6" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
+          {workout.type === 'strength' ? 'Strength' : 'Run'} --{' '}
+          {new Date(workout.created_at).toLocaleDateString()} -- ID: {workoutId}
         </Text>
         </Animated.View>
 
         {/* Status Badge */}
         <Animated.View style={fadeContentAnim.style}>
         <View
-          className="rounded-xl p-4 mb-6 border"
-          style={{ borderColor: statusConfig.color + '40' }}
+          className="rounded-xl p-4 mb-6"
+          style={{
+            backgroundColor: '#1d1d37',
+            shadowColor: statusConfig.color,
+            shadowOpacity: 0.2,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 0 },
+            elevation: 6,
+          }}
         >
           <View className="flex-row items-center gap-2 mb-2">
             <FontAwesome
@@ -133,12 +140,12 @@ export default function WorkoutReviewScreen() {
               size={18}
               color={statusConfig.color}
             />
-            <Text className="font-bold text-lg" style={{ color: statusConfig.color }}>
+            <Text className="text-lg" style={{ color: statusConfig.color, fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
               {statusConfig.label}
             </Text>
           </View>
-          <Text className="text-text-secondary">{statusConfig.description}</Text>
-          <Text className="text-text-muted text-sm mt-2">
+          <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>{statusConfig.description}</Text>
+          <Text className="text-sm mt-2" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
             Confidence: {Math.round(confidenceScore * 100)}%
           </Text>
         </View>
@@ -146,7 +153,7 @@ export default function WorkoutReviewScreen() {
         {/* Reason Codes */}
         {reasonCodes.length > 0 && (
           <View className="mb-6">
-            <Text className="text-white text-lg font-bold mb-3">
+            <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
               Flagged Issues
             </Text>
             {reasonCodes.map((code) => {
@@ -156,19 +163,19 @@ export default function WorkoutReviewScreen() {
                   ? Colors.danger
                   : severity === 'warning'
                   ? Colors.warning
-                  : Colors.info;
+                  : '#81ecff';
 
               return (
                 <View
                   key={code}
-                  className="bg-surface-raised border border-surface-border rounded-xl p-3 mb-2"
+                  className="bg-[#1d1d37] rounded-xl p-3 mb-2"
                 >
                   <View className="flex-row items-center gap-2">
                     <View
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: severityColor }}
                     />
-                    <Text className="text-white font-bold flex-1">
+                    <Text className="flex-1" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>
                       {REASON_CODE_LABELS[code]}
                     </Text>
                   </View>
@@ -181,29 +188,37 @@ export default function WorkoutReviewScreen() {
         {/* Appeal Form */}
         {canAppeal && (
           <View>
-            <Text className="text-white text-lg font-bold mb-3">
+            <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
               Submit an Appeal
             </Text>
-            <Text className="text-text-secondary text-sm mb-3">
+            <Text className="text-sm mb-3" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
               If you believe this workout was incorrectly flagged, describe what
               happened and we will review it.
             </Text>
             <TextInput
-              className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base mb-4"
+              className="bg-[#000000] rounded-xl px-4 py-3 text-base mb-4"
+              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular', minHeight: 100 }}
               placeholder="Describe why this flag is incorrect..."
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor="#74738b"
               value={appealReason}
               onChangeText={setAppealReason}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
-              style={{ minHeight: 100 }}
             />
             <Pressable
-              className="py-3.5 items-center active:opacity-70" style={{ borderWidth: 1, borderColor: '#ffffff' }}
+              className="py-3.5 items-center rounded-[2rem] active:scale-[0.98]"
+              style={{
+                backgroundColor: '#a434ff',
+                shadowColor: '#a434ff',
+                shadowOpacity: 0.4,
+                shadowRadius: 16,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 10,
+              }}
               onPress={handleSubmitAppeal}
             >
-              <Text className="text-white text-lg font-bold">
+              <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>
                 Submit Appeal
               </Text>
             </Pressable>

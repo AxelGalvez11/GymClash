@@ -19,18 +19,18 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: Colors.danger,
   validated: Colors.success,
   submitted: Colors.info,
-  draft: Colors.text.muted,
+  draft: '#74738b',
 };
 
 function WorkoutCard({ item, onPress }: { item: any; onPress: () => void }) {
   const status = item.validation_status ?? item.status;
-  const statusColor = STATUS_COLORS[status] ?? Colors.text.muted;
+  const statusColor = STATUS_COLORS[status] ?? '#74738b';
   const isFlagged = ['held_for_review', 'excluded_from_clan_score', 'rejected'].includes(status);
   const date = new Date(item.created_at);
 
   return (
     <Pressable
-      className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-2"
+      className="bg-[#1d1d37] rounded-xl p-4 mb-2 active:scale-[0.98]"
       onPress={onPress}
     >
       <View className="flex-row items-center justify-between mb-2">
@@ -38,35 +38,35 @@ function WorkoutCard({ item, onPress }: { item: any; onPress: () => void }) {
           <FontAwesome
             name={item.type === 'strength' ? 'heartbeat' : item.type === 'scout' ? 'road' : 'leaf'}
             size={16}
-            color={item.type === 'strength' ? Colors.danger : item.type === 'scout' ? Colors.info : Colors.success}
+            color={item.type === 'strength' ? Colors.danger : item.type === 'scout' ? '#81ecff' : Colors.success}
           />
-          <Text className="text-white font-bold capitalize">
+          <Text className="capitalize" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>
             {item.type === 'active_recovery' ? 'Recovery' : item.type}
           </Text>
         </View>
         <View className="flex-row items-center gap-2">
           <View className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
-          <Text className="text-xs capitalize" style={{ color: statusColor }}>
+          <Text className="text-xs capitalize" style={{ color: statusColor, fontFamily: 'BeVietnamPro-Regular' }}>
             {status?.replace(/_/g, ' ') ?? 'pending'}
           </Text>
         </View>
       </View>
 
       <View className="flex-row items-center justify-between">
-        <Text className="text-text-muted text-sm">
-          {date.toLocaleDateString()} · {Math.round((item.duration_seconds ?? 0) / 60)} min
+        <Text className="text-sm" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
+          {date.toLocaleDateString()} -- {Math.round((item.duration_seconds ?? 0) / 60)} min
         </Text>
         <View className="items-end">
           {item.final_score != null ? (
-            <Text className="text-white text-lg font-bold">
+            <Text className="text-lg" style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>
               {Math.round(item.final_score)}
             </Text>
           ) : item.raw_score != null ? (
-            <Text className="text-white/50 text-lg">
+            <Text className="text-lg" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>
               ~{Math.round(item.raw_score)}
             </Text>
           ) : (
-            <Text className="text-text-muted text-lg">—</Text>
+            <Text className="text-lg" style={{ color: '#74738b' }}>--</Text>
           )}
         </View>
       </View>
@@ -74,7 +74,7 @@ function WorkoutCard({ item, onPress }: { item: any; onPress: () => void }) {
       {isFlagged && (
         <View className="mt-2 flex-row items-center gap-1">
           <FontAwesome name="exclamation-triangle" size={12} color={Colors.warning} />
-          <Text className="text-warning text-xs">Tap to review or appeal</Text>
+          <Text className="text-warning text-xs" style={{ fontFamily: 'BeVietnamPro-Regular' }}>Tap to review or appeal</Text>
         </View>
       )}
     </Pressable>
@@ -96,14 +96,14 @@ export default function HistoryScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-black" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       {/* Header */}
       <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Pressable onPress={() => router.back()}>
-            <Text className="text-white/60 text-base">← Back</Text>
+            <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
           </Pressable>
-          <Text className="text-white text-lg font-bold">Workout History</Text>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>Workout History</Text>
           <View className="w-12" />
         </View>
 
@@ -117,12 +117,21 @@ export default function HistoryScreen() {
           ]).map(({ key, label }) => (
             <Pressable
               key={key}
-              className={`px-4 py-2 rounded-full ${
-                filter === key ? 'bg-white' : 'bg-surface-raised border border-surface-border'
-              }`}
+              className="px-4 py-2 rounded-full active:scale-[0.98]"
+              style={
+                filter === key
+                  ? { backgroundColor: '#ce96ff' }
+                  : { backgroundColor: '#1d1d37' }
+              }
               onPress={() => setFilter(key)}
             >
-              <Text className={filter === key ? 'text-black font-bold' : 'text-white/50'}>
+              <Text
+                style={{
+                  color: filter === key ? '#0c0c1f' : '#aaa8c3',
+                  fontFamily: 'Lexend-SemiBold',
+                  fontWeight: '700',
+                }}
+              >
                 {label}
               </Text>
             </Pressable>
@@ -133,7 +142,7 @@ export default function HistoryScreen() {
       {/* List */}
       <Animated.View style={fadeList.style} className="flex-1">
       {isLoading ? (
-        <ActivityIndicator color={Colors.text.primary} className="mt-8" />
+        <ActivityIndicator color="#ce96ff" className="mt-8" />
       ) : (
         <FlatList
           data={filtered}
@@ -155,8 +164,8 @@ export default function HistoryScreen() {
           )}
           ListEmptyComponent={
             <View className="items-center py-12">
-              <Text className="text-text-muted text-lg">No workouts yet</Text>
-              <Text className="text-text-muted text-sm mt-1">Start training to see your history</Text>
+              <Text className="text-lg" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>No workouts yet</Text>
+              <Text className="text-sm mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Start training to see your history</Text>
             </View>
           }
           onRefresh={refetch}

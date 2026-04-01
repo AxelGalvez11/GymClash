@@ -18,15 +18,19 @@ export function NumberInput({
 }: NumberInputProps) {
   return (
     <View className="flex-1">
-      <Text className="text-text-secondary text-xs uppercase mb-1">
+      <Text
+        className="text-xs uppercase mb-1"
+        style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}
+      >
         {label}
       </Text>
       <TextInput
-        className="bg-surface-raised border border-surface-border rounded-lg px-3 py-2 text-white text-center text-lg font-bold"
+        className="bg-[#000000] rounded-lg px-3 py-2 text-center text-lg"
+        style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={Colors.text.muted}
+        placeholderTextColor="#74738b"
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
       />
     </View>

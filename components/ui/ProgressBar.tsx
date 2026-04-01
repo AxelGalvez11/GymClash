@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, Animated } from 'react-native';
-import { Colors } from '@/constants/theme';
-import { useAccent } from '@/stores/accent-store';
 
 type ProgressBarHeight = 'sm' | 'md';
 
@@ -14,8 +12,8 @@ interface ProgressBarProps {
 }
 
 const HEIGHT_VALUES: Record<ProgressBarHeight, number> = {
-  sm: 4,
-  md: 8,
+  sm: 6,
+  md: 10,
 };
 
 export function ProgressBar({
@@ -25,11 +23,12 @@ export function ProgressBar({
   height = 'sm',
   showLabel = false,
 }: ProgressBarProps) {
-  const accent = useAccent();
-  const barColor = color ?? accent.DEFAULT;
+  // TODO: Replace solid fill with expo-linear-gradient when available
+  const barColor = color ?? '#a434ff';
   const fraction = max > 0 ? Math.min(current / max, 1) : 0;
 
   const animatedWidth = useRef(new Animated.Value(0)).current;
+  const shimmerPos = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(animatedWidth, {
@@ -39,16 +38,28 @@ export function ProgressBar({
     }).start();
   }, [fraction, animatedWidth]);
 
+  useEffect(() => {
+    const shimmer = Animated.loop(
+      Animated.timing(shimmerPos, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: false,
+      })
+    );
+    shimmer.start();
+    return () => shimmer.stop();
+  }, [shimmerPos]);
+
   const h = HEIGHT_VALUES[height];
 
   return (
     <View>
       <View
         className="w-full rounded-full overflow-hidden"
-        style={{ height: h, backgroundColor: Colors.surface.border }}
+        style={{ height: h, backgroundColor: '#23233f' }}
       >
         <Animated.View
-          className="rounded-full"
+          className="rounded-full overflow-hidden"
           style={{
             height: h,
             backgroundColor: barColor,
@@ -57,10 +68,29 @@ export function ProgressBar({
               outputRange: ['0%', '100%'],
             }),
           }}
-        />
+        >
+          {/* Shimmer overlay */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              width: '40%',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              borderRadius: 999,
+              left: shimmerPos.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['-40%', '140%'],
+              }),
+            }}
+          />
+        </Animated.View>
       </View>
       {showLabel && (
-        <Text className="text-text-muted text-xs mt-1 text-center">
+        <Text
+          className="text-xs mt-1 text-center"
+          style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}
+        >
           {current} / {max}
         </Text>
       )}

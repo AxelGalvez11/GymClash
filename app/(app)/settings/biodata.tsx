@@ -13,7 +13,7 @@ type SexOption = 'male' | 'female' | 'prefer_not_to_say';
 
 function SectionLabel({ text }: { readonly text: string }) {
   return (
-    <Text className="text-text-secondary text-xs uppercase mb-1">{text}</Text>
+    <Text className="text-xs uppercase mb-1" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>{text}</Text>
   );
 }
 
@@ -33,17 +33,34 @@ function OptionPicker<T extends string>({
       {options.map((opt) => (
         <Pressable
           key={opt}
-          className={`flex-1 border rounded-xl py-3 items-center ${
+          className="flex-1 rounded-xl py-3 items-center active:scale-[0.98]"
+          style={
             value === opt
-              ? 'border-white bg-white/10'
-              : 'border-surface-border bg-surface-raised'
-          }`}
+              ? {
+                  backgroundColor: '#23233f',
+                  borderWidth: 1.5,
+                  borderColor: '#ce96ff',
+                  shadowColor: '#ce96ff',
+                  shadowOpacity: 0.3,
+                  shadowRadius: 10,
+                  shadowOffset: { width: 0, height: 0 },
+                  elevation: 6,
+                }
+              : {
+                  backgroundColor: '#23233f',
+                  borderWidth: 1.5,
+                  borderColor: 'transparent',
+                }
+          }
           onPress={() => onChange(opt)}
         >
           <Text
-            className={`font-bold text-sm ${
-              value === opt ? 'text-white' : 'text-white/50'
-            }`}
+            className="text-sm"
+            style={{
+              color: value === opt ? '#e5e3ff' : '#74738b',
+              fontFamily: 'Lexend-SemiBold',
+              fontWeight: '700',
+            }}
           >
             {labels?.[opt] ?? opt}
           </Text>
@@ -140,18 +157,18 @@ export default function BiodataScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-5" contentContainerClassName="pb-8">
         <View className="flex-row items-center pt-3 pb-5">
-          <Pressable onPress={() => router.back()} className="mr-4 active:opacity-60">
-            <FontAwesome name="arrow-left" size={18} color={Colors.text.secondary} />
+          <Pressable onPress={() => router.back()} className="mr-4 active:scale-[0.98]">
+            <FontAwesome name="arrow-left" size={18} color="#aaa8c3" />
           </Pressable>
-          <Text className="text-white text-lg font-bold" style={{ fontFamily: 'SpaceMono', letterSpacing: 1 }}>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, letterSpacing: 1 }}>
             Body Data
           </Text>
         </View>
 
-        <Text className="text-text-secondary text-sm mb-6">
+        <Text className="text-sm mb-6" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
           Used to personalize your scoring, predict your trajectory, and make
           competition fairer. Your data is private and only used server-side.
         </Text>
@@ -161,9 +178,10 @@ export default function BiodataScreen() {
           <View>
             <SectionLabel text="Body Weight (kg)" />
             <TextInput
-              className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base"
+              className="bg-[#000000] rounded-xl px-4 py-3 text-base"
+              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
               placeholder="e.g. 80"
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor="#74738b"
               value={bodyWeight}
               onChangeText={setBodyWeight}
               keyboardType="decimal-pad"
@@ -174,9 +192,10 @@ export default function BiodataScreen() {
           <View>
             <SectionLabel text="Height (cm)" />
             <TextInput
-              className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base"
+              className="bg-[#000000] rounded-xl px-4 py-3 text-base"
+              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
               placeholder="e.g. 175"
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor="#74738b"
               value={height}
               onChangeText={setHeight}
               keyboardType="decimal-pad"
@@ -187,14 +206,15 @@ export default function BiodataScreen() {
           <View>
             <SectionLabel text="Birth Date (YYYY-MM-DD)" />
             <TextInput
-              className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base"
+              className="bg-[#000000] rounded-xl px-4 py-3 text-base"
+              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
               placeholder="e.g. 1995-06-15"
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor="#74738b"
               value={birthDate}
               onChangeText={setBirthDate}
             />
             {age !== null && (
-              <Text className="text-text-muted text-xs mt-1">Age: {age} years</Text>
+              <Text className="text-xs mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Age: {age} years</Text>
             )}
           </View>
 
@@ -218,7 +238,7 @@ export default function BiodataScreen() {
               onChange={setLiftingExp}
               labels={{ beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' }}
             />
-            <Text className="text-text-muted text-xs mt-1">
+            <Text className="text-xs mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
               {liftingExp === 'beginner' ? 'Less than 6 months of consistent training'
                 : liftingExp === 'intermediate' ? '6 months to 2 years of consistent training'
                 : liftingExp === 'advanced' ? '2+ years of consistent training'
@@ -235,7 +255,7 @@ export default function BiodataScreen() {
               onChange={setRunningExp}
               labels={{ beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' }}
             />
-            <Text className="text-text-muted text-xs mt-1">
+            <Text className="text-xs mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
               {runningExp === 'beginner' ? 'New to regular cardio'
                 : runningExp === 'intermediate' ? 'Run or do cardio a few times a week'
                 : runningExp === 'advanced' ? 'Experienced runner or endurance athlete'
@@ -245,38 +265,39 @@ export default function BiodataScreen() {
 
           {/* Resting Heart Rate */}
           <View>
-            <SectionLabel text="Resting Heart Rate (bpm) — optional" />
+            <SectionLabel text="Resting Heart Rate (bpm) -- optional" />
             <TextInput
-              className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base"
+              className="bg-[#000000] rounded-xl px-4 py-3 text-base"
+              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
               placeholder="e.g. 65"
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor="#74738b"
               value={restingHR}
               onChangeText={setRestingHR}
               keyboardType="number-pad"
             />
-            <Text className="text-text-muted text-xs mt-1">
+            <Text className="text-xs mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
               Measured at rest, sitting calmly. Used to estimate VO2max.
             </Text>
           </View>
 
           {/* Derived Stats */}
           {(maxHR !== null || vo2max !== null) && (
-            <View className="bg-surface-raised border border-surface-border rounded-xl p-4">
-              <Text className="text-white font-bold mb-2">Estimated Stats</Text>
+            <View className="bg-[#1d1d37] rounded-xl p-4">
+              <Text className="mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>Estimated Stats</Text>
               {maxHR !== null && (
                 <View className="flex-row justify-between py-1">
-                  <Text className="text-text-secondary">Max Heart Rate</Text>
-                  <Text className="text-white font-bold">{maxHR} bpm</Text>
+                  <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>Max Heart Rate</Text>
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>{maxHR} bpm</Text>
                 </View>
               )}
               {vo2max !== null && (
                 <View className="flex-row justify-between py-1">
-                  <Text className="text-text-secondary">Est. VO2max</Text>
-                  <Text className="text-white font-bold">{vo2max} ml/kg/min</Text>
+                  <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>Est. VO2max</Text>
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>{vo2max} ml/kg/min</Text>
                 </View>
               )}
               {vo2max !== null && (
-                <Text className="text-text-muted text-xs mt-2">
+                <Text className="text-xs mt-2" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
                   {vo2max >= 50 ? 'Excellent' : vo2max >= 40 ? 'Good' : vo2max >= 30 ? 'Average' : 'Below average'} cardiovascular fitness (Nes formula)
                 </Text>
               )}
@@ -285,17 +306,24 @@ export default function BiodataScreen() {
         </View>
 
         <Pressable
-          className="rounded-xl py-4 items-center active:opacity-70"
-          style={{ backgroundColor: accent.DEFAULT }}
+          className="rounded-[2rem] py-4 items-center active:scale-[0.98]"
+          style={{
+            backgroundColor: '#a434ff',
+            shadowColor: '#a434ff',
+            shadowOpacity: 0.4,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 10,
+          }}
           onPress={handleSave}
           disabled={updateBiodata.isPending}
         >
-          <Text className="text-white text-lg font-bold" style={{ fontFamily: 'SpaceMono', letterSpacing: 1 }}>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, letterSpacing: 1 }}>
             {updateBiodata.isPending ? 'Saving...' : 'Save'}
           </Text>
         </Pressable>
 
-        <Text className="text-text-muted text-xs text-center mt-4 px-4">
+        <Text className="text-xs text-center mt-4 px-4" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
           This data is never shown to other users. It is only used server-side
           for scoring and trajectory prediction.
         </Text>

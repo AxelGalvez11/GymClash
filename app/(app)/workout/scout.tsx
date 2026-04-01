@@ -172,24 +172,25 @@ export default function ScoutWorkoutScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center justify-between py-4">
-          <Pressable onPress={handleDiscard}>
-            <Text className="text-danger text-base">Cancel</Text>
+          <Pressable onPress={handleDiscard} className="active:scale-[0.98]">
+            <Text className="text-danger text-base" style={{ fontFamily: 'BeVietnamPro-Regular' }}>Cancel</Text>
           </Pressable>
           <View className="items-center">
-            <Text className="text-white text-lg font-bold">Run</Text>
-            <Text className="text-text-muted text-xs" style={{ fontFamily: 'SpaceMono' }}>
+            <Text style={{ color: '#e5e3ff', fontSize: 18, fontFamily: 'Epilogue-Bold' }}>Run</Text>
+            <Text style={{ color: '#74738b', fontSize: 12, fontFamily: 'Lexend-SemiBold' }}>
               {`${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
             </Text>
           </View>
           <Pressable
             onPress={handleFinishWorkout}
             disabled={submitWorkout.isPending}
+            className="active:scale-[0.98]"
           >
-            <Text className="text-success text-base font-bold">
+            <Text className="text-success text-base" style={{ fontFamily: 'Epilogue-Bold' }}>
               {submitWorkout.isPending ? 'Saving...' : 'Finish'}
             </Text>
           </Pressable>
@@ -197,8 +198,8 @@ export default function ScoutWorkoutScreen() {
 
         {/* Guest indicator */}
         {isGuest && (
-          <View className="bg-warning/10 border border-warning/30 rounded-xl p-3 mb-4">
-            <Text className="text-warning text-xs text-center font-bold">
+          <View className="bg-warning/10 rounded-xl p-3 mb-4">
+            <Text className="text-warning text-xs text-center" style={{ fontFamily: 'Lexend-SemiBold' }}>
               Guest mode — {5 - guestWorkouts.length} workouts remaining
             </Text>
           </View>
@@ -206,98 +207,115 @@ export default function ScoutWorkoutScreen() {
 
         {/* Stats Grid */}
         <View className="flex-row gap-3 mb-6">
-          <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-white/50 text-xs uppercase mb-1">
+          <View className="bg-[#1d1d37] rounded-xl p-4 flex-1 items-center">
+            <Text
+              className="text-xs uppercase mb-1"
+              style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}
+            >
               Distance
             </Text>
-            <Text className="text-white text-2xl font-bold">
+            <Text style={{ color: '#e5e3ff', fontSize: 24, fontFamily: 'Lexend-SemiBold' }}>
               {currentDistance > 0 ? currentDistance.toFixed(2) : '0.00'}
             </Text>
-            <Text className="text-text-muted text-xs">km</Text>
+            <Text className="text-xs" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>km</Text>
           </View>
-          <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-white/50 text-xs uppercase mb-1">
+          <View className="bg-[#1d1d37] rounded-xl p-4 flex-1 items-center">
+            <Text
+              className="text-xs uppercase mb-1"
+              style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}
+            >
               Pace
             </Text>
-            <Text className="text-white text-2xl font-bold">
+            <Text style={{ color: '#e5e3ff', fontSize: 24, fontFamily: 'Lexend-SemiBold' }}>
               {formatPace(currentPace)}
             </Text>
-            <Text className="text-text-muted text-xs">min/km</Text>
+            <Text className="text-xs" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>min/km</Text>
           </View>
-          <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-white/50 text-xs uppercase mb-1">
+          <View className="bg-[#1d1d37] rounded-xl p-4 flex-1 items-center">
+            <Text
+              className="text-xs uppercase mb-1"
+              style={{ color: '#81ecff', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}
+            >
               Score
             </Text>
-            <Text className="text-white text-2xl font-bold">
+            <Text style={{ color: '#e5e3ff', fontSize: 24, fontFamily: 'Lexend-SemiBold' }}>
               {Math.round(provisionalScore)}
             </Text>
-            <Text className="text-text-muted text-xs">est.</Text>
+            <Text className="text-xs" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>est.</Text>
           </View>
         </View>
 
         {/* GPS / Manual Toggle */}
         <View className="flex-row gap-2 mb-4">
           <Pressable
-            className={`flex-1 py-2 rounded-xl items-center ${useGps ? 'bg-white' : 'bg-surface-raised border border-surface-border'}`}
+            className="flex-1 py-2 rounded-xl items-center active:scale-[0.98]"
+            style={{ backgroundColor: useGps ? '#ce96ff' : '#23233f' }}
             onPress={() => {
               setUseGps(true);
               if (gps.status === 'idle') gps.startTracking();
             }}
           >
             <View className="flex-row items-center gap-2">
-              <FontAwesome name="map-marker" size={14} color={useGps ? '#000' : Colors.text.secondary} />
-              <Text className={useGps ? 'text-black font-bold' : 'text-text-secondary'}>GPS</Text>
+              <FontAwesome name="map-marker" size={14} color={useGps ? '#000' : '#aaa8c3'} />
+              <Text style={{
+                color: useGps ? '#000' : '#aaa8c3',
+                fontFamily: 'Lexend-SemiBold',
+              }}>GPS</Text>
             </View>
           </Pressable>
           <Pressable
-            className={`flex-1 py-2 rounded-xl items-center ${!useGps ? 'bg-white' : 'bg-surface-raised border border-surface-border'}`}
+            className="flex-1 py-2 rounded-xl items-center active:scale-[0.98]"
+            style={{ backgroundColor: !useGps ? '#ce96ff' : '#23233f' }}
             onPress={() => {
               setUseGps(false);
               if (gps.status === 'tracking') gps.stopTracking();
             }}
           >
             <View className="flex-row items-center gap-2">
-              <FontAwesome name="pencil" size={14} color={!useGps ? '#000' : Colors.text.secondary} />
-              <Text className={!useGps ? 'text-black font-bold' : 'text-text-secondary'}>Manual</Text>
+              <FontAwesome name="pencil" size={14} color={!useGps ? '#000' : '#aaa8c3'} />
+              <Text style={{
+                color: !useGps ? '#000' : '#aaa8c3',
+                fontFamily: 'Lexend-SemiBold',
+              }}>Manual</Text>
             </View>
           </Pressable>
         </View>
 
         {/* Distance Input */}
-        <View className="bg-surface-overlay border border-surface-border rounded-xl p-4">
+        <View className="bg-[#23233f] rounded-xl p-4">
           {useGps ? (
             <>
-              <Text className="text-white text-lg font-bold mb-2">GPS Tracking</Text>
+              <Text className="text-lg mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>GPS Tracking</Text>
               {gps.status === 'tracking' ? (
                 <View className="items-center py-4">
                   <View className="flex-row items-center gap-2 mb-2">
                     <View className="w-2 h-2 rounded-full bg-success" />
-                    <Text className="text-success text-xs font-bold uppercase">Live Tracking</Text>
+                    <Text className="text-success text-xs uppercase" style={{ fontFamily: 'Lexend-SemiBold' }}>Live Tracking</Text>
                   </View>
-                  <Text className="text-white text-4xl font-bold" style={{ fontFamily: 'SpaceMono' }}>
+                  <Text style={{ color: '#e5e3ff', fontSize: 36, fontFamily: 'Lexend-SemiBold' }}>
                     {gps.distance.toFixed(2)} km
                   </Text>
-                  <Text className="text-text-muted text-sm mt-1">
+                  <Text className="text-sm mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
                     Pace: {formatPace(gps.pace)} min/km · {gps.points.length} points
                   </Text>
                 </View>
               ) : gps.status === 'error' ? (
                 <View className="items-center py-4">
-                  <Text className="text-danger text-sm mb-2">GPS unavailable</Text>
-                  <Pressable onPress={() => setUseGps(false)}>
-                    <Text className="text-white/50 text-sm underline">Switch to manual</Text>
+                  <Text className="text-danger text-sm mb-2" style={{ fontFamily: 'BeVietnamPro-Regular' }}>GPS unavailable</Text>
+                  <Pressable onPress={() => setUseGps(false)} className="active:scale-[0.98]">
+                    <Text className="text-sm underline" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Switch to manual</Text>
                   </Pressable>
                 </View>
               ) : (
                 <View className="items-center py-4">
-                  <Text className="text-text-muted text-sm">Starting GPS...</Text>
+                  <Text className="text-sm" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Starting GPS...</Text>
                 </View>
               )}
             </>
           ) : (
             <>
-              <Text className="text-white text-lg font-bold mb-2">Enter Distance</Text>
-              <Text className="text-white/50 text-sm mb-3">
+              <Text className="text-lg mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>Enter Distance</Text>
+              <Text className="text-sm mb-3" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
                 Enter the distance you ran, or switch to GPS mode.
               </Text>
               <NumberInput
@@ -318,7 +336,7 @@ export default function ScoutWorkoutScreen() {
 
         {/* Provisional Note */}
         <View className="mt-4 px-2">
-          <Text className="text-text-muted text-xs text-center">
+          <Text className="text-xs text-center" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
             Score is provisional. Final score and validation are calculated server-side after submission.
           </Text>
         </View>

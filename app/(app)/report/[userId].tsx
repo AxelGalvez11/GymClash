@@ -54,7 +54,7 @@ export default function ReportScreen() {
     onSuccess: () => {
       Alert.alert(
         'Report Submitted',
-        'Thank you. We will review this report. Reports are a signal — they do not automatically penalize the reported user.',
+        'Thank you. We will review this report. Reports are a signal -- they do not automatically penalize the reported user.',
         [{ text: 'OK', onPress: () => router.back() }]
       );
     },
@@ -79,39 +79,55 @@ export default function ReportScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
-        <Pressable onPress={() => router.back()} className="py-4">
-          <Text className="text-white/60 text-base">← Back</Text>
+        <Pressable onPress={() => router.back()} className="py-4 active:scale-[0.98]">
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
         </Pressable>
 
-        <Text className="text-white text-2xl font-bold mb-2">Report User</Text>
-        <Text className="text-text-secondary text-sm mb-6">
+        <Text className="text-2xl mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>Report User</Text>
+        <Text className="text-sm mb-6" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
           Reports help us maintain fair competition. They are reviewed by our
           team and do not automatically penalize the reported user.
         </Text>
 
         {/* Category Selection */}
-        <Text className="text-white text-lg font-bold mb-3">Category</Text>
+        <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>Category</Text>
         <View className="gap-2 mb-6">
           {CATEGORIES.map((cat) => (
             <Pressable
               key={cat.value}
-              className={`border rounded-xl p-4 ${
+              className="rounded-xl p-4 active:scale-[0.98]"
+              style={
                 category === cat.value
-                  ? 'border-white bg-white/10'
-                  : 'border-surface-border bg-surface-raised'
-              }`}
+                  ? {
+                      backgroundColor: '#23233f',
+                      borderWidth: 1.5,
+                      borderColor: '#ce96ff',
+                      shadowColor: '#ce96ff',
+                      shadowOpacity: 0.3,
+                      shadowRadius: 10,
+                      shadowOffset: { width: 0, height: 0 },
+                      elevation: 6,
+                    }
+                  : {
+                      backgroundColor: '#1d1d37',
+                      borderWidth: 1.5,
+                      borderColor: 'transparent',
+                    }
+              }
               onPress={() => setCategory(cat.value)}
             >
               <Text
-                className={`font-bold ${
-                  category === cat.value ? 'text-white' : 'text-white/50'
-                }`}
+                style={{
+                  color: category === cat.value ? '#e5e3ff' : '#aaa8c3',
+                  fontFamily: 'BeVietnamPro-Bold',
+                  fontWeight: '700',
+                }}
               >
                 {cat.label}
               </Text>
-              <Text className="text-text-muted text-xs mt-1">
+              <Text className="text-xs mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
                 {cat.description}
               </Text>
             </Pressable>
@@ -119,31 +135,39 @@ export default function ReportScreen() {
         </View>
 
         {/* Description */}
-        <Text className="text-white text-lg font-bold mb-3">Description</Text>
+        <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>Description</Text>
         <TextInput
-          className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base mb-6"
+          className="bg-[#000000] rounded-xl px-4 py-3 text-base mb-6"
+          style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular', minHeight: 100 }}
           placeholder="Describe what you observed..."
-          placeholderTextColor={Colors.text.muted}
+          placeholderTextColor="#74738b"
           value={description}
           onChangeText={setDescription}
           multiline
           numberOfLines={4}
           textAlignVertical="top"
-          style={{ minHeight: 100 }}
         />
 
         {/* Submit */}
         <Pressable
-          className="py-3.5 items-center active:opacity-70" style={{ borderWidth: 1, borderColor: '#ffffff' }}
+          className="py-3.5 items-center rounded-[2rem] active:scale-[0.98]"
+          style={{
+            backgroundColor: '#a434ff',
+            shadowColor: '#a434ff',
+            shadowOpacity: 0.4,
+            shadowRadius: 16,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 10,
+          }}
           onPress={handleSubmit}
           disabled={reportMutation.isPending}
         >
-          <Text className="text-white text-lg font-bold">
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>
             {reportMutation.isPending ? 'Submitting...' : 'Submit Report'}
           </Text>
         </Pressable>
 
-        <Text className="text-text-muted text-xs text-center mt-4 px-4">
+        <Text className="text-xs text-center mt-4 px-4" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
           False or malicious reports are tracked. Frequent abuse may result in
           reduced report privileges.
         </Text>
