@@ -248,3 +248,88 @@ export type ReasonCode =
   | 'one_rm_plausibility'
   | 'active_recovery_too_short'
   | 'clean';
+
+// ─── GPS / Location Types ───────────────────────────────
+
+export interface GpsRoutePoint {
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly altitude: number | null;
+  readonly timestamp: string;
+  readonly accuracy: number;
+  readonly speed: number | null;
+}
+
+export interface GpsRoute {
+  readonly points: readonly GpsRoutePoint[];
+  readonly total_distance_km: number;
+  readonly total_elevation_gain_m: number;
+  readonly avg_pace_min_per_km: number;
+  readonly started_at: string;
+  readonly ended_at: string;
+}
+
+export type GpsTrackingStatus = 'idle' | 'requesting_permission' | 'tracking' | 'paused' | 'stopped' | 'error';
+
+export interface GymLocationResult {
+  readonly is_near_gym: boolean;
+  readonly nearest_gym_name: string | null;
+  readonly distance_meters: number | null;
+  readonly confidence: number;
+}
+
+// ─── Player Type System ─────────────────────────────────
+
+export type CardioSpecialization = 'sprinter' | 'trail_runner' | 'marathoner';
+export type StrengthSpecialization = 'bench_baron' | 'squat_king' | 'deadlift_demon' | 'all_rounder';
+export type PlayerCategory = 'cardio_specialist' | 'strength_specialist' | 'balanced';
+
+export interface PlayerType {
+  readonly category: PlayerCategory;
+  readonly specialization: CardioSpecialization | StrengthSpecialization | 'hybrid';
+  readonly display_name: string;
+  readonly confidence: number;
+  readonly dominant_exercises: readonly string[];
+  readonly strength_pct: number;
+  readonly scout_pct: number;
+}
+
+export interface PlayerTypeDetectionInput {
+  readonly workouts: readonly {
+    readonly type: WorkoutType;
+    readonly sets: readonly StrengthSet[] | null;
+    readonly route_data: RouteData | null;
+    readonly completed_at: string;
+  }[];
+}
+
+export interface SpecializationBonus {
+  readonly applies: boolean;
+  readonly multiplier: number;
+  readonly reason: string;
+}
+
+// ─── Game Feel Types ────────────────────────────────────
+
+export type StreakTier = 'ember' | 'torch' | 'bonfire' | 'inferno' | 'supernova' | 'eternal';
+
+export interface StreakTierConfig {
+  readonly tier: StreakTier;
+  readonly minDays: number;
+  readonly label: string;
+  readonly color: string;
+  readonly emoji: string;
+  readonly pulseSpeed: number;
+  readonly glowRadius: number;
+}
+
+export type LeaderboardZone = 'promote' | 'safe' | 'demote';
+
+export type WarChatReaction = 'flex' | 'fire' | 'trophy' | 'lets_go' | 'rest_day';
+
+export interface ConfettiConfig {
+  readonly particleCount: number;
+  readonly colors: readonly string[];
+  readonly duration: number;
+  readonly spread: number;
+}

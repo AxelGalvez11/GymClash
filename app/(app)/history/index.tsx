@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors } from '@/constants/theme';
 import { useMyWorkouts } from '@/hooks/use-workouts';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
 import type { ValidationStatus, WorkoutType } from '@/types';
 
 type Filter = 'all' | 'strength' | 'scout' | 'active_recovery';
@@ -85,6 +86,10 @@ export default function HistoryScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const { data: workouts, isLoading, refetch } = useMyWorkouts(50);
 
+  // Entrance animations
+  const fadeHeader = useFadeSlide(0);
+  const fadeList = useFadeSlide(100);
+
   const filtered = (workouts ?? []).filter((w: any) => {
     if (filter === 'all') return true;
     return w.type === filter;
@@ -93,7 +98,7 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView className="flex-1 bg-black" edges={['top']}>
       {/* Header */}
-      <View className="px-4 pt-4 pb-2">
+      <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Pressable onPress={() => router.back()}>
             <Text className="text-white/60 text-base">← Back</Text>
@@ -123,9 +128,10 @@ export default function HistoryScreen() {
             </Pressable>
           ))}
         </View>
-      </View>
+      </Animated.View>
 
       {/* List */}
+      <Animated.View style={fadeList.style} className="flex-1">
       {isLoading ? (
         <ActivityIndicator color={Colors.text.primary} className="mt-8" />
       ) : (
@@ -157,6 +163,7 @@ export default function HistoryScreen() {
           refreshing={isLoading}
         />
       )}
+      </Animated.View>
     </SafeAreaView>
   );
 }

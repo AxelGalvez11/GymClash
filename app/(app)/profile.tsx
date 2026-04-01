@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, ScrollView, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -11,6 +11,9 @@ import { useMyWorkouts } from '@/hooks/use-workouts';
 import { useMy1RMRecords } from '@/hooks/use-1rm';
 import { CharacterDisplay } from '@/components/ui/CharacterDisplay';
 import { useAccent } from '@/stores/accent-store';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
+import { usePlayerType } from '@/hooks/use-player-type';
+import { PlayerTypeBadge } from '@/components/PlayerTypeBadge';
 import type { Rank as RankType, ArenaTier } from '@/types';
 
 type AccountTier = 'unverified' | 'verified' | 'ranked_eligible';
@@ -57,6 +60,7 @@ export default function ProfileScreen() {
   const { data: workouts } = useMyWorkouts(100);
 
   const accent = useAccent();
+  const { playerType } = usePlayerType();
   const accountTier = computeAccountTier(profile, workouts?.length ?? 0);
   const tierConfig = TIER_CONFIG[accountTier];
 
@@ -66,6 +70,12 @@ export default function ProfileScreen() {
   const trophies = profile?.trophy_rating ?? 0;
   const arenaTier: ArenaTier = (profile?.arena_tier as ArenaTier) ?? getArenaTier(trophies);
   const arenaConfig = Arena[arenaTier] ?? Arena.rustyard;
+
+  // Entrance animations
+  const fadeHeader = useFadeSlide(0);
+  const fadeStats = useFadeSlide(100);
+  const fadeRecords = useFadeSlide(200);
+  const fadeLinks = useFadeSlide(300);
 
   if (isLoading) {
     return (
@@ -79,12 +89,13 @@ export default function ProfileScreen() {
     <SafeAreaView className="flex-1 bg-black" edges={['top']}>
       <ScrollView className="flex-1 px-5 pt-4" contentContainerClassName="pb-8">
         {/* Profile Header */}
-        <View className="items-center mb-6">
+        <Animated.View style={fadeHeader.style} className="items-center mb-6">
           <View className="mb-3">
             <CharacterDisplay
               level={profile?.level ?? 1}
               strengthCount={profile?.strength_workout_count ?? 0}
               scoutCount={profile?.scout_workout_count ?? 0}
+              playerType={playerType}
               size="lg"
             />
           </View>
@@ -94,6 +105,10 @@ export default function ProfileScreen() {
           <Text className="text-lg font-bold mt-1" style={{ color: rankConfig.color }}>
             {rankConfig.label} — Level {profile?.level ?? 1}
           </Text>
+          {/* Player type */}
+          <View className="mt-2">
+            <PlayerTypeBadge playerType={playerType} size="md" />
+          </View>
           {/* Arena badge */}
           <View className="flex-row items-center gap-2 mt-2">
             <Text className="text-lg">{arenaConfig.badge}</Text>
@@ -118,9 +133,10 @@ export default function ProfileScreen() {
               <Text className="text-text-muted text-xs"> — Complete biodata</Text>
             )}
           </Pressable>
-        </View>
+        </Animated.View>
 
         {/* XP Progress */}
+        <Animated.View style={fadeStats.style}>
         {nextRank && (
           <View className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-4">
             <View className="flex-row justify-between mb-2">
@@ -149,8 +165,10 @@ export default function ProfileScreen() {
             <Text className="text-white text-2xl font-bold">{profile?.longest_streak ?? 0}</Text>
           </View>
         </View>
+        </Animated.View>
 
         {/* 1RM Records */}
+        <Animated.View style={fadeRecords.style}>
         {records && records.length > 0 && (
           <View className="mb-4">
             <Text className="text-white text-lg font-bold mb-3">Personal Records</Text>
@@ -165,6 +183,7 @@ export default function ProfileScreen() {
             </View>
           </View>
         )}
+        </Animated.View>
 
         {/* Season */}
         {season && (
@@ -199,7 +218,7 @@ export default function ProfileScreen() {
         )}
 
         {/* Quick Links */}
-        <View className="gap-2 mb-6">
+        <Animated.View style={fadeLinks.style} className="gap-2 mb-6">
           <Pressable
             className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-row items-center"
             onPress={() => router.push('/(app)/history')}
@@ -228,7 +247,7 @@ export default function ProfileScreen() {
             <Text className="text-white font-bold ml-3 flex-1">Settings</Text>
             <FontAwesome name="chevron-right" size={14} color={Colors.text.muted} />
           </Pressable>
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,4 +1,4 @@
-import type { StrengthSet, RouteData } from '@/types';
+import type { StrengthSet, RouteData, SpecializationBonus } from '@/types';
 
 /**
  * Diminishing volume multiplier per set index within an exercise.
@@ -153,4 +153,21 @@ export function calculatePaceMultiplier(avgPaceMinPerKm: number): number {
 export function calculateScoutRawScore(routeData: RouteData): number {
   const paceMultiplier = calculatePaceMultiplier(routeData.avg_pace_min_per_km);
   return routeData.distance_km * paceMultiplier * 100;
+}
+
+/**
+ * Apply a specialization bonus to a raw score.
+ *
+ * CLIENT-SIDE PROVISIONAL ONLY — the server is authoritative for final scores.
+ * This is used to show the player a preview of their specialization bonus
+ * in the UI before the server confirms the final score.
+ */
+export function applySpecializationBonus(
+  rawScore: number,
+  bonus: SpecializationBonus
+): number {
+  if (bonus.applies) {
+    return Math.round(rawScore * bonus.multiplier * 100) / 100;
+  }
+  return rawScore;
 }

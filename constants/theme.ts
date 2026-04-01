@@ -2,6 +2,8 @@
 // NativeWind handles most styling via Tailwind classes in tailwind.config.js.
 // These constants are for programmatic use (charts, animations, status bar, etc.)
 
+import type { StreakTierConfig, WarChatReaction, ConfettiConfig } from '@/types';
+
 export const Colors = {
   /** Brand/accent — use useAccent() for the dynamic user-selected accent. */
   brand: {
@@ -138,4 +140,49 @@ export const GameConfig = {
 
   /** Active recovery minimum duration in seconds */
   ACTIVE_RECOVERY_MIN_DURATION: 600,
+} as const;
+
+// ─── Streak Tiers ───────────────────────────────────────
+
+export const StreakTiers: readonly StreakTierConfig[] = [
+  { tier: 'ember',     minDays: 1,   label: 'Ember',     color: Colors.warning,       emoji: '🔥', pulseSpeed: 0,    glowRadius: 0 },
+  { tier: 'torch',     minDays: 7,   label: 'Torch',     color: '#FF8C00',            emoji: '🔥', pulseSpeed: 2000, glowRadius: 2 },
+  { tier: 'bonfire',   minDays: 14,  label: 'Bonfire',   color: '#FF6347',            emoji: '🔥', pulseSpeed: 1500, glowRadius: 4 },
+  { tier: 'inferno',   minDays: 30,  label: 'Inferno',   color: Colors.danger,        emoji: '🔥', pulseSpeed: 1000, glowRadius: 6 },
+  { tier: 'supernova', minDays: 60,  label: 'Supernova', color: '#FF1493',            emoji: '💥', pulseSpeed: 800,  glowRadius: 8 },
+  { tier: 'eternal',   minDays: 100, label: 'Eternal',   color: '#00BFFF',            emoji: '💎', pulseSpeed: 600,  glowRadius: 10 },
+] as const;
+
+export function getStreakTier(days: number): StreakTierConfig {
+  for (let i = StreakTiers.length - 1; i >= 0; i--) {
+    if (days >= StreakTiers[i].minDays) return StreakTiers[i];
+  }
+  return StreakTiers[0];
+}
+
+// ─── Leaderboard Zone Colors ────────────────────────────
+
+export const LeaderboardZoneColors = {
+  promote: Colors.success,
+  safe: Colors.text.muted,
+  demote: Colors.danger,
+} as const;
+
+// ─── War Chat Reactions ─────────────────────────────────
+
+export const WAR_CHAT_REACTIONS: Record<WarChatReaction, { emoji: string; label: string }> = {
+  flex:     { emoji: '💪', label: 'Flex' },
+  fire:     { emoji: '🔥', label: 'Fire' },
+  trophy:   { emoji: '🏆', label: 'Trophy' },
+  lets_go:  { emoji: '⚡', label: "Let's Go" },
+  rest_day: { emoji: '😴', label: 'Rest Day' },
+} as const;
+
+// ─── Confetti Defaults ──────────────────────────────────
+
+export const DEFAULT_CONFETTI: ConfettiConfig = {
+  particleCount: 25,
+  colors: ['#FFD700', '#FF6B6B', '#3B82F6', '#10B981', '#8B5CF6'],
+  duration: 2000,
+  spread: 60,
 } as const;

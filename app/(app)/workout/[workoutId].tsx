@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -6,6 +6,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Colors } from '@/constants/theme';
 import { REASON_CODE_LABELS, REASON_CODE_SEVERITY } from '@/lib/validation';
 import { useWorkoutDetail } from '@/hooks/use-workouts';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
 import type { ReasonCode, ValidationStatus, StrengthSet, RouteData } from '@/types';
 
 const STATUS_CONFIG: Record<
@@ -87,6 +88,11 @@ export default function WorkoutDetailScreen() {
     );
   }
 
+  // Entrance animations
+  const fadeHeaderAnim = useFadeSlide(0);
+  const fadeScoreAnim = useFadeSlide(100);
+  const fadeSetsAnim = useFadeSlide(200);
+
   const { workout, validations } = data;
   const validationStatus = (workout.validation_status ?? 'accepted') as ValidationStatus;
   const confidenceScore = workout.confidence_score ?? 1.0;
@@ -114,6 +120,7 @@ export default function WorkoutDetailScreen() {
         </Pressable>
 
         {/* Header */}
+        <Animated.View style={fadeHeaderAnim.style}>
         <View className="flex-row items-center gap-3 mb-1">
           <FontAwesome name={typeConfig.name} size={20} color={typeConfig.color} />
           <Text className="text-white text-2xl font-bold">{typeLabel}</Text>
@@ -121,8 +128,10 @@ export default function WorkoutDetailScreen() {
         <Text className="text-text-secondary text-sm mb-6">
           {date.toLocaleDateString()} · {durationMin} min
         </Text>
+        </Animated.View>
 
         {/* Status Badge */}
+        <Animated.View style={fadeScoreAnim.style}>
         <View
           className="rounded-xl p-3 mb-6 flex-row items-center gap-2 border"
           style={{ borderColor: statusConfig.color + '40' }}
@@ -158,8 +167,10 @@ export default function WorkoutDetailScreen() {
             <Text className="text-white font-bold">{Math.round(confidenceScore * 100)}%</Text>
           </View>
         </View>
+        </Animated.View>
 
         {/* Type-specific breakdown */}
+        <Animated.View style={fadeSetsAnim.style}>
         {workout.type === 'strength' && workout.sets && workout.sets.length > 0 && (
           <>
             <SectionHeader title="Set Breakdown" />
@@ -235,6 +246,7 @@ export default function WorkoutDetailScreen() {
             <Text className="text-white text-lg font-bold">Review & Appeal</Text>
           </Pressable>
         )}
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );

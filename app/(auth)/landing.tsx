@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { View, Text, Pressable, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,6 +39,9 @@ function DotRow() {
 export default function LandingScreen() {
   const router = useRouter();
   const { enterGuestMode } = useAuthStore();
+
+  // Memoize random bar heights so they don't jitter on re-render
+  const barHeights = useMemo(() => Array.from({ length: 6 }, () => Math.random() * 8 + 3), []);
 
   // Fade in animation
   const fadeIn = useRef(new Animated.Value(0)).current;
@@ -194,11 +197,11 @@ export default function LandingScreen() {
                 SYSTEM.ACTIVE
               </Text>
               <View className="flex-row gap-0.5">
-                {Array.from({ length: 6 }).map((_, i) => (
+                {barHeights.map((h, i) => (
                   <View
                     key={i}
                     className="w-1 bg-white/20"
-                    style={{ height: Math.random() * 8 + 3 }}
+                    style={{ height: h }}
                   />
                 ))}
               </View>

@@ -123,7 +123,7 @@ export default function ReportScreen() {
         <TextInput
           className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base mb-6"
           placeholder="Describe what you observed..."
-          placeholderTextColor="#6A6A8A"
+          placeholderTextColor={Colors.text.muted}
           value={description}
           onChangeText={setDescription}
           multiline

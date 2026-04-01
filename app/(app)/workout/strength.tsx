@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-import { Colors } from '@/constants/theme';
+import { Colors, TrophyRewards } from '@/constants/theme';
+import { VictoryScreen } from '@/components/VictoryScreen';
 import { useAuthStore } from '@/stores/auth-store';
 import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
 import { useSubmitWorkout } from '@/hooks/use-workouts';
@@ -116,6 +117,10 @@ export default function StrengthWorkoutScreen() {
   const [weightKg, setWeightKg] = useState('');
   const [showExercises, setShowExercises] = useState(false);
   const [isBodyweight, setIsBodyweight] = useState(false);
+
+  // Victory screen state
+  const [showVictory, setShowVictory] = useState(false);
+  const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false });
 
   // Per-exercise score feedback
   const [lastAddedScore, setLastAddedScore] = useState(0);
@@ -247,10 +252,13 @@ export default function StrengthWorkoutScreen() {
         idempotency_key: idempotencyKey,
       });
 
-      reset();
-      Alert.alert('Workout Submitted', 'Your workout has been submitted for validation!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      setVictoryData({
+        score: provisionalScore,
+        trophies: TrophyRewards.ACCEPTED_WORKOUT,
+        streak: profile?.current_streak ?? 0,
+        isPB: false, // TODO: check against profile 1RM records
+      });
+      setShowVictory(true);
     } catch (err) {
       Alert.alert('Error', 'Failed to submit workout. Please try again.');
     }
@@ -282,6 +290,9 @@ export default function StrengthWorkoutScreen() {
           </Pressable>
           <View className="items-center">
             <Text className="text-white text-lg font-bold">Strength</Text>
+            <Text className="text-text-muted text-xs" style={{ fontFamily: 'SpaceMono' }}>
+              {`${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
+            </Text>
           </View>
           <Pressable
             onPress={handleFinishWorkout}
@@ -412,6 +423,20 @@ export default function StrengthWorkoutScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      <VictoryScreen
+        visible={showVictory}
+        workoutType="strength"
+        score={victoryData.score}
+        trophiesEarned={victoryData.trophies}
+        streakCount={victoryData.streak}
+        isPersonalBest={victoryData.isPB}
+        onDismiss={() => {
+          setShowVictory(false);
+          reset();
+          router.back();
+        }}
+      />
     </SafeAreaView>
   );
 }

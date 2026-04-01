@@ -5,10 +5,46 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Colors } from '@/constants/theme';
+import { Colors, WAR_CHAT_REACTIONS } from '@/constants/theme';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMyClan } from '@/hooks/use-clan';
+import type { WarChatReaction } from '@/types';
+
+// ─── Reaction Helpers ───────────────────────────────────
+
+const REACTION_PATTERN = /^\[REACTION:(\w+)\]$/;
+const REACTION_KEYS = Object.keys(WAR_CHAT_REACTIONS) as readonly WarChatReaction[];
+
+function parseReaction(content: string): { emoji: string; label: string } | null {
+  const match = content.trim().match(REACTION_PATTERN);
+  if (!match) return null;
+  const key = match[1] as WarChatReaction;
+  return WAR_CHAT_REACTIONS[key] ?? null;
+}
+
+// ─── Quick Reaction Bar ─────────────────────────────────
+
+function QuickReactionBar({ onSelect }: { readonly onSelect: (key: WarChatReaction) => void }) {
+  return (
+    <View className="flex-row justify-evenly px-4 py-2 border-t border-surface-border">
+      {REACTION_KEYS.map((key) => {
+        const reaction = WAR_CHAT_REACTIONS[key];
+        return (
+          <Pressable
+            key={key}
+            className="w-10 h-10 rounded-full bg-surface-raised items-center justify-center active:opacity-70"
+            onPress={() => onSelect(key)}
+          >
+            <Text style={{ fontSize: 20 }}>{reaction.emoji}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// ─── Screen ─────────────────────────────────────────────
 
 export default function WarChatScreen() {
   const { warId } = useLocalSearchParams<{ warId: string }>();
@@ -57,8 +93,8 @@ export default function WarChatScreen() {
     };
   }, [warId, queryClient]);
 
-  const handleSend = useCallback(async () => {
-    if (!message.trim() || !session?.user || !myClan || !warId) return;
+  const sendContent = useCallback(async (content: string) => {
+    if (!content.trim() || !session?.user || !myClan || !warId) return;
 
     setSending(true);
     try {
@@ -66,7 +102,7 @@ export default function WarChatScreen() {
         war_id: warId,
         user_id: session.user.id,
         clan_id: myClan.id,
-        content: message.trim(),
+        content: content.trim(),
       });
       if (error) {
         if (error.message.includes('rate limit')) {
@@ -81,7 +117,15 @@ export default function WarChatScreen() {
     } finally {
       setSending(false);
     }
-  }, [message, session, myClan, warId, refetch]);
+  }, [session, myClan, warId, refetch]);
+
+  const handleSend = useCallback(() => {
+    sendContent(message);
+  }, [message, sendContent]);
+
+  const handleReaction = useCallback((key: WarChatReaction) => {
+    sendContent(`[REACTION:${key}]`);
+  }, [sendContent]);
 
   const myClanId = myClan?.id;
 
@@ -109,6 +153,24 @@ export default function WarChatScreen() {
           renderItem={({ item }) => {
             const isMe = item.user_id === session?.user?.id;
             const isMyClan = item.clan_id === myClanId;
+            const reaction = parseReaction(item.content);
+
+            // Reaction messages render as large centered emoji
+            if (reaction) {
+              return (
+                <View className={`mb-2 ${isMe ? 'items-end' : 'items-start'}`}>
+                  <View className="items-center px-2 py-1">
+                    <Text style={{ fontSize: 36 }}>{reaction.emoji}</Text>
+                    <Text className={isMyClan ? 'text-white text-xs mt-0.5' : 'text-danger text-xs mt-0.5'}>
+                      {isMe ? 'You' : item.user_id.slice(0, 8)}
+                    </Text>
+                  </View>
+                  <Text className="text-text-muted text-xs mt-0.5">
+                    {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+              );
+            }
 
             return (
               <View className={`mb-2 ${isMe ? 'items-end' : 'items-start'}`}>
@@ -138,6 +200,9 @@ export default function WarChatScreen() {
             </View>
           }
         />
+
+        {/* Quick Reactions */}
+        <QuickReactionBar onSelect={handleReaction} />
 
         {/* Input */}
         <View className="px-4 py-2 border-t border-surface-border flex-row items-center gap-2">

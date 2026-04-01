@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   FlatList,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -27,6 +28,7 @@ import {
   useMyClanChallenges,
   useRespondToChallenge,
 } from '@/hooks/use-clan';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
 import type { Rank as RankType, ClanRole } from '@/types';
 
 type ClanView = 'my-clan' | 'search' | 'create';
@@ -76,17 +78,79 @@ function MemberRow({
 
 // ─── My Clan View ────────────────────────────────────────
 
+function getCountdownUrgency(ms: number): { color: string; pulse: boolean } {
+  const hours = ms / (1000 * 60 * 60);
+  if (hours < 3) return { color: Colors.danger, pulse: true };
+  if (hours < 12) return { color: Colors.danger, pulse: false };
+  if (hours < 24) return { color: Colors.warning, pulse: false };
+  return { color: Colors.text.muted, pulse: false };
+}
+
 function WarCountdown({ endedAt }: { readonly endedAt: string }) {
-  const end = new Date(endedAt).getTime();
-  const now = Date.now();
-  const remaining = Math.max(0, end - now);
+  const [remaining, setRemaining] = useState(() => {
+    return Math.max(0, new Date(endedAt).getTime() - Date.now());
+  });
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Update every 30s for sub-12h precision
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const tick = remaining < 12 * 60 * 60 * 1000 ? 30_000 : 60_000;
+    const interval = setInterval(() => {
+      const next = Math.max(0, new Date(endedAt).getTime() - Date.now());
+      setRemaining(next);
+      if (next <= 0) clearInterval(interval);
+    }, tick);
+    return () => clearInterval(interval);
+  }, [endedAt, remaining]);
+
+  const urgency = getCountdownUrgency(remaining);
+
+  // Pulsing animation for <3h
+  useEffect(() => {
+    if (urgency.pulse && remaining > 0) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.5,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+    pulseAnim.setValue(1);
+    return undefined;
+  }, [urgency.pulse, remaining, pulseAnim]);
+
   const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
   const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+  const hoursTotal = remaining / (1000 * 60 * 60);
+
+  const timeLabel =
+    remaining <= 0
+      ? 'War ended'
+      : hoursTotal < 12
+        ? `${hours}h ${minutes}m remaining`
+        : `${days}d ${hours}h remaining`;
 
   return (
-    <Text className="text-text-muted text-xs text-center mt-2">
-      {remaining > 0 ? `${days}d ${hours}h remaining` : 'War ended'}
-    </Text>
+    <Animated.View style={{ opacity: pulseAnim }} className="flex-row items-center justify-center mt-2 gap-1">
+      {urgency.pulse && (
+        <FontAwesome name="exclamation-circle" size={12} color={urgency.color} />
+      )}
+      <Text style={{ color: urgency.color }} className="text-xs text-center">
+        {timeLabel}
+      </Text>
+    </Animated.View>
   );
 }
 
@@ -106,6 +170,12 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   const { data: challenges } = useMyClanChallenges();
   const respondMutation = useRespondToChallenge();
   const leaveMutation = useLeaveClan();
+
+  // Entrance animations
+  const fadeHeader = useFadeSlide(0);
+  const fadeWar = useFadeSlide(100);
+  const fadeHistory = useFadeSlide(200);
+  const fadeRoster = useFadeSlide(300);
 
   const incomingChallenges = (challenges ?? []).filter(
     (c: any) => c.target_clan_id === myClanId && c.status === 'pending'
@@ -130,7 +200,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   return (
     <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
       {/* Clan Header */}
-      <View className="items-center py-6">
+      <Animated.View style={fadeHeader.style} className="items-center py-6">
         <Text className="text-4xl mb-2">⚔️</Text>
         <Text className="text-white text-2xl font-bold">{clan.name}</Text>
         <Text className="text-white font-bold text-lg">[{clan.tag}]</Text>
@@ -142,9 +212,10 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         <Text className="text-text-muted text-sm mt-2">
           {clan.member_count} / {clan.max_members} members · Your role: {ROLE_LABELS[clan.my_role as ClanRole]}
         </Text>
-      </View>
+      </Animated.View>
 
       {/* Incoming Challenges */}
+      <Animated.View style={fadeWar.style}>
       {incomingChallenges.length > 0 && (
         <View className="mb-4">
           <Text className="text-white text-lg font-bold mb-3">War Challenges</Text>
@@ -238,8 +309,10 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           )}
         </View>
       )}
+      </Animated.View>
 
       {/* War History */}
+      <Animated.View style={fadeHistory.style}>
       {warHistory && warHistory.length > 0 && (
         <View className="mb-6">
           <Text className="text-white text-lg font-bold mb-3">War History</Text>
@@ -288,7 +361,10 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </View>
       )}
 
+      </Animated.View>
+
       {/* Leaderboard Link */}
+      <Animated.View style={fadeRoster.style}>
       <Pressable
         className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-4 flex-row items-center active:opacity-80"
         onPress={() => router.push('/(app)/leaderboard' as any)}
@@ -328,6 +404,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           {leaveMutation.isPending ? 'Leaving...' : 'Leave Clan'}
         </Text>
       </Pressable>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -397,10 +474,30 @@ function SearchView({ onJoined }: { onJoined: () => void }) {
 
 // ─── Create Clan View ────────────────────────────────────
 
+function generateClanTag(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+
+  const words = trimmed.split(/\s+/).filter(Boolean);
+
+  if (words.length >= 2) {
+    // Multi-word: use initials (e.g., "Iron Wolves" → "IW", "The Dark Knights" → "TDK")
+    const initials = words.map(w => w[0]).join('').toUpperCase();
+    // Pad to 3 chars minimum if needed
+    if (initials.length < 3) {
+      return (initials + words[words.length - 1].slice(1, 4 - initials.length + 1)).toUpperCase().slice(0, 6);
+    }
+    return initials.slice(0, 6);
+  }
+
+  // Single word: take first 3-4 chars uppercase
+  return trimmed.slice(0, 4).toUpperCase();
+}
+
 function CreateView({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState('');
-  const [tag, setTag] = useState('');
   const [description, setDescription] = useState('');
+  const autoTag = generateClanTag(name);
   const createMutation = useCreateClan();
 
   function handleCreate() {
@@ -408,13 +505,13 @@ function CreateView({ onCreated }: { onCreated: () => void }) {
       Alert.alert('Error', 'Enter a clan name');
       return;
     }
-    if (tag.length < 3 || tag.length > 6 || !/^[A-Za-z0-9]+$/.test(tag)) {
-      Alert.alert('Error', 'Tag must be 3-6 alphanumeric characters');
+    if (!autoTag || autoTag.length < 2) {
+      Alert.alert('Error', 'Clan name is too short to generate a tag');
       return;
     }
 
     createMutation.mutate(
-      { name: name.trim(), tag: tag.toUpperCase(), description: description.trim() },
+      { name: name.trim(), tag: autoTag, description: description.trim() },
       {
         onSuccess: onCreated,
         onError: (err: any) => Alert.alert('Error', err.message ?? 'Failed to create clan'),
@@ -434,18 +531,12 @@ function CreateView({ onCreated }: { onCreated: () => void }) {
             value={name}
             onChangeText={setName}
           />
-        </View>
-        <View>
-          <Text className="text-white/50 text-xs uppercase mb-1">Tag (3-6 characters)</Text>
-          <TextInput
-            className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base uppercase"
-            placeholder="WOLVES"
-            placeholderTextColor={Colors.text.muted}
-            value={tag}
-            onChangeText={(t) => setTag(t.replace(/[^A-Za-z0-9]/g, '').slice(0, 6))}
-            maxLength={6}
-            autoCapitalize="characters"
-          />
+          {autoTag && (
+            <View className="bg-surface-raised border border-surface-border rounded-lg px-3 py-2 mt-2 mb-1">
+              <Text className="text-text-muted text-xs uppercase mb-0.5">Auto-generated Tag</Text>
+              <Text className="text-white font-bold text-lg">[{autoTag}]</Text>
+            </View>
+          )}
         </View>
         <View>
           <Text className="text-white/50 text-xs uppercase mb-1">Description (optional)</Text>

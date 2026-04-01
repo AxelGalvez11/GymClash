@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Colors } from '@/constants/theme';
-import type { CharacterBuild, CharacterState, CharacterTier } from '@/types';
+import type { CharacterBuild, CharacterState, CharacterTier, PlayerType } from '@/types';
 
 interface CharacterDisplayProps {
   readonly level: number;
@@ -9,6 +9,7 @@ interface CharacterDisplayProps {
   readonly scoutCount: number;
   readonly isWorkingOut?: boolean;
   readonly size?: 'sm' | 'md' | 'lg';
+  readonly playerType?: PlayerType;
 }
 
 function getCharacterTier(level: number): CharacterTier {
@@ -73,15 +74,29 @@ const SIZE_CONFIG = {
  * Phase 5A.1: Replace emoji with actual character sprite PNG.
  * The component API stays the same — only the rendering changes.
  */
+function getBuildFromPlayerType(playerType: PlayerType): CharacterBuild {
+  switch (playerType.category) {
+    case 'cardio_specialist':
+      return 'cardio';
+    case 'strength_specialist':
+      return 'strength';
+    case 'balanced':
+      return 'balanced';
+  }
+}
+
 export function CharacterDisplay({
   level,
   strengthCount,
   scoutCount,
   isWorkingOut = false,
   size = 'md',
+  playerType,
 }: CharacterDisplayProps) {
   const tier = getCharacterTier(level);
-  const build = getCharacterBuild(strengthCount, scoutCount);
+  const build = playerType && playerType.confidence > 0
+    ? getBuildFromPlayerType(playerType)
+    : getCharacterBuild(strengthCount, scoutCount);
   const state = getCharacterState(isWorkingOut);
   const config = SIZE_CONFIG[size];
 

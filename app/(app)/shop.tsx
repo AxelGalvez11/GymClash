@@ -1,11 +1,13 @@
-import { View, Text, FlatList, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Pressable, Alert, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Colors } from '@/constants/theme';
+import { useAccent } from '@/stores/accent-store';
 import { supabase } from '@/services/supabase';
 import { useProfile } from '@/hooks/use-profile';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
 import type { CosmeticRarity } from '@/types';
 
 const RARITY_COLORS: Record<CosmeticRarity, string> = {
@@ -60,10 +62,15 @@ function usePurchase() {
 }
 
 export default function ShopScreen() {
+  const accent = useAccent();
   const { data: profile } = useProfile();
   const { data: catalog, isLoading } = useCatalog();
   const { data: inventory } = useMyInventory();
   const purchaseMutation = usePurchase();
+
+  // Entrance animations
+  const fadeHeader = useFadeSlide(0);
+  const fadeGrid = useFadeSlide(100);
 
   const ownedIds = new Set((inventory ?? []).map((i: any) => i.cosmetic_id));
 
@@ -92,7 +99,7 @@ export default function ShopScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-black" edges={['top']}>
-      <View className="px-4 pt-4 pb-2">
+      <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-white text-lg font-bold">Shop</Text>
           <View className="flex-row items-center gap-1">
@@ -100,10 +107,11 @@ export default function ShopScreen() {
             <Text className="text-white font-bold">{profile?.gym_coins ?? 0}</Text>
           </View>
         </View>
-      </View>
+      </Animated.View>
 
+      <Animated.View style={fadeGrid.style} className="flex-1">
       {isLoading ? (
-        <ActivityIndicator color={Colors.brand.DEFAULT} className="mt-8" />
+        <ActivityIndicator color={accent.DEFAULT} className="mt-8" />
       ) : (
         <FlatList
           data={catalog ?? []}
@@ -157,6 +165,7 @@ export default function ShopScreen() {
           }
         />
       )}
+      </Animated.View>
     </SafeAreaView>
   );
 }

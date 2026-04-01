@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -9,27 +9,18 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useGuestWorkoutStore, useWorkoutStore } from '@/stores/workout-store';
 import { useAccent } from '@/stores/accent-store';
 import { CharacterDisplay } from '@/components/ui/CharacterDisplay';
+import { Card } from '@/components/ui/Card';
+import { StreakFlame } from '@/components/StreakFlame';
 import { useProfile } from '@/hooks/use-profile';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
 import { useMyWorkouts } from '@/hooks/use-workouts';
 import { useActiveWar, useMyClan } from '@/hooks/use-clan';
 import { useDailyGoal } from '@/hooks/use-daily-goal';
+import { usePlayerType } from '@/hooks/use-player-type';
+import { useStreakMilestone } from '@/hooks/use-streak-milestone';
+import { PlayerTypeBadge } from '@/components/PlayerTypeBadge';
+import { ConfettiBurst } from '@/components/ConfettiBurst';
 import type { Rank as RankType, ArenaTier } from '@/types';
-
-// ─── Entrance Animation Hook ────────────────────────────
-
-function useFadeSlide(delay = 0) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(12)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 500, delay, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
-    ]).start();
-  }, [opacity, translateY, delay]);
-
-  return { opacity, transform: [{ translateY }] };
-}
 
 // ─── Sub-Components ─────────────────────────────────────
 
@@ -103,12 +94,24 @@ export default function HomeScreen() {
   const { data: myClan } = useMyClan();
   const { data: dailyGoal } = useDailyGoal();
   const { isActive: isWorkingOut } = useWorkoutStore();
+  const { playerType } = usePlayerType();
+  const { isMilestone, tier } = useStreakMilestone(profile?.current_streak ?? 0);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const prevMilestoneRef = useRef(false);
 
   const trophies = profile?.trophy_rating ?? 0;
   const arenaTier: ArenaTier = (profile?.arena_tier as ArenaTier) ?? getArenaTier(trophies);
   const arenaConfig = Arena[arenaTier] ?? Arena.rustyard;
   const rankKey = (profile?.rank ?? 'rookie') as RankType;
   const rankConfig = Rank[rankKey] ?? Rank.rookie;
+
+  // Streak milestone celebration
+  useEffect(() => {
+    if (isMilestone && !prevMilestoneRef.current) {
+      setShowMilestone(true);
+    }
+    prevMilestoneRef.current = isMilestone;
+  }, [isMilestone]);
 
   // Section animations
   const heroAnim = useFadeSlide(0);
@@ -163,18 +166,21 @@ export default function HomeScreen() {
         )}
 
         {/* Hero: character + arena + trophies */}
-        <Animated.View style={heroAnim} className="items-center px-5 pb-4">
+        <Animated.View style={heroAnim.style} className="items-center px-5 pb-4">
           <CharacterDisplay
             level={profile?.level ?? 1}
             strengthCount={profile?.strength_workout_count ?? 0}
             scoutCount={profile?.scout_workout_count ?? 0}
             isWorkingOut={isWorkingOut}
+            playerType={playerType}
             size="lg"
           />
           <Text className="text-white text-lg font-bold mt-3">
             {profile?.display_name || 'Warrior'}
           </Text>
           <View className="flex-row items-center gap-2 mt-1">
+            <PlayerTypeBadge playerType={playerType} size="sm" />
+            <Text className="text-text-muted text-xs">·</Text>
             <Text style={{ color: arenaConfig.accent, fontFamily: 'SpaceMono', fontSize: 11 }}>
               {arenaConfig.badge} {arenaConfig.label}
             </Text>
@@ -205,10 +211,12 @@ export default function HomeScreen() {
 
         <View className="px-5">
           {/* Stats row */}
-          <Animated.View style={statsAnim} className="flex-row gap-2 mb-4">
+          <Animated.View style={statsAnim.style} className="flex-row gap-2 mb-4">
             <StatCard label="Rank" value={rankConfig.label} icon="shield" color={rankConfig.color} />
             <StatCard label="Level" value={String(profile?.level ?? 1)} icon="star" />
-            <StatCard label="Streak" value={`${profile?.current_streak ?? 0}d`} icon="fire" color={Colors.warning} />
+            <View className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-1 items-center justify-center">
+              <StreakFlame count={profile?.current_streak ?? 0} size="md" />
+            </View>
           </Animated.View>
 
           {/* Flagged workout alert */}
@@ -230,6 +238,61 @@ export default function HomeScreen() {
               </Pressable>
             );
           })()}
+
+          {/* Clan info card — shown when user is in a clan */}
+          {myClan && (
+            <Pressable
+              className="mb-4 active:opacity-70"
+              onPress={() => router.push('/(app)/clan')}
+            >
+              <Card
+                padding="lg"
+                className="overflow-hidden"
+                style={{ borderLeftWidth: 3, borderLeftColor: accent.DEFAULT }}
+              >
+                <View className="flex-row items-center gap-3">
+                  <View
+                    className="w-10 h-10 rounded-full items-center justify-center"
+                    style={{ backgroundColor: accent.DEFAULT + '15' }}
+                  >
+                    <FontAwesome name="shield" size={16} color={accent.DEFAULT} />
+                  </View>
+                  <View className="flex-1">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-white font-bold text-sm">{myClan.name}</Text>
+                      <Text className="text-text-muted text-xs">[{myClan.tag}]</Text>
+                    </View>
+                    <Text className="text-text-muted text-xs">
+                      {myClan.member_count} member{myClan.member_count !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <FontAwesome name="chevron-right" size={12} color={Colors.text.muted} />
+                </View>
+
+                {/* Active war score line */}
+                {activeWar && (() => {
+                  const isClansA = myClan.id === activeWar.clan_a_id;
+                  const myScore = isClansA ? activeWar.clan_a_score : activeWar.clan_b_score;
+                  const opponentScore = isClansA ? activeWar.clan_b_score : activeWar.clan_a_score;
+                  return (
+                    <View
+                      className="flex-row items-center justify-between mt-3 pt-3"
+                      style={{ borderTopWidth: 1, borderTopColor: Colors.surface.border }}
+                    >
+                      <Text className="text-text-muted text-xs uppercase" style={{ fontFamily: 'SpaceMono', fontSize: 9, letterSpacing: 1 }}>
+                        War · Wk {activeWar.week_number}
+                      </Text>
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-white text-xs font-bold">{myScore?.total ?? 0}</Text>
+                        <Text className="text-text-muted text-xs">vs</Text>
+                        <Text className="text-white text-xs font-bold">{opponentScore?.total ?? 0}</Text>
+                      </View>
+                    </View>
+                  );
+                })()}
+              </Card>
+            </Pressable>
+          )}
 
           {/* Daily goal */}
           {dailyGoal && (
@@ -279,7 +342,7 @@ export default function HomeScreen() {
           )}
 
           {/* Quick actions */}
-          <Animated.View style={actionsAnim}>
+          <Animated.View style={actionsAnim.style}>
             <Text className="text-white text-sm font-bold mb-3 uppercase" style={{ fontFamily: 'SpaceMono', letterSpacing: 2, fontSize: 10 }}>
               Train
             </Text>
@@ -341,7 +404,7 @@ export default function HomeScreen() {
           })()}
 
           {/* Recent workouts */}
-          <Animated.View style={recentAnim}>
+          <Animated.View style={recentAnim.style}>
             {(!workouts || workouts.length === 0) && (
               <View className="bg-surface-raised border border-surface-border rounded-xl p-6 items-center">
                 <Text className="text-2xl mb-2">💪</Text>
@@ -387,6 +450,27 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
       </ScrollView>
+
+      {/* Streak milestone celebration */}
+      <ConfettiBurst
+        visible={showMilestone}
+        onComplete={() => setShowMilestone(false)}
+      />
+      {showMilestone && (
+        <Pressable
+          className="absolute inset-0 items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1000 }}
+          onPress={() => setShowMilestone(false)}
+        >
+          <View className="bg-surface-raised rounded-2xl p-8 items-center mx-8 border border-surface-border">
+            <Text className="text-4xl mb-3">{tier.emoji}</Text>
+            <Text className="text-white text-xl font-bold mb-1">{tier.label} Streak!</Text>
+            <Text className="text-text-muted text-sm text-center">
+              {profile?.current_streak ?? 0} day streak — keep it up!
+            </Text>
+          </View>
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }

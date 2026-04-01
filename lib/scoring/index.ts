@@ -6,6 +6,7 @@ export {
   getSetMultiplier,
   calculateBrzycki1RM,
   calculateWilksCoefficient,
+  applySpecializationBonus,
 } from './raw-score';
 
 export {

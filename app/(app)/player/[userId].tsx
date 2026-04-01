@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { Colors, Rank, Arena, getArenaTier } from '@/constants/theme';
 import { fetchPublicProfile } from '@/services/api';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
 import type { Rank as RankType, ArenaTier } from '@/types';
 
 export default function PublicProfileScreen() {
@@ -26,6 +27,10 @@ export default function PublicProfileScreen() {
     );
   }
 
+  // Entrance animations
+  const fadeCharacter = useFadeSlide(0);
+  const fadeStats = useFadeSlide(100);
+
   const rankKey = (profile.rank ?? 'rookie') as RankType;
   const rankConfig = Rank[rankKey] ?? Rank.rookie;
   const trophies = profile.trophy_rating ?? 0;
@@ -40,7 +45,7 @@ export default function PublicProfileScreen() {
         </Pressable>
 
         {/* Header */}
-        <View className="items-center mb-6">
+        <Animated.View style={fadeCharacter.style} className="items-center mb-6">
           <View className="w-20 h-20 rounded-full bg-surface-overlay items-center justify-center mb-3">
             <FontAwesome name="user" size={32} color={Colors.text.secondary} />
           </View>
@@ -57,9 +62,10 @@ export default function PublicProfileScreen() {
             </Text>
             <Text className="text-text-secondary">· {trophies} 🏆</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Stats */}
+        <Animated.View style={fadeStats.style}>
         <View className="flex-row gap-3 mb-4">
           <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
             <Text className="text-text-secondary text-xs uppercase mb-1">Level</Text>
@@ -82,6 +88,7 @@ export default function PublicProfileScreen() {
         >
           <Text className="text-text-secondary text-sm">Report User</Text>
         </Pressable>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );

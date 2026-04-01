@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -9,6 +9,7 @@ import { Colors } from '@/constants/theme';
 import { REASON_CODE_LABELS, REASON_CODE_SEVERITY } from '@/lib/validation';
 import { useWorkoutDetail } from '@/hooks/use-workouts';
 import { createAppeal } from '@/services/api';
+import { useFadeSlide } from '@/hooks/use-fade-slide';
 import type { ReasonCode, ValidationStatus } from '@/types';
 
 const STATUS_CONFIG: Record<
@@ -50,6 +51,10 @@ export default function WorkoutReviewScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const router = useRouter();
   const [appealReason, setAppealReason] = useState('');
+
+  // Entrance animations
+  const fadeHeaderAnim = useFadeSlide(0);
+  const fadeContentAnim = useFadeSlide(100);
 
   const { data, isLoading } = useWorkoutDetail(workoutId);
   const appealMutation = useMutation({
@@ -104,6 +109,7 @@ export default function WorkoutReviewScreen() {
         </Pressable>
 
         {/* Header */}
+        <Animated.View style={fadeHeaderAnim.style}>
         <Text className="text-white text-2xl font-bold mb-1">
           Workout Review
         </Text>
@@ -111,8 +117,10 @@ export default function WorkoutReviewScreen() {
           {workout.type === 'strength' ? 'Strength' : 'Run'} —{' '}
           {new Date(workout.created_at).toLocaleDateString()} — ID: {workoutId}
         </Text>
+        </Animated.View>
 
         {/* Status Badge */}
+        <Animated.View style={fadeContentAnim.style}>
         <View
           className="rounded-xl p-4 mb-6 border"
           style={{ borderColor: statusConfig.color + '40' }}
@@ -201,6 +209,7 @@ export default function WorkoutReviewScreen() {
             </Pressable>
           </View>
         )}
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
