@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, type ViewStyle } from 'react-native';
 
 interface SkeletonProps {
-  readonly width: number | string;
+  readonly width: number | `${number}%` | 'auto';
   readonly height: number;
   readonly borderRadius?: number;
   readonly style?: ViewStyle;
@@ -52,7 +52,7 @@ export function SkeletonText({
   width = '60%',
   style,
 }: {
-  readonly width?: number | string;
+  readonly width?: number | `${number}%` | 'auto';
   readonly style?: ViewStyle;
 }) {
   return <SkeletonBase width={width} height={14} borderRadius={4} style={style} />;

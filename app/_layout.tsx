@@ -79,16 +79,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    Epilogue_700Bold,
-    Epilogue_800ExtraBold,
-    Epilogue_900Black,
-    BeVietnamPro_400Regular,
-    BeVietnamPro_500Medium,
-    BeVietnamPro_600SemiBold,
-    BeVietnamPro_700Bold,
-    Lexend_400Regular,
-    Lexend_600SemiBold,
-    Lexend_700Bold,
+    // Alias Google Font variables to the names components use
+    'Epilogue-Bold': Epilogue_700Bold,
+    'Epilogue-ExtraBold': Epilogue_800ExtraBold,
+    'Epilogue-Black': Epilogue_900Black,
+    'BeVietnamPro-Regular': BeVietnamPro_400Regular,
+    'BeVietnamPro-Medium': BeVietnamPro_500Medium,
+    'BeVietnamPro-SemiBold': BeVietnamPro_600SemiBold,
+    'BeVietnamPro-Bold': BeVietnamPro_700Bold,
+    'Lexend-Regular': Lexend_400Regular,
+    'Lexend-SemiBold': Lexend_600SemiBold,
+    'Lexend-Bold': Lexend_700Bold,
     ...FontAwesome.font,
   });
 
