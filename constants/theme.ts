@@ -3,10 +3,11 @@
 // These constants are for programmatic use (charts, animations, status bar, etc.)
 
 export const Colors = {
+  /** Brand/accent — use useAccent() for the dynamic user-selected accent. */
   brand: {
-    DEFAULT: '#6C5CE7',
-    light: '#A29BFE',
-    dark: '#4A3DB5',
+    DEFAULT: '#8B5CF6',
+    light: '#A78BFA',
+    dark: '#6D28D9',
   },
   rank: {
     bronze: '#CD7F32',
@@ -16,30 +17,31 @@ export const Colors = {
     diamond: '#B9F2FF',
     champion: '#FF6B6B',
   },
+  /** Black-first surface system — no purple tint. */
   surface: {
-    DEFAULT: '#1A1A2E',
-    raised: '#222240',
-    overlay: '#2A2A4A',
-    border: '#3A3A5C',
+    DEFAULT: '#0A0A0A',
+    raised: '#141414',
+    overlay: '#1C1C1C',
+    border: '#2A2A2A',
   },
   text: {
     primary: '#FFFFFF',
-    secondary: '#A0A0C0',
-    muted: '#6A6A8A',
+    secondary: '#A0A0A0',
+    muted: '#666666',
   },
-  success: '#00D68F',
-  warning: '#FFAA00',
-  danger: '#FF3D71',
-  info: '#0095FF',
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  info: '#3B82F6',
 } as const;
 
 export const Rank = {
-  bronze: { label: 'Bronze', color: Colors.rank.bronze, minXp: 0 },
-  silver: { label: 'Silver', color: Colors.rank.silver, minXp: 1000 },
-  gold: { label: 'Gold', color: Colors.rank.gold, minXp: 3000 },
-  platinum: { label: 'Platinum', color: Colors.rank.platinum, minXp: 7000 },
-  diamond: { label: 'Diamond', color: Colors.rank.diamond, minXp: 15000 },
-  champion: { label: 'Champion', color: Colors.rank.champion, minXp: 30000 },
+  rookie: { label: 'Rookie', color: Colors.rank.bronze, minXp: 0 },
+  iron: { label: 'Iron', color: Colors.rank.silver, minXp: 1000 },
+  steel: { label: 'Steel', color: Colors.rank.gold, minXp: 3000 },
+  titan: { label: 'Titan', color: Colors.rank.platinum, minXp: 7000 },
+  apex: { label: 'Apex', color: Colors.rank.diamond, minXp: 15000 },
+  demon_slayer: { label: 'Demon Slayer', color: Colors.rank.champion, minXp: 30000 },
 } as const;
 
 // ─── Arena System ────────────────────────────────────────

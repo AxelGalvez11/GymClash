@@ -9,11 +9,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Core brand
+        // Accent (static fallback — dynamic accent applied via style prop)
         brand: {
-          DEFAULT: '#6C5CE7',
-          light: '#A29BFE',
-          dark: '#4A3DB5',
+          DEFAULT: '#8B5CF6',
+          light: '#A78BFA',
+          dark: '#6D28D9',
         },
         // Rank colors
         rank: {
@@ -24,18 +24,24 @@ module.exports = {
           diamond: '#B9F2FF',
           champion: '#FF6B6B',
         },
-        // Surface (dark-first)
+        // Black-first surfaces
         surface: {
-          DEFAULT: '#1A1A2E',
-          raised: '#222240',
-          overlay: '#2A2A4A',
-          border: '#3A3A5C',
+          DEFAULT: '#0A0A0A',
+          raised: '#141414',
+          overlay: '#1C1C1C',
+          border: '#2A2A2A',
+        },
+        // Text
+        text: {
+          primary: '#FFFFFF',
+          secondary: '#A0A0A0',
+          muted: '#666666',
         },
         // Semantic
-        success: '#00D68F',
-        warning: '#FFAA00',
-        danger: '#FF3D71',
-        info: '#0095FF',
+        success: '#10B981',
+        warning: '#F59E0B',
+        danger: '#EF4444',
+        info: '#3B82F6',
       },
       fontFamily: {
         sans: ['SpaceMono'],

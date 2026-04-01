@@ -79,10 +79,10 @@ export default function ReportScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-black">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         <Pressable onPress={() => router.back()} className="py-4">
-          <Text className="text-brand text-base">← Back</Text>
+          <Text className="text-white/60 text-base">← Back</Text>
         </Pressable>
 
         <Text className="text-white text-2xl font-bold mb-2">Report User</Text>
@@ -99,14 +99,14 @@ export default function ReportScreen() {
               key={cat.value}
               className={`border rounded-xl p-4 ${
                 category === cat.value
-                  ? 'border-brand bg-brand/10'
+                  ? 'border-white bg-white/10'
                   : 'border-surface-border bg-surface-raised'
               }`}
               onPress={() => setCategory(cat.value)}
             >
               <Text
                 className={`font-bold ${
-                  category === cat.value ? 'text-brand' : 'text-white'
+                  category === cat.value ? 'text-white' : 'text-white/50'
                 }`}
               >
                 {cat.label}
@@ -134,7 +134,7 @@ export default function ReportScreen() {
 
         {/* Submit */}
         <Pressable
-          className="bg-brand rounded-xl py-4 items-center active:bg-brand-dark"
+          className="py-3.5 items-center active:opacity-70" style={{ borderWidth: 1, borderColor: '#ffffff' }}
           onPress={handleSubmit}
           disabled={reportMutation.isPending}
         >

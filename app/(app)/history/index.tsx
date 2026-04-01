@@ -8,7 +8,7 @@ import { Colors } from '@/constants/theme';
 import { useMyWorkouts } from '@/hooks/use-workouts';
 import type { ValidationStatus, WorkoutType } from '@/types';
 
-type Filter = 'all' | 'strength' | 'scout';
+type Filter = 'all' | 'strength' | 'scout' | 'active_recovery';
 
 const STATUS_COLORS: Record<string, string> = {
   accepted: Colors.success,
@@ -35,11 +35,13 @@ function WorkoutCard({ item, onPress }: { item: any; onPress: () => void }) {
       <View className="flex-row items-center justify-between mb-2">
         <View className="flex-row items-center gap-2">
           <FontAwesome
-            name={item.type === 'strength' ? 'heartbeat' : 'road'}
+            name={item.type === 'strength' ? 'heartbeat' : item.type === 'scout' ? 'road' : 'leaf'}
             size={16}
-            color={Colors.brand.DEFAULT}
+            color={item.type === 'strength' ? Colors.danger : item.type === 'scout' ? Colors.info : Colors.success}
           />
-          <Text className="text-white font-bold capitalize">{item.type}</Text>
+          <Text className="text-white font-bold capitalize">
+            {item.type === 'active_recovery' ? 'Recovery' : item.type}
+          </Text>
         </View>
         <View className="flex-row items-center gap-2">
           <View className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
@@ -59,7 +61,7 @@ function WorkoutCard({ item, onPress }: { item: any; onPress: () => void }) {
               {Math.round(item.final_score)}
             </Text>
           ) : item.raw_score != null ? (
-            <Text className="text-text-secondary text-lg">
+            <Text className="text-white/50 text-lg">
               ~{Math.round(item.raw_score)}
             </Text>
           ) : (
@@ -89,12 +91,12 @@ export default function HistoryScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-black" edges={['top']}>
       {/* Header */}
       <View className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Pressable onPress={() => router.back()}>
-            <Text className="text-brand text-base">← Back</Text>
+            <Text className="text-white/60 text-base">← Back</Text>
           </Pressable>
           <Text className="text-white text-lg font-bold">Workout History</Text>
           <View className="w-12" />
@@ -102,16 +104,21 @@ export default function HistoryScreen() {
 
         {/* Filter tabs */}
         <View className="flex-row gap-2">
-          {(['all', 'strength', 'scout'] as Filter[]).map((f) => (
+          {([
+            { key: 'all' as Filter, label: 'All' },
+            { key: 'strength' as Filter, label: 'Strength' },
+            { key: 'scout' as Filter, label: 'Running' },
+            { key: 'active_recovery' as Filter, label: 'Recovery' },
+          ]).map(({ key, label }) => (
             <Pressable
-              key={f}
+              key={key}
               className={`px-4 py-2 rounded-full ${
-                filter === f ? 'bg-brand' : 'bg-surface-raised border border-surface-border'
+                filter === key ? 'bg-white' : 'bg-surface-raised border border-surface-border'
               }`}
-              onPress={() => setFilter(f)}
+              onPress={() => setFilter(key)}
             >
-              <Text className={filter === f ? 'text-white font-bold' : 'text-text-secondary'}>
-                {f === 'all' ? 'All' : f === 'strength' ? 'Strength' : 'Running'}
+              <Text className={filter === key ? 'text-black font-bold' : 'text-white/50'}>
+                {label}
               </Text>
             </Pressable>
           ))}
@@ -120,7 +127,7 @@ export default function HistoryScreen() {
 
       {/* List */}
       {isLoading ? (
-        <ActivityIndicator color={Colors.brand.DEFAULT} className="mt-8" />
+        <ActivityIndicator color={Colors.text.primary} className="mt-8" />
       ) : (
         <FlatList
           data={filtered}
@@ -134,6 +141,8 @@ export default function HistoryScreen() {
                 const isFlagged = ['held_for_review', 'excluded_from_clan_score', 'rejected'].includes(status);
                 if (isFlagged) {
                   router.push(`/(app)/review/${item.id}`);
+                } else {
+                  router.push(`/(app)/workout/${item.id}`);
                 }
               }}
             />

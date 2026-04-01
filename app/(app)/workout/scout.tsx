@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -26,7 +26,6 @@ export default function ScoutWorkoutScreen() {
   const submitWorkout = useSubmitWorkout();
 
   const [distanceInput, setDistanceInput] = useState('');
-  const [isRunning, setIsRunning] = useState(true);
 
   // Start workout on mount if not active
   useEffect(() => {
@@ -35,24 +34,13 @@ export default function ScoutWorkoutScreen() {
     }
   }, [isActive, startWorkout]);
 
-  // Timer (only when running)
+  // Track elapsed time silently for duration_seconds on submission
   useEffect(() => {
-    if (!isRunning) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [elapsedSeconds, updateElapsed, isRunning]);
-
-  const formatTime = useCallback((seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
+  }, [elapsedSeconds, updateElapsed]);
 
   // Compute pace from elapsed time and distance
   const computePace = useCallback(() => {
@@ -132,7 +120,7 @@ export default function ScoutWorkoutScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-black">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center justify-between py-4">
@@ -152,25 +140,10 @@ export default function ScoutWorkoutScreen() {
           </Pressable>
         </View>
 
-        {/* Timer */}
-        <View className="items-center mb-6">
-          <Text className="text-brand text-6xl font-bold">
-            {formatTime(elapsedSeconds)}
-          </Text>
-          <Pressable
-            className="mt-3 px-6 py-2 rounded-full border border-surface-border active:bg-surface-raised"
-            onPress={() => setIsRunning((v) => !v)}
-          >
-            <Text className="text-white font-bold">
-              {isRunning ? 'Pause' : 'Resume'}
-            </Text>
-          </Pressable>
-        </View>
-
         {/* Stats Grid */}
         <View className="flex-row gap-3 mb-6">
           <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-text-secondary text-xs uppercase mb-1">
+            <Text className="text-white/50 text-xs uppercase mb-1">
               Distance
             </Text>
             <Text className="text-white text-2xl font-bold">
@@ -179,7 +152,7 @@ export default function ScoutWorkoutScreen() {
             <Text className="text-text-muted text-xs">km</Text>
           </View>
           <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-text-secondary text-xs uppercase mb-1">
+            <Text className="text-white/50 text-xs uppercase mb-1">
               Pace
             </Text>
             <Text className="text-white text-2xl font-bold">
@@ -188,7 +161,7 @@ export default function ScoutWorkoutScreen() {
             <Text className="text-text-muted text-xs">min/km</Text>
           </View>
           <View className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-1 items-center">
-            <Text className="text-text-secondary text-xs uppercase mb-1">
+            <Text className="text-white/50 text-xs uppercase mb-1">
               Score
             </Text>
             <Text className="text-white text-2xl font-bold">
@@ -203,7 +176,7 @@ export default function ScoutWorkoutScreen() {
           <Text className="text-white text-lg font-bold mb-2">
             Enter Distance
           </Text>
-          <Text className="text-text-secondary text-sm mb-3">
+          <Text className="text-white/50 text-sm mb-3">
             Enter the distance you ran. GPS tracking coming in a future update.
           </Text>
           <NumberInput

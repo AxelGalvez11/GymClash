@@ -1,82 +1,37 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors, Rank, Arena, getArenaTier } from '@/constants/theme';
+import { useAuthStore } from '@/stores/auth-store';
+import { useGuestWorkoutStore, useWorkoutStore } from '@/stores/workout-store';
+import { useAccent } from '@/stores/accent-store';
+import { CharacterDisplay } from '@/components/ui/CharacterDisplay';
 import { useProfile } from '@/hooks/use-profile';
 import { useMyWorkouts } from '@/hooks/use-workouts';
-import { useActiveWar } from '@/hooks/use-clan';
+import { useActiveWar, useMyClan } from '@/hooks/use-clan';
 import { useDailyGoal } from '@/hooks/use-daily-goal';
 import type { Rank as RankType, ArenaTier } from '@/types';
 
-function ArenaHeader({ tier, trophies }: { tier: ArenaTier; trophies: number }) {
-  const arenaConfig = Arena[tier];
-  const nextArena = Object.values(Arena).find((a) => a.minTrophies > trophies);
+// ─── Entrance Animation Hook ────────────────────────────
 
-  return (
-    <View className="items-center py-4">
-      <Text className="text-4xl">{arenaConfig.badge}</Text>
-      <Text className="text-2xl font-bold mt-1" style={{ color: arenaConfig.accent }}>
-        {arenaConfig.label}
-      </Text>
-      <View className="flex-row items-center gap-2 mt-1">
-        <Text className="text-white text-lg font-bold">{trophies}</Text>
-        <Text className="text-text-secondary text-sm">trophies</Text>
-      </View>
-      {nextArena && (
-        <View className="w-full max-w-xs mt-2">
-          <View className="h-2 bg-surface-overlay rounded-full overflow-hidden">
-            <View
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.min(100, ((trophies - arenaConfig.minTrophies) / (nextArena.minTrophies - arenaConfig.minTrophies)) * 100)}%`,
-                backgroundColor: arenaConfig.accent,
-              }}
-            />
-          </View>
-          <Text className="text-text-muted text-xs text-center mt-1">
-            {nextArena.minTrophies - trophies} to {nextArena.label}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
+function useFadeSlide(delay = 0) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 500, delay, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
+    ]).start();
+  }, [opacity, translateY, delay]);
+
+  return { opacity, transform: [{ translateY }] };
 }
 
-function DailyGoalCard({ goal }: { goal: any }) {
-  if (!goal) return null;
-
-  const isComplete = goal.completed;
-  const goalLabel =
-    goal.goal_type === 'strength_intensity'
-      ? `Hit ${Math.round((goal.goal_metadata?.threshold_pct ?? 0.8) * 100)}% of your ${goal.goal_metadata?.exercise ?? ''} 1RM`
-      : 'Complete any workout today';
-
-  return (
-    <View
-      className="border rounded-xl p-4 mb-4"
-      style={{
-        borderColor: isComplete ? Colors.success + '60' : Colors.brand.DEFAULT + '40',
-        backgroundColor: isComplete ? Colors.success + '10' : undefined,
-      }}
-    >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1">
-          <Text className="text-text-secondary text-xs uppercase mb-1">Daily Goal</Text>
-          <Text className="text-white font-bold">{goalLabel}</Text>
-        </View>
-        {isComplete ? (
-          <View className="bg-success/20 rounded-full px-3 py-1">
-            <Text className="text-success font-bold text-xs">+6 🏆</Text>
-          </View>
-        ) : (
-          <FontAwesome name="circle-o" size={20} color={Colors.text.muted} />
-        )}
-      </View>
-    </View>
-  );
-}
+// ─── Sub-Components ─────────────────────────────────────
 
 function StatCard({
   label,
@@ -92,8 +47,10 @@ function StatCard({
   return (
     <View className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-1">
       <View className="flex-row items-center gap-1 mb-1">
-        <FontAwesome name={icon} size={12} color={color ?? Colors.text.secondary} />
-        <Text className="text-text-secondary text-xs uppercase">{label}</Text>
+        <FontAwesome name={icon} size={10} color={color ?? Colors.text.muted} />
+        <Text className="text-text-muted text-xs uppercase" style={{ fontFamily: 'SpaceMono', fontSize: 9, letterSpacing: 1 }}>
+          {label}
+        </Text>
       </View>
       <Text className="text-white text-xl font-bold">{value}</Text>
     </View>
@@ -111,189 +68,323 @@ function QuickAction({
   icon: React.ComponentProps<typeof FontAwesome>['name'];
   subtitle: string;
   onPress: () => void;
-  accentColor?: string;
+  accentColor: string;
 }) {
   return (
     <Pressable
-      className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-row items-center gap-3 active:opacity-80"
+      className="bg-surface-raised border border-surface-border rounded-xl p-4 flex-row items-center gap-3 active:opacity-70"
       onPress={onPress}
     >
       <View
         className="w-10 h-10 rounded-full items-center justify-center"
-        style={{ backgroundColor: (accentColor ?? Colors.brand.DEFAULT) + '20' }}
+        style={{ backgroundColor: accentColor + '15' }}
       >
-        <FontAwesome name={icon} size={18} color={accentColor ?? Colors.brand.DEFAULT} />
+        <FontAwesome name={icon} size={16} color={accentColor} />
       </View>
       <View className="flex-1">
-        <Text className="text-white font-bold">{label}</Text>
+        <Text className="text-white font-bold text-sm">{label}</Text>
         <Text className="text-text-muted text-xs">{subtitle}</Text>
       </View>
-      <FontAwesome name="chevron-right" size={14} color={Colors.text.muted} />
+      <FontAwesome name="chevron-right" size={12} color={Colors.text.muted} />
     </Pressable>
   );
 }
 
+// ─── Main Screen ────────────────────────────────────────
+
 export default function HomeScreen() {
   const router = useRouter();
+  const accent = useAccent();
+  const { isGuest } = useAuthStore();
+  const { guestWorkouts } = useGuestWorkoutStore();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: workouts } = useMyWorkouts(3);
   const { data: activeWar } = useActiveWar();
+  const { data: myClan } = useMyClan();
   const { data: dailyGoal } = useDailyGoal();
+  const { isActive: isWorkingOut } = useWorkoutStore();
 
   const trophies = profile?.trophy_rating ?? 0;
   const arenaTier: ArenaTier = (profile?.arena_tier as ArenaTier) ?? getArenaTier(trophies);
-  const arenaConfig = Arena[arenaTier];
-  const rankKey = (profile?.rank ?? 'bronze') as RankType;
-  const rankConfig = Rank[rankKey];
+  const arenaConfig = Arena[arenaTier] ?? Arena.rustyard;
+  const rankKey = (profile?.rank ?? 'rookie') as RankType;
+  const rankConfig = Rank[rankKey] ?? Rank.rookie;
+
+  // Section animations
+  const heroAnim = useFadeSlide(0);
+  const statsAnim = useFadeSlide(100);
+  const actionsAnim = useFadeSlide(200);
+  const recentAnim = useFadeSlide(300);
 
   if (profileLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-surface items-center justify-center">
-        <ActivityIndicator color={Colors.brand.DEFAULT} size="large" />
+      <SafeAreaView className="flex-1 bg-black items-center justify-center">
+        <ActivityIndicator color={accent.DEFAULT} size="large" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-black" edges={['top']}>
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
-        {/* Arena Header with themed accent */}
-        <View
-          className="px-4 pb-4"
-          style={{ borderBottomWidth: 2, borderBottomColor: arenaConfig.accent + '40' }}
-        >
-          <ArenaHeader tier={arenaTier} trophies={trophies} />
+        {/* Top bar: settings + coins */}
+        <View className="flex-row items-center justify-between px-5 pt-2 pb-3">
+          <Pressable
+            className="w-9 h-9 rounded-full bg-surface-raised items-center justify-center active:opacity-60"
+            onPress={() => router.push('/(app)/settings' as any)}
+          >
+            <FontAwesome name="cog" size={16} color={Colors.text.secondary} />
+          </Pressable>
+
+          <Text className="text-white/40" style={{ fontFamily: 'SpaceMono', fontSize: 9, letterSpacing: 2 }}>
+            GYMCLASH
+          </Text>
+
+          {profile?.gym_coins != null && (
+            <View className="flex-row items-center gap-1.5 bg-surface-raised rounded-full px-3 py-1.5">
+              <FontAwesome name="circle" size={6} color={Colors.warning} />
+              <Text className="text-white text-xs font-bold">{profile.gym_coins}</Text>
+            </View>
+          )}
+          {profile?.gym_coins == null && <View className="w-9" />}
         </View>
 
-        <View className="px-4 mt-4">
-          {/* Stats Row */}
-          <View className="flex-row gap-2 mb-4">
-            <StatCard
-              label="Rank"
-              value={rankConfig.label}
-              icon="shield"
-              color={rankConfig.color}
-            />
+        {/* Guest banner */}
+        {isGuest && (
+          <Pressable
+            className="mx-5 mb-3 rounded-xl py-2.5 items-center active:opacity-70"
+            style={{ backgroundColor: accent.DEFAULT + '15', borderWidth: 0.5, borderColor: accent.DEFAULT + '30' }}
+            onPress={() => router.push('/(auth)/login?mode=signup')}
+          >
+            <Text className="text-xs font-bold" style={{ color: accent.DEFAULT, fontFamily: 'SpaceMono', letterSpacing: 1 }}>
+              GUEST · {5 - guestWorkouts.length} WORKOUTS LEFT
+            </Text>
+          </Pressable>
+        )}
+
+        {/* Hero: character + arena + trophies */}
+        <Animated.View style={heroAnim} className="items-center px-5 pb-4">
+          <CharacterDisplay
+            level={profile?.level ?? 1}
+            strengthCount={profile?.strength_workout_count ?? 0}
+            scoutCount={profile?.scout_workout_count ?? 0}
+            isWorkingOut={isWorkingOut}
+            size="lg"
+          />
+          <Text className="text-white text-lg font-bold mt-3">
+            {profile?.display_name || 'Warrior'}
+          </Text>
+          <View className="flex-row items-center gap-2 mt-1">
+            <Text style={{ color: arenaConfig.accent, fontFamily: 'SpaceMono', fontSize: 11 }}>
+              {arenaConfig.badge} {arenaConfig.label}
+            </Text>
+            <Text className="text-text-muted text-xs">·</Text>
+            <Text className="text-white/70 text-xs">{trophies} 🏆</Text>
+          </View>
+
+          {/* Trophy progress bar */}
+          {(() => {
+            const nextArena = Object.values(Arena).find((a) => a.minTrophies > trophies);
+            if (!nextArena) return null;
+            const progress = Math.min(100, ((trophies - arenaConfig.minTrophies) / (nextArena.minTrophies - arenaConfig.minTrophies)) * 100);
+            return (
+              <View className="w-full max-w-xs mt-3">
+                <View className="h-1.5 bg-surface-raised rounded-full overflow-hidden">
+                  <View
+                    className="h-full rounded-full"
+                    style={{ width: `${progress}%`, backgroundColor: accent.DEFAULT }}
+                  />
+                </View>
+                <Text className="text-text-muted text-center mt-1" style={{ fontSize: 9, fontFamily: 'SpaceMono' }}>
+                  {nextArena.minTrophies - trophies} to {nextArena.label}
+                </Text>
+              </View>
+            );
+          })()}
+        </Animated.View>
+
+        <View className="px-5">
+          {/* Stats row */}
+          <Animated.View style={statsAnim} className="flex-row gap-2 mb-4">
+            <StatCard label="Rank" value={rankConfig.label} icon="shield" color={rankConfig.color} />
             <StatCard label="Level" value={String(profile?.level ?? 1)} icon="star" />
-            <StatCard
-              label="Streak"
-              value={`${profile?.current_streak ?? 0}d`}
-              icon="fire"
-              color={Colors.warning}
-            />
-          </View>
+            <StatCard label="Streak" value={`${profile?.current_streak ?? 0}d`} icon="fire" color={Colors.warning} />
+          </Animated.View>
 
-          {/* Daily Goal */}
-          <DailyGoalCard goal={dailyGoal} />
+          {/* Flagged workout alert */}
+          {!isGuest && workouts && (() => {
+            const flagged = workouts.filter((w: any) =>
+              ['held_for_review', 'excluded_from_clan_score', 'rejected'].includes(w.validation_status)
+            );
+            if (flagged.length === 0) return null;
+            return (
+              <Pressable
+                className="bg-danger/10 border border-danger/20 rounded-xl p-3 mb-4 flex-row items-center gap-2 active:opacity-70"
+                onPress={() => router.push(`/(app)/review/${flagged[0].id}` as any)}
+              >
+                <FontAwesome name="exclamation-triangle" size={14} color={Colors.danger} />
+                <Text className="text-danger text-xs font-bold flex-1">
+                  {flagged.length} workout{flagged.length > 1 ? 's' : ''} flagged
+                </Text>
+                <FontAwesome name="chevron-right" size={10} color={Colors.danger} />
+              </Pressable>
+            );
+          })()}
 
-          {/* Quick Actions */}
-          <Text className="text-white text-lg font-bold mb-3">Train</Text>
-          <View className="gap-2 mb-6">
-            <QuickAction
-              label="Strength"
-              icon="heartbeat"
-              subtitle="Log sets, reps, and weight"
-              onPress={() => router.push('/(app)/workout/strength')}
-              accentColor={Colors.danger}
-            />
-            <QuickAction
-              label="Run"
-              icon="road"
-              subtitle="Log distance and pace"
-              onPress={() => router.push('/(app)/workout/scout')}
-              accentColor={Colors.info}
-            />
-            <QuickAction
-              label="Active Recovery"
-              icon="leaf"
-              subtitle="Stretching, yoga, mobility — maintain streak"
-              onPress={() => router.push('/(app)/workout/recovery')}
-              accentColor={Colors.success}
-            />
-          </View>
-
-          {/* Daily goal complete message */}
-          {dailyGoal?.completed && (
-            <View className="bg-success/10 border border-success/30 rounded-xl p-4 mb-6">
-              <Text className="text-success font-bold text-center">
-                Daily goal complete! Rest up or keep training.
-              </Text>
+          {/* Daily goal */}
+          {dailyGoal && (
+            <View
+              className="rounded-xl p-4 mb-4 border"
+              style={{
+                borderColor: dailyGoal.completed ? Colors.success + '30' : accent.DEFAULT + '20',
+                backgroundColor: dailyGoal.completed ? Colors.success + '08' : 'transparent',
+              }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1">
+                  <Text className="text-text-muted text-xs uppercase mb-1" style={{ fontFamily: 'SpaceMono', fontSize: 9, letterSpacing: 1 }}>
+                    Daily Goal
+                  </Text>
+                  <Text className="text-white text-sm font-bold">
+                    {dailyGoal.goal_type === 'strength_intensity'
+                      ? `Hit ${Math.round((dailyGoal.goal_metadata?.threshold_pct ?? 0.8) * 100)}% of your ${dailyGoal.goal_metadata?.exercise ?? ''} 1RM`
+                      : 'Complete any workout today'}
+                  </Text>
+                </View>
+                {dailyGoal.completed ? (
+                  <View className="bg-success/20 rounded-full px-3 py-1">
+                    <Text className="text-success font-bold text-xs">+6 🏆</Text>
+                  </View>
+                ) : (
+                  <FontAwesome name="circle-o" size={18} color={Colors.text.muted} />
+                )}
+              </View>
             </View>
           )}
 
-          {/* Clan War */}
-          {activeWar && (
-            <>
-              <Text className="text-white text-lg font-bold mb-3">Clan War</Text>
-              <View className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-6">
-                <Text className="text-text-secondary text-sm mb-2">
-                  Week {activeWar.week_number}
+          {/* Biodata prompt */}
+          {workouts && workouts.length > 0 && profile && !profile.body_weight_kg && (
+            <Pressable
+              className="rounded-xl p-3 mb-4 flex-row items-center gap-3 active:opacity-70"
+              style={{ backgroundColor: accent.DEFAULT + '10', borderWidth: 0.5, borderColor: accent.DEFAULT + '25' }}
+              onPress={() => router.push('/(app)/settings/biodata')}
+            >
+              <FontAwesome name="user-plus" size={14} color={accent.DEFAULT} />
+              <View className="flex-1">
+                <Text className="text-white text-sm font-bold">Personalize scores</Text>
+                <Text className="text-text-muted text-xs">Add body data for fairer scoring</Text>
+              </View>
+              <FontAwesome name="chevron-right" size={10} color={Colors.text.muted} />
+            </Pressable>
+          )}
+
+          {/* Quick actions */}
+          <Animated.View style={actionsAnim}>
+            <Text className="text-white text-sm font-bold mb-3 uppercase" style={{ fontFamily: 'SpaceMono', letterSpacing: 2, fontSize: 10 }}>
+              Train
+            </Text>
+            <View className="gap-2 mb-5">
+              <QuickAction
+                label="Strength"
+                icon="heartbeat"
+                subtitle="Log sets, reps, and weight"
+                onPress={() => router.push('/(app)/workout/strength')}
+                accentColor={Colors.danger}
+              />
+              <QuickAction
+                label="Run"
+                icon="road"
+                subtitle="Log distance and pace"
+                onPress={() => router.push('/(app)/workout/scout')}
+                accentColor={Colors.info}
+              />
+            </View>
+          </Animated.View>
+
+          {/* Clan war / no clan */}
+          {!activeWar && !myClan && (
+            <Pressable
+              className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-5 flex-row items-center gap-3 active:opacity-70"
+              onPress={() => router.push('/(app)/clan')}
+            >
+              <FontAwesome name="shield" size={18} color={accent.DEFAULT} />
+              <View className="flex-1">
+                <Text className="text-white font-bold text-sm">No clan yet</Text>
+                <Text className="text-text-muted text-xs">Find a Clan to compete</Text>
+              </View>
+              <FontAwesome name="chevron-right" size={12} color={Colors.text.muted} />
+            </Pressable>
+          )}
+
+          {activeWar && (() => {
+            const isClansA = myClan?.id === activeWar.clan_a_id;
+            const myScore = isClansA ? activeWar.clan_a_score : activeWar.clan_b_score;
+            const opponentScore = isClansA ? activeWar.clan_b_score : activeWar.clan_a_score;
+            return (
+              <View className="bg-surface-raised border border-surface-border rounded-xl p-4 mb-5">
+                <Text className="text-text-muted text-xs uppercase mb-2" style={{ fontFamily: 'SpaceMono', fontSize: 9, letterSpacing: 1 }}>
+                  Clan War · Week {activeWar.week_number}
                 </Text>
                 <View className="flex-row items-center justify-between">
                   <View className="items-center flex-1">
-                    <Text className="text-text-secondary text-xs">Your Clan</Text>
-                    <Text className="text-white text-2xl font-bold">
-                      {activeWar.clan_a_score?.total ?? activeWar.clan_b_score?.total ?? 0}
-                    </Text>
+                    <Text className="text-text-muted text-xs">You</Text>
+                    <Text className="text-white text-2xl font-bold">{myScore?.total ?? 0}</Text>
                   </View>
-                  <Text className="text-text-muted text-xl mx-4">vs</Text>
+                  <Text className="text-text-muted text-lg mx-3">vs</Text>
                   <View className="items-center flex-1">
-                    <Text className="text-text-secondary text-xs">Opponent</Text>
-                    <Text className="text-white text-2xl font-bold">
-                      {activeWar.clan_b_score?.total ?? activeWar.clan_a_score?.total ?? 0}
-                    </Text>
+                    <Text className="text-text-muted text-xs">Opp</Text>
+                    <Text className="text-white text-2xl font-bold">{opponentScore?.total ?? 0}</Text>
                   </View>
                 </View>
               </View>
-            </>
-          )}
+            );
+          })()}
 
-          {/* Recent */}
-          {workouts && workouts.length > 0 && (
-            <>
-              <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-white text-lg font-bold">Recent</Text>
-                <Pressable onPress={() => router.push('/(app)/history')}>
-                  <Text className="text-brand text-sm">See all</Text>
-                </Pressable>
+          {/* Recent workouts */}
+          <Animated.View style={recentAnim}>
+            {(!workouts || workouts.length === 0) && (
+              <View className="bg-surface-raised border border-surface-border rounded-xl p-6 items-center">
+                <Text className="text-2xl mb-2">💪</Text>
+                <Text className="text-white font-bold text-sm mb-1">No workouts yet</Text>
+                <Text className="text-text-muted text-xs text-center">
+                  Log your first workout to start earning trophies
+                </Text>
               </View>
-              <View className="gap-2">
-                {workouts.map((w: any) => (
-                  <View
-                    key={w.id}
-                    className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-row items-center"
-                  >
-                    <FontAwesome
-                      name={
-                        w.type === 'strength'
-                          ? 'heartbeat'
-                          : w.type === 'scout'
-                          ? 'road'
-                          : 'leaf'
-                      }
-                      size={16}
-                      color={
-                        w.type === 'strength'
-                          ? Colors.danger
-                          : w.type === 'scout'
-                          ? Colors.info
-                          : Colors.success
-                      }
-                    />
-                    <View className="flex-1 ml-3">
-                      <Text className="text-white font-bold capitalize">{w.type === 'active_recovery' ? 'Recovery' : w.type}</Text>
-                      <Text className="text-text-muted text-xs">
-                        {new Date(w.created_at).toLocaleDateString()}
+            )}
+            {workouts && workouts.length > 0 && (
+              <>
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text className="text-white text-sm font-bold uppercase" style={{ fontFamily: 'SpaceMono', letterSpacing: 2, fontSize: 10 }}>
+                    Recent
+                  </Text>
+                  <Pressable onPress={() => router.push('/(app)/history')}>
+                    <Text className="text-xs" style={{ color: accent.DEFAULT }}>See all</Text>
+                  </Pressable>
+                </View>
+                <View className="gap-2">
+                  {workouts.map((w: any) => (
+                    <View
+                      key={w.id}
+                      className="bg-surface-raised border border-surface-border rounded-xl p-3 flex-row items-center"
+                    >
+                      <FontAwesome
+                        name={w.type === 'strength' ? 'heartbeat' : w.type === 'scout' ? 'road' : 'leaf'}
+                        size={14}
+                        color={w.type === 'strength' ? Colors.danger : w.type === 'scout' ? Colors.info : Colors.success}
+                      />
+                      <View className="flex-1 ml-3">
+                        <Text className="text-white font-bold text-sm">{w.type === 'active_recovery' ? 'Recovery' : w.type}</Text>
+                        <Text className="text-text-muted text-xs">{new Date(w.created_at).toLocaleDateString()}</Text>
+                      </View>
+                      <Text className="text-white font-bold">
+                        {w.final_score != null ? Math.round(w.final_score) : '—'}
                       </Text>
                     </View>
-                    <Text className="text-white font-bold">
-                      {w.final_score != null ? Math.round(w.final_score) : '—'}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
+                  ))}
+                </View>
+              </>
+            )}
+          </Animated.View>
         </View>
       </ScrollView>
     </SafeAreaView>

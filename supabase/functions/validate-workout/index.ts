@@ -25,10 +25,24 @@ const DIMINISHING_FACTOR = 0.25;
 const ONE_RM_PLAUSIBILITY_FACTOR = 1.25;
 const ACTIVE_RECOVERY_MIN_DURATION = 600;
 
+// Experience-based baseline multipliers (applied to population median for new users)
+const EXPERIENCE_BASELINE: Record<string, number> = {
+  beginner: 0.6,
+  intermediate: 1.0,
+  advanced: 1.4,
+};
+
 // Trophy rewards
 const TROPHY_ACCEPTED = 12;
 const TROPHY_LOW_CONFIDENCE = 8;
 const TROPHY_ACTIVE_RECOVERY = 4;
+
+// Coin rewards
+const COINS_ACCEPTED_WORKOUT = 5;
+const COINS_ACTIVE_RECOVERY = 2;
+
+// War role bonuses
+const WAR_ROLE_BONUS = 0.20; // +20% contribution for matching role
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -329,7 +343,8 @@ async function handleClanContribution(
   supabase: any,
   userId: string,
   workoutId: string,
-  finalScore: number
+  finalScore: number,
+  workoutType: string
 ): Promise<number | null> {
   const { data: membership } = await supabase
     .from('clan_memberships')
@@ -341,7 +356,7 @@ async function handleClanContribution(
 
   const { data: activeWar } = await supabase
     .from('clan_wars')
-    .select('id, started_at')
+    .select('id, started_at, war_type')
     .eq('status', 'active')
     .or(`clan_a_id.eq.${membership.clan_id},clan_b_id.eq.${membership.clan_id}`)
     .order('started_at', { ascending: false })
@@ -349,6 +364,11 @@ async function handleClanContribution(
     .single();
 
   if (!activeWar) return null;
+
+  // War type filter: only matching workout types contribute
+  const warType = activeWar.war_type ?? 'mixed';
+  if (warType === 'strength_only' && workoutType !== 'strength') return 0;
+  if (warType === 'cardio_only' && workoutType !== 'scout') return 0;
 
   // Weekly total for this user in this war
   const { data: weekContribs } = await supabase
@@ -387,6 +407,10 @@ async function handleClanContribution(
     contribution = dailyRemaining + (finalScore - dailyRemaining) * DIMINISHING_FACTOR;
   }
 
+  // Apply war role bonus
+  const roleBonus = await getWarRoleBonus(supabase, userId, activeWar.id, workoutType);
+  contribution = contribution * roleBonus;
+
   // Apply weekly cap
   contribution = Math.min(contribution, weeklyRemaining);
   contribution = Math.round(contribution * 100) / 100;
@@ -402,6 +426,70 @@ async function handleClanContribution(
   }
 
   return contribution;
+}
+
+// ─── Coin Rewards ────────────────────────────────────────
+
+async function awardCoins(supabase: any, userId: string, amount: number): Promise<void> {
+  if (amount <= 0) return;
+  await supabase.rpc('update_gym_coins', { p_user_id: userId, p_delta: amount }).catch(() => {
+    // Fallback: direct update if RPC doesn't exist yet
+    supabase.from('profiles').update({ gym_coins: supabase.raw(`gym_coins + ${amount}`) }).eq('id', userId);
+  });
+}
+
+// ─── XP Boost Check ─────────────────────────────────────
+
+async function getXpMultiplier(supabase: any, userId: string): Promise<number> {
+  const { data } = await supabase
+    .from('active_boosts')
+    .select('boost_type')
+    .eq('user_id', userId)
+    .eq('boost_type', 'xp_2x')
+    .gt('expires_at', new Date().toISOString())
+    .limit(1);
+  return (data && data.length > 0) ? 2 : 1;
+}
+
+// ─── Workout Distribution Counter ───────────────────────
+
+async function incrementWorkoutCounter(
+  supabase: any, userId: string, workoutType: string
+): Promise<void> {
+  if (workoutType === 'strength') {
+    await supabase.from('profiles')
+      .update({ strength_workout_count: supabase.rpc ? undefined : 0 })
+      .eq('id', userId);
+    // Use raw SQL increment via RPC or direct
+    await supabase.rpc('increment_workout_counter', {
+      p_user_id: userId, p_type: 'strength'
+    }).catch(() => {
+      // If RPC doesn't exist, skip silently — counter is non-critical
+    });
+  } else if (workoutType === 'scout') {
+    await supabase.rpc('increment_workout_counter', {
+      p_user_id: userId, p_type: 'scout'
+    }).catch(() => {});
+  }
+}
+
+// ─── War Role Bonus ─────────────────────────────────────
+
+async function getWarRoleBonus(
+  supabase: any, userId: string, warId: string, workoutType: string
+): Promise<number> {
+  const { data: role } = await supabase
+    .from('clan_war_member_roles')
+    .select('role')
+    .eq('war_id', warId)
+    .eq('user_id', userId)
+    .single();
+
+  if (!role) return 1.0;
+
+  if (role.role === 'strength_specialist' && workoutType === 'strength') return 1.0 + WAR_ROLE_BONUS;
+  if (role.role === 'cardio_specialist' && workoutType === 'scout') return 1.0 + WAR_ROLE_BONUS;
+  return 1.0; // flex gets no bonus but contributes to diversity
 }
 
 // ─── Main Handler ────────────────────────────────────────
@@ -478,6 +566,9 @@ Deno.serve(async (req) => {
         // Trophy decay check
         await supabase.rpc('apply_trophy_decay', { p_user_id: workout.user_id });
 
+        // Coin reward
+        await awardCoins(supabase, workout.user_id, COINS_ACTIVE_RECOVERY);
+
         // Daily goal evaluation
         await evaluateDailyGoal(supabase, workout.user_id, 'active_recovery', null, workoutDate);
       }
@@ -535,7 +626,7 @@ Deno.serve(async (req) => {
       // Apply Wilks coefficient if biodata available
       const { data: profile } = await supabase
         .from('profiles')
-        .select('body_weight_kg, biological_sex, current_streak')
+        .select('body_weight_kg, biological_sex, current_streak, lifting_experience, running_experience')
         .eq('id', workout.user_id)
         .single();
 
@@ -551,7 +642,8 @@ Deno.serve(async (req) => {
         .eq('scoring_version', SCORING_VERSION)
         .gte('created_at', thirtyDaysAgo);
 
-      const baseline = recent?.length ? recent.reduce((s: number, w: any) => s + Number(w.raw_score), 0) / recent.length : null;
+      const hasEnoughHistory = (recent?.length ?? 0) >= 5;
+      const rollingAvg = recent?.length ? recent.reduce((s: number, w: any) => s + Number(w.raw_score), 0) / recent.length : null;
 
       const { data: medianResult } = await supabase
         .from('workouts').select('raw_score')
@@ -560,6 +652,19 @@ Deno.serve(async (req) => {
         .order('raw_score', { ascending: true });
 
       const median = medianResult?.length ? Number(medianResult[Math.floor(medianResult.length / 2)].raw_score) : rawScore;
+
+      // Experience-based baseline for new users (< 5 workouts): scale the population median
+      // by the user's self-reported experience level. After 5+ workouts, use their own history.
+      let baseline: number | null;
+      if (hasEnoughHistory) {
+        baseline = rollingAvg;
+      } else if (profile?.lifting_experience && median > 0) {
+        const multiplier = EXPERIENCE_BASELINE[profile.lifting_experience] ?? 1.0;
+        baseline = median * multiplier;
+      } else {
+        baseline = rollingAvg; // falls back to null → normalizeScore uses median
+      }
+
       const normalized = normalizeScore(rawScore, baseline, median);
       const finalScore = calculateFinalScore(normalized, profile?.current_streak ?? 0, confidence);
 
@@ -577,7 +682,9 @@ Deno.serve(async (req) => {
       // Post-validation actions for accepted workouts
       let clanContribution: number | null = null;
       if (validationStatus === 'accepted' || validationStatus === 'accepted_with_low_confidence') {
-        await supabase.rpc('increment_user_xp', { p_user_id: workout.user_id, p_xp: Math.round(finalScore) });
+        // XP with boost check (2x XP boost affects rank progression only, NOT scores)
+        const xpMultiplier = await getXpMultiplier(supabase, workout.user_id);
+        await supabase.rpc('increment_user_xp', { p_user_id: workout.user_id, p_xp: Math.round(finalScore * xpMultiplier) });
 
         const workoutDate = (workout.completed_at ?? new Date().toISOString()).split('T')[0];
         await supabase.rpc('update_user_streak', { p_user_id: workout.user_id, p_workout_date: workoutDate });
@@ -587,6 +694,12 @@ Deno.serve(async (req) => {
         await supabase.rpc('update_trophy_rating', { p_user_id: workout.user_id, p_delta: trophyDelta });
         await supabase.rpc('apply_trophy_decay', { p_user_id: workout.user_id });
 
+        // Coin reward
+        await awardCoins(supabase, workout.user_id, COINS_ACCEPTED_WORKOUT);
+
+        // Workout distribution counter
+        await incrementWorkoutCounter(supabase, workout.user_id, 'strength');
+
         // 1RM tracking (only for accepted strength workouts)
         await upsert1RMRecords(supabase, workout.user_id, workout_id, workout.sets ?? []);
 
@@ -595,7 +708,7 @@ Deno.serve(async (req) => {
 
         // Clan contribution (only for fully accepted)
         if (validationStatus === 'accepted') {
-          clanContribution = await handleClanContribution(supabase, workout.user_id, workout_id, finalScore);
+          clanContribution = await handleClanContribution(supabase, workout.user_id, workout_id, finalScore, workout.type);
         }
       }
 
@@ -613,7 +726,7 @@ Deno.serve(async (req) => {
       rawScore = calculateScoutRaw(workout.route_data ?? {});
 
       const { data: profile } = await supabase
-        .from('profiles').select('current_streak').eq('id', workout.user_id).single();
+        .from('profiles').select('current_streak, running_experience').eq('id', workout.user_id).single();
 
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: recent } = await supabase
@@ -622,7 +735,8 @@ Deno.serve(async (req) => {
         .eq('scoring_version', SCORING_VERSION)
         .gte('created_at', thirtyDaysAgo);
 
-      const baseline = recent?.length ? recent.reduce((s: number, w: any) => s + Number(w.raw_score), 0) / recent.length : null;
+      const hasEnoughHistory = (recent?.length ?? 0) >= 5;
+      const rollingAvg = recent?.length ? recent.reduce((s: number, w: any) => s + Number(w.raw_score), 0) / recent.length : null;
 
       const { data: medianResult } = await supabase
         .from('workouts').select('raw_score')
@@ -631,6 +745,18 @@ Deno.serve(async (req) => {
         .order('raw_score', { ascending: true });
 
       const median = medianResult?.length ? Number(medianResult[Math.floor(medianResult.length / 2)].raw_score) : rawScore;
+
+      // Experience-based baseline for new users (< 5 workouts)
+      let baseline: number | null;
+      if (hasEnoughHistory) {
+        baseline = rollingAvg;
+      } else if (profile?.running_experience && median > 0) {
+        const multiplier = EXPERIENCE_BASELINE[profile.running_experience] ?? 1.0;
+        baseline = median * multiplier;
+      } else {
+        baseline = rollingAvg;
+      }
+
       const normalized = normalizeScore(rawScore, baseline, median);
       const finalScore = calculateFinalScore(normalized, profile?.current_streak ?? 0, confidence);
 
@@ -643,7 +769,8 @@ Deno.serve(async (req) => {
 
       let clanContribution: number | null = null;
       if (validationStatus === 'accepted' || validationStatus === 'accepted_with_low_confidence') {
-        await supabase.rpc('increment_user_xp', { p_user_id: workout.user_id, p_xp: Math.round(finalScore) });
+        const xpMultiplier = await getXpMultiplier(supabase, workout.user_id);
+        await supabase.rpc('increment_user_xp', { p_user_id: workout.user_id, p_xp: Math.round(finalScore * xpMultiplier) });
 
         const workoutDate = (workout.completed_at ?? new Date().toISOString()).split('T')[0];
         await supabase.rpc('update_user_streak', { p_user_id: workout.user_id, p_workout_date: workoutDate });
@@ -652,10 +779,13 @@ Deno.serve(async (req) => {
         await supabase.rpc('update_trophy_rating', { p_user_id: workout.user_id, p_delta: trophyDelta });
         await supabase.rpc('apply_trophy_decay', { p_user_id: workout.user_id });
 
+        await awardCoins(supabase, workout.user_id, COINS_ACCEPTED_WORKOUT);
+        await incrementWorkoutCounter(supabase, workout.user_id, 'scout');
+
         await evaluateDailyGoal(supabase, workout.user_id, 'scout', null, workoutDate);
 
         if (validationStatus === 'accepted') {
-          clanContribution = await handleClanContribution(supabase, workout.user_id, workout_id, finalScore);
+          clanContribution = await handleClanContribution(supabase, workout.user_id, workout_id, finalScore, workout.type);
         }
       }
 

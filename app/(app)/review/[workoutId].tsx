@@ -96,11 +96,11 @@ export default function WorkoutReviewScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-black">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Back button */}
         <Pressable onPress={() => router.back()} className="py-4">
-          <Text className="text-brand text-base">← Back</Text>
+          <Text className="text-white/60 text-base">← Back</Text>
         </Pressable>
 
         {/* Header */}
@@ -183,7 +183,7 @@ export default function WorkoutReviewScreen() {
             <TextInput
               className="bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-white text-base mb-4"
               placeholder="Describe why this flag is incorrect..."
-              placeholderTextColor="#6A6A8A"
+              placeholderTextColor={Colors.text.muted}
               value={appealReason}
               onChangeText={setAppealReason}
               multiline
@@ -192,7 +192,7 @@ export default function WorkoutReviewScreen() {
               style={{ minHeight: 100 }}
             />
             <Pressable
-              className="bg-brand rounded-xl py-4 items-center active:bg-brand-dark"
+              className="py-3.5 items-center active:opacity-70" style={{ borderWidth: 1, borderColor: '#ffffff' }}
               onPress={handleSubmitAppeal}
             >
               <Text className="text-white text-lg font-bold">

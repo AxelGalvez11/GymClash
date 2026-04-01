@@ -4,6 +4,49 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as crypto from 'expo-crypto';
 import type { StrengthSet, WorkoutType } from '@/types';
 
+// ─── Guest Workout (stored locally, synced on sign-up) ──
+
+export interface GuestWorkout {
+  readonly type: WorkoutType;
+  readonly started_at: string;
+  readonly completed_at: string;
+  readonly duration_seconds: number;
+  readonly sets: readonly StrengthSet[] | null;
+  readonly route_data: { distance_km: number; avg_pace_min_per_km: number; elevation_gain_m: number } | null;
+}
+
+const MAX_GUEST_WORKOUTS = 5;
+
+interface GuestWorkoutState {
+  readonly guestWorkouts: readonly GuestWorkout[];
+}
+
+interface GuestWorkoutActions {
+  readonly addGuestWorkout: (workout: GuestWorkout) => void;
+  readonly clearGuestWorkouts: () => void;
+}
+
+export const useGuestWorkoutStore = create<GuestWorkoutState & GuestWorkoutActions>()(
+  persist(
+    (set) => ({
+      guestWorkouts: [],
+      addGuestWorkout: (workout) =>
+        set((state) => ({
+          guestWorkouts: state.guestWorkouts.length < MAX_GUEST_WORKOUTS
+            ? [...state.guestWorkouts, workout]
+            : state.guestWorkouts,
+        })),
+      clearGuestWorkouts: () => set({ guestWorkouts: [] }),
+    }),
+    {
+      name: 'gymclash-guest-workouts',
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
+
+// ─── Active Workout Session ─────────────────────────────
+
 interface ActiveWorkoutState {
   readonly isActive: boolean;
   readonly type: WorkoutType | null;

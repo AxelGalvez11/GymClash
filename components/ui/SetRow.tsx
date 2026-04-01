@@ -1,5 +1,6 @@
 import { View, Text, TextInput, Pressable } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Colors } from '@/constants/theme';
 import type { StrengthSet } from '@/types';
 
 interface SetRowProps {
@@ -23,7 +24,7 @@ export function SetRow({ set, index, onRemove }: SetRowProps) {
         onPress={() => onRemove(index)}
         className="p-2 active:opacity-50"
       >
-        <FontAwesome name="trash-o" size={18} color="#FF3D71" />
+        <FontAwesome name="trash-o" size={18} color={Colors.danger} />
       </Pressable>
     </View>
   );

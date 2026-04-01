@@ -18,7 +18,7 @@ export { ErrorBoundary } from 'expo-router';
 SplashScreen.preventAutoHideAsync();
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { session, isLoading, setSession } = useAuthStore();
+  const { session, isLoading, isGuest, setSession } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
   const { data: needsOnboarding } = useNeedsOnboarding();
@@ -39,14 +39,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[1] === 'onboarding';
 
-    if (!session && !inAuthGroup) {
+    // Guest mode: allow through to (app) group
+    if (isGuest && inAuthGroup) {
+      router.replace('/(app)/home');
+      return;
+    }
+
+    if (!session && !isGuest && !inAuthGroup) {
       router.replace('/(auth)/landing');
     } else if (session && needsOnboarding && !inOnboarding) {
       router.replace('/(auth)/onboarding');
     } else if (session && !needsOnboarding && inAuthGroup) {
       router.replace('/(app)/home');
     }
-  }, [session, isLoading, needsOnboarding, segments, router]);
+  }, [session, isLoading, isGuest, needsOnboarding, segments, router]);
 
   if (isLoading) {
     return <View className="flex-1 bg-surface" />;

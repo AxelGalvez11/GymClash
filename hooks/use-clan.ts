@@ -10,6 +10,9 @@ import {
   searchClans,
   fetchClanRoster,
   fetchWarContributions,
+  fetchMyClanChallenges,
+  sendWarChallenge,
+  respondToChallenge,
 } from '@/services/api';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -98,6 +101,42 @@ export function useJoinClan() {
     mutationFn: (clanId: string) => joinClan(clanId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clan'] });
+    },
+  });
+}
+
+export function useMyClanChallenges() {
+  const { session } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['clan-challenges', session?.user?.id],
+    queryFn: fetchMyClanChallenges,
+    enabled: !!session,
+    staleTime: 1000 * 30,
+  });
+}
+
+export function useSendChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ targetClanId, warType }: { targetClanId: string; warType?: 'strength_only' | 'cardio_only' | 'mixed' }) =>
+      sendWarChallenge(targetClanId, warType),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clan-challenges'] });
+    },
+  });
+}
+
+export function useRespondToChallenge() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ challengeId, accept }: { challengeId: string; accept: boolean }) =>
+      respondToChallenge(challengeId, accept),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clan-challenges'] });
+      queryClient.invalidateQueries({ queryKey: ['active-war'] });
     },
   });
 }

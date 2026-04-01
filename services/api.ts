@@ -34,12 +34,18 @@ export async function updateBiodata(updates: {
   height_cm?: number | null;
   birth_date?: string | null;
   biological_sex?: string | null;
+  lifting_experience?: string | null;
+  running_experience?: string | null;
+  resting_hr?: number | null;
 }) {
   const { data, error } = await supabase.rpc('update_my_biodata', {
     p_body_weight_kg: updates.body_weight_kg ?? null,
     p_height_cm: updates.height_cm ?? null,
     p_birth_date: updates.birth_date ?? null,
     p_biological_sex: updates.biological_sex ?? null,
+    p_lifting_experience: updates.lifting_experience ?? null,
+    p_running_experience: updates.running_experience ?? null,
+    p_resting_hr: updates.resting_hr ?? null,
   });
   if (error) throw error;
   return data;
@@ -282,6 +288,69 @@ export async function fetchWarContributions(warId: string, clanId: string) {
   });
   if (error) throw error;
   return data ?? [];
+}
+
+// ─── Challenges ─────────────────────────────────────
+
+export async function sendWarChallenge(targetClanId: string, warType: 'strength_only' | 'cardio_only' | 'mixed' = 'mixed') {
+  const { data, error } = await supabase.rpc('send_war_challenge', {
+    p_target_clan_id: targetClanId,
+    p_war_type: warType,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function respondToChallenge(challengeId: string, accept: boolean) {
+  const { data, error } = await supabase.rpc('respond_to_challenge', {
+    p_challenge_id: challengeId,
+    p_accept: accept,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchMyClanChallenges() {
+  const { data, error } = await supabase.rpc('get_my_clan_challenges');
+  if (error) throw error;
+  return data ?? [];
+}
+
+// ─── Leaderboards ───────────────────────────────────
+
+export async function fetchClanLeaderboard(limit = 50) {
+  const { data, error } = await supabase
+    .from('leaderboard_clans' as any)
+    .select('*')
+    .limit(limit);
+  if (error) {
+    // Fallback if view doesn't exist yet (pre-migration 011)
+    const { data: fallback, error: fbErr } = await supabase
+      .from('clans')
+      .select('id, name, tag, member_count')
+      .order('member_count', { ascending: false })
+      .limit(limit);
+    if (fbErr) throw fbErr;
+    return (fallback ?? []).map((c: any) => ({ ...c, war_wins: 0, wars_played: 0, total_trophies: 0 }));
+  }
+  return data ?? [];
+}
+
+export async function fetchPersonalLeaderboard(limit = 100) {
+  const { data, error } = await supabase
+    .from('leaderboard_players' as any)
+    .select('*')
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchPublicProfile(userId: string) {
+  const { data, error } = await supabase.rpc('get_public_profile', {
+    p_user_id: userId,
+  });
+  if (error) throw error;
+  return data;
 }
 
 // ─── Appeals ─────────────────────────────────────────────

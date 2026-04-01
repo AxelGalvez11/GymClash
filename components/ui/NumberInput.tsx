@@ -1,4 +1,5 @@
 import { View, Text, TextInput } from 'react-native';
+import { Colors } from '@/constants/theme';
 
 interface NumberInputProps {
   readonly label: string;
@@ -25,7 +26,7 @@ export function NumberInput({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#6A6A8A"
+        placeholderTextColor={Colors.text.muted}
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
       />
     </View>

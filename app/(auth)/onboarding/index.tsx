@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors } from '@/constants/theme';
 import { updateProfile } from '@/services/api';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Step = 'name' | 'focus' | 'ready';
+type Step = 'name' | 'ready';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -16,7 +15,6 @@ export default function OnboardingScreen() {
 
   const [step, setStep] = useState<Step>('name');
   const [displayName, setDisplayName] = useState('');
-  const [focus, setFocus] = useState<'strength' | 'scout' | 'both' | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function handleFinish() {
@@ -39,23 +37,23 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-black">
       <View className="flex-1 px-8 justify-center">
         {/* Step 1: Name */}
         {step === 'name' && (
           <View>
             <Text className="text-4xl mb-2">⚔️</Text>
-            <Text className="text-white text-3xl font-bold mb-2">
+            <Text className="text-white text-3xl font-bold mb-2" style={{ fontFamily: 'SpaceMono' }}>
               Choose your name
             </Text>
-            <Text className="text-text-secondary mb-8">
+            <Text className="text-white/50 mb-8" style={{ fontFamily: 'SpaceMono', fontSize: 13 }}>
               This is how other warriors will see you.
             </Text>
 
             <TextInput
               className="bg-surface-raised border border-surface-border rounded-xl px-4 py-4 text-white text-lg mb-6"
               placeholder="Your warrior name"
-              placeholderTextColor="#6A6A8A"
+              placeholderTextColor={Colors.text.muted}
               value={displayName}
               onChangeText={setDisplayName}
               autoFocus
@@ -63,103 +61,68 @@ export default function OnboardingScreen() {
             />
 
             <Pressable
-              className="bg-brand rounded-xl py-4 items-center active:bg-brand-dark"
+              className="py-3.5 items-center active:bg-white"
+              style={{ borderWidth: 1, borderColor: '#ffffff' }}
               onPress={() => {
                 if (!displayName.trim()) {
                   Alert.alert('Error', 'Enter a name to continue');
                   return;
                 }
-                setStep('focus');
+                setStep('ready');
               }}
             >
-              <Text className="text-white text-lg font-bold">Continue</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Step 2: Training Focus */}
-        {step === 'focus' && (
-          <View>
-            <Text className="text-white text-3xl font-bold mb-2">
-              What's your focus?
-            </Text>
-            <Text className="text-text-secondary mb-8">
-              This helps us personalize your dashboard. You can always do both.
-            </Text>
-
-            <View className="gap-3 mb-8">
-              {[
-                { value: 'strength' as const, icon: 'heartbeat' as const, label: 'Lifting', desc: 'Squat, bench, deadlift — build strength' },
-                { value: 'scout' as const, icon: 'road' as const, label: 'Running', desc: 'Runs, jogs, sprints — cover ground' },
-                { value: 'both' as const, icon: 'bolt' as const, label: 'Both', desc: 'Train everything — earn in every way' },
-              ].map((opt) => (
-                <Pressable
-                  key={opt.value}
-                  className={`border rounded-xl p-4 flex-row items-center gap-4 ${
-                    focus === opt.value
-                      ? 'border-brand bg-brand/10'
-                      : 'border-surface-border bg-surface-raised'
-                  }`}
-                  onPress={() => setFocus(opt.value)}
+              {({ pressed }) => (
+                <Text
+                  className={`font-bold text-sm ${pressed ? 'text-black' : 'text-white'}`}
+                  style={{ fontFamily: 'SpaceMono', letterSpacing: 2 }}
                 >
-                  <FontAwesome
-                    name={opt.icon}
-                    size={24}
-                    color={focus === opt.value ? Colors.brand.DEFAULT : Colors.text.muted}
-                  />
-                  <View className="flex-1">
-                    <Text className={focus === opt.value ? 'text-brand font-bold text-lg' : 'text-white font-bold text-lg'}>
-                      {opt.label}
-                    </Text>
-                    <Text className="text-text-muted text-sm">{opt.desc}</Text>
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable
-              className="bg-brand rounded-xl py-4 items-center active:bg-brand-dark"
-              onPress={() => setStep('ready')}
-            >
-              <Text className="text-white text-lg font-bold">Continue</Text>
+                  CONTINUE
+                </Text>
+              )}
             </Pressable>
           </View>
         )}
 
-        {/* Step 3: Ready */}
+        {/* Step 2: Ready */}
         {step === 'ready' && (
           <View className="items-center">
             <Text className="text-6xl mb-4">🏆</Text>
-            <Text className="text-white text-3xl font-bold mb-2 text-center">
+            <Text className="text-white text-3xl font-bold mb-2 text-center" style={{ fontFamily: 'SpaceMono' }}>
               You're ready, {displayName}
             </Text>
-            <Text className="text-text-secondary text-center mb-2">
+            <Text className="text-white/50 text-center mb-2" style={{ fontFamily: 'SpaceMono', fontSize: 13 }}>
               Train in real life. Level up in game. Help your clan win.
             </Text>
 
             <View className="bg-surface-raised border border-surface-border rounded-xl p-4 w-full mt-6 mb-8">
               <View className="flex-row justify-between mb-2">
-                <Text className="text-text-secondary">Rank</Text>
-                <Text className="text-rank-bronze font-bold">Bronze</Text>
+                <Text className="text-white/50">Rank</Text>
+                <Text className="text-rank-bronze font-bold">Rookie</Text>
               </View>
               <View className="flex-row justify-between mb-2">
-                <Text className="text-text-secondary">Level</Text>
+                <Text className="text-white/50">Level</Text>
                 <Text className="text-white font-bold">1</Text>
               </View>
               <View className="flex-row justify-between">
-                <Text className="text-text-secondary">First mission</Text>
-                <Text className="text-brand font-bold">Log your first workout</Text>
+                <Text className="text-white/50">First mission</Text>
+                <Text className="text-white font-bold">Log your first workout</Text>
               </View>
             </View>
 
             <Pressable
-              className="bg-brand rounded-xl py-4 items-center active:bg-brand-dark w-full"
+              className="py-3.5 items-center active:bg-white w-full"
+              style={{ borderWidth: 1, borderColor: '#ffffff' }}
               onPress={handleFinish}
               disabled={saving}
             >
-              <Text className="text-white text-lg font-bold">
-                {saving ? 'Setting up...' : 'Enter the Arena'}
-              </Text>
+              {({ pressed }) => (
+                <Text
+                  className={`font-bold text-sm ${pressed ? 'text-black' : 'text-white'}`}
+                  style={{ fontFamily: 'SpaceMono', letterSpacing: 2 }}
+                >
+                  {saving ? 'SETTING UP...' : 'ENTER THE ARENA'}
+                </Text>
+              )}
             </Pressable>
           </View>
         )}
@@ -167,11 +130,11 @@ export default function OnboardingScreen() {
 
       {/* Step indicator */}
       <View className="flex-row justify-center gap-2 pb-8">
-        {(['name', 'focus', 'ready'] as Step[]).map((s) => (
+        {(['name', 'ready'] as Step[]).map((s) => (
           <View
             key={s}
             className={`w-2 h-2 rounded-full ${
-              s === step ? 'bg-brand' : 'bg-surface-border'
+              s === step ? 'bg-white' : 'bg-white/20'
             }`}
           />
         ))}

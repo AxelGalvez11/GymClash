@@ -1,39 +1,67 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
+import { Alert } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { useAuthStore } from '@/stores/auth-store';
+import { useAccent } from '@/stores/accent-store';
+
+function useGuestGate() {
+  const { isGuest } = useAuthStore();
+  const router = useRouter();
+
+  return {
+    isGuest,
+    guard: () => {
+      if (isGuest) {
+        Alert.alert(
+          'Sign Up to Unlock',
+          'Create an account to access clans, profile, and competitive features.',
+          [
+            { text: 'Later', style: 'cancel' },
+            { text: 'Sign Up', onPress: () => router.push('/(auth)/login?mode=signup') },
+          ]
+        );
+        return true;
+      }
+      return false;
+    },
+  };
+}
 
 export default function AppLayout() {
+  const { isGuest, guard } = useGuestGate();
+  const accent = useAccent();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.brand.DEFAULT,
+        headerShown: false,
+        tabBarActiveTintColor: accent.DEFAULT,
         tabBarInactiveTintColor: Colors.text.muted,
         tabBarStyle: {
-          backgroundColor: Colors.surface.raised,
+          backgroundColor: '#000000',
           borderTopColor: Colors.surface.border,
+          borderTopWidth: 0.5,
+          height: 80,
+          paddingBottom: 24,
+          paddingTop: 8,
         },
-        headerStyle: {
-          backgroundColor: Colors.surface.DEFAULT,
+        tabBarLabelStyle: {
+          fontFamily: 'SpaceMono',
+          fontSize: 9,
+          letterSpacing: 1,
+          textTransform: 'uppercase',
         },
-        headerTintColor: Colors.text.primary,
       }}
     >
+      {/* ─── Visible tabs: Shop → Profile → Home → Clan ─── */}
       <Tabs.Screen
-        name="home"
+        name="shop"
         options={{
-          title: 'Dashboard',
+          title: 'Shop',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="home" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="clan"
-        options={{
-          title: 'Clan',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="shield" size={24} color={color} />
+            <FontAwesome name="shopping-bag" size={18} color={color} />
           ),
         }}
       />
@@ -42,10 +70,56 @@ export default function AppLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="user" size={24} color={color} />
+            <FontAwesome
+              name="user"
+              size={20}
+              color={isGuest ? Colors.text.muted : color}
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            if (guard()) e.preventDefault();
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name="home" size={22} color={color} />
           ),
         }}
       />
+      <Tabs.Screen
+        name="clan"
+        options={{
+          title: 'Clan',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome
+              name="shield"
+              size={20}
+              color={isGuest ? Colors.text.muted : color}
+            />
+          ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            if (guard()) e.preventDefault();
+          },
+        }}
+      />
+
+      {/* ─── Hidden routes (accessible via navigation, not tab bar) ─── */}
+      <Tabs.Screen name="leaderboard" options={{ href: null }} />
+      <Tabs.Screen name="history" options={{ href: null }} />
+      <Tabs.Screen name="workout" options={{ href: null }} />
+      <Tabs.Screen name="review" options={{ href: null }} />
+      <Tabs.Screen name="report" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="player" options={{ href: null }} />
+      <Tabs.Screen name="war-chat" options={{ href: null }} />
     </Tabs>
   );
 }

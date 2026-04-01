@@ -13,14 +13,24 @@ export function useNeedsOnboarding() {
     queryKey: ['needs-onboarding', session?.user?.id],
     queryFn: async () => {
       if (!session?.user) return false;
-      const { data } = await supabase
-        .from('profiles')
-        .select('display_name')
-        .eq('id', session.user.id)
-        .single();
-      return !data?.display_name || data.display_name === '';
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', session.user.id)
+          .single();
+        if (error) {
+          console.warn('Onboarding check failed:', error.message);
+          return false; // Don't block navigation if DB is unreachable
+        }
+        return !data?.display_name || data.display_name === '';
+      } catch (err) {
+        console.warn('Onboarding check error:', err);
+        return false;
+      }
     },
     enabled: !!session,
-    staleTime: Infinity, // Only check once per session
+    staleTime: Infinity,
+    retry: 1, // Only retry once to avoid blocking
   });
 }

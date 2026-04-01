@@ -15,15 +15,18 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const MIN_CLAN_SIZE = 3;
 
+const CRON_SECRET = Deno.env.get('CRON_SECRET');
+
 Deno.serve(async (req) => {
   try {
-    // Verify this is called with service_role or a valid admin token
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.includes(supabaseServiceKey)) {
-      // For cron triggers, Supabase sends the service_role key automatically
-      // For manual triggers, require the service_role key
-      const callerClient = createClient(supabaseUrl, supabaseServiceKey);
-      // Allow if the caller has the CRON_SECRET or is service_role
+    // Verify caller: must be service_role (Supabase cron) or CRON_SECRET header
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const cronHeader = req.headers.get('X-Cron-Secret') ?? '';
+    const isServiceRole = authHeader.includes(supabaseServiceKey);
+    const hasCronSecret = CRON_SECRET && cronHeader === CRON_SECRET;
+
+    if (!isServiceRole && !hasCronSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

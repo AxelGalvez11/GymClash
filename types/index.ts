@@ -1,6 +1,6 @@
 // ─── Enums ───────────────────────────────────────────────
 
-export type WorkoutType = 'strength' | 'scout' | 'active_recovery';
+export type WorkoutType = 'strength' | 'scout' | 'active_recovery' | 'hiit';
 
 export type ValidationStatus =
   | 'accepted'
@@ -14,12 +14,12 @@ export type WorkoutStatus = 'draft' | 'submitted' | 'validated' | 'rejected';
 export type EvidenceSource = 'manual' | 'sensor' | 'wearable';
 
 export type Rank =
-  | 'bronze'
-  | 'silver'
-  | 'gold'
-  | 'platinum'
-  | 'diamond'
-  | 'champion';
+  | 'rookie'
+  | 'iron'
+  | 'steel'
+  | 'titan'
+  | 'apex'
+  | 'demon_slayer';
 
 export type ArenaTier = 'rustyard' | 'iron_forge' | 'titan_vault' | 'apex_colosseum';
 
@@ -82,7 +82,34 @@ export interface Profile {
   readonly height_cm: number | null;
   readonly birth_date: string | null;
   readonly biological_sex: string | null;
+  readonly lifting_experience: 'beginner' | 'intermediate' | 'advanced' | null;
+  readonly running_experience: 'beginner' | 'intermediate' | 'advanced' | null;
+  readonly resting_hr: number | null;
+  readonly estimated_vo2max: number | null;
+  readonly max_heart_rate: number | null;
   readonly last_trophy_decay_date: string | null;
+  readonly strength_workout_count: number;
+  readonly scout_workout_count: number;
+  readonly country_code: string | null;
+  readonly region_code: string | null;
+  readonly gym_coins: number;
+}
+
+export type CharacterBuild = 'balanced' | 'strength' | 'cardio';
+export type CharacterState = 'active' | 'resting' | 'sleeping';
+export type CharacterTier = 'basic' | 'equipped' | 'geared' | 'elite' | 'legendary' | 'mythic';
+export type WarRole = 'strength_specialist' | 'cardio_specialist' | 'flex';
+
+export type CosmeticRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+export interface CosmeticCatalogItem {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly cosmetic_type: string;
+  readonly rarity: CosmeticRarity;
+  readonly price_coins: number | null;
+  readonly preview_url: string | null;
 }
 
 export interface Workout {

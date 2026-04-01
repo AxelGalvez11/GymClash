@@ -18,6 +18,10 @@ const WAR_WEIGHT_PARTICIPATION = 0.3;
 const WAR_WEIGHT_CONSISTENCY = 0.2;
 const WAR_WEIGHT_DIVERSITY = 0.2;
 
+// Trophy rewards (must match constants/theme.ts TrophyRewards)
+const TROPHY_CLAN_WAR_WIN = 30;
+const TROPHY_CLAN_WAR_LOSS = -15;
+
 interface ClanWarMetrics {
   totalOutput: number;
   activeMemberCount: number;
@@ -171,6 +175,41 @@ Deno.serve(async (_req) => {
           clan_b_score: scoreB,
         })
         .eq('id', war.id);
+
+      // Award trophies to all members of both clans
+      const winnerClanId = winnerId;
+      const loserClanId = winnerId === war.clan_a_id ? war.clan_b_id
+        : winnerId === war.clan_b_id ? war.clan_a_id
+        : null; // null = draw
+
+      if (winnerClanId) {
+        // Winner members get +30 trophies
+        const { data: winnerMembers } = await supabase
+          .from('clan_memberships')
+          .select('user_id')
+          .eq('clan_id', winnerClanId);
+        for (const m of (winnerMembers ?? [])) {
+          await supabase.rpc('update_trophy_rating', {
+            p_user_id: m.user_id,
+            p_delta: TROPHY_CLAN_WAR_WIN,
+          });
+        }
+
+        // Loser members get -15 trophies
+        if (loserClanId) {
+          const { data: loserMembers } = await supabase
+            .from('clan_memberships')
+            .select('user_id')
+            .eq('clan_id', loserClanId);
+          for (const m of (loserMembers ?? [])) {
+            await supabase.rpc('update_trophy_rating', {
+              p_user_id: m.user_id,
+              p_delta: TROPHY_CLAN_WAR_LOSS,
+            });
+          }
+        }
+      }
+      // Draw: no trophy changes for either clan
 
       results.push({
         war_id: war.id,
