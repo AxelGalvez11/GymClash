@@ -121,7 +121,6 @@ export default function StrengthWorkoutScreen() {
 
   // Form state
   const [exercise, setExercise] = useState('');
-  const [sets, setSets] = useState('');
   const [reps, setReps] = useState('');
   const [weightKg, setWeightKg] = useState('');
   const [showExercises, setShowExercises] = useState(false);
@@ -181,12 +180,12 @@ export default function StrengthWorkoutScreen() {
       Alert.alert('Error', 'Select an exercise');
       return;
     }
-    const s = parseInt(sets, 10);
+    const s = 1;
     const r = parseInt(reps, 10);
     const w = parseFloat(weightKg);
 
-    if (!s || s <= 0 || !r || r <= 0 || isNaN(w) || w < 0) {
-      Alert.alert('Error', 'Enter valid sets, reps, and weight');
+    if (!r || r <= 0 || isNaN(w) || w < 0) {
+      Alert.alert('Error', 'Enter valid reps and weight');
       return;
     }
 
@@ -214,7 +213,6 @@ export default function StrengthWorkoutScreen() {
       setTimeout(() => setShowScoreBadge(true), 50);
     }
 
-    setSets('');
     setReps('');
     if (!isBodyweight) {
       setWeightKg('');
@@ -259,7 +257,7 @@ export default function StrengthWorkoutScreen() {
       Alert.alert(
         'Workout Saved Locally',
         `${guestWorkouts.length + 1}/5 guest workouts used. Sign up to sync to server.`,
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ text: 'OK', onPress: () => router.replace('/(app)/home') }]
       );
       return;
     }
@@ -323,7 +321,7 @@ export default function StrengthWorkoutScreen() {
         style: 'destructive',
         onPress: () => {
           reset();
-          router.back();
+          router.replace('/(app)/home');
         },
       },
     ]);
@@ -469,7 +467,6 @@ export default function StrengthWorkoutScreen() {
 
           {/* Sets / Reps / Weight */}
           <View className="flex-row gap-3 mb-4">
-            <NumberInput label="Sets" value={sets} onChangeText={setSets} />
             <NumberInput label="Reps" value={reps} onChangeText={setReps} />
             <NumberInput
               label={isBodyweight ? 'BW (kg)' : 'Weight (kg)'}
@@ -495,6 +492,44 @@ export default function StrengthWorkoutScreen() {
             </Text>
           </Pressable>
         </View>
+
+        {/* Camera — Future Implementation */}
+        <View className="bg-[#23233f] rounded-xl p-4 mt-4">
+          <Pressable
+            className="flex-row items-center gap-3 active:scale-[0.98]"
+            onPress={() => Alert.alert('Coming Soon', 'Camera integration for photo evidence will be available in a future update.')}
+          >
+            <View className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center">
+              <FontAwesome name="camera" size={16} color="#ce96ff" />
+            </View>
+            <View className="flex-1">
+              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Take Photo</Text>
+              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>Photo evidence for verified workouts</Text>
+            </View>
+            <View className="bg-[#1d1d37] rounded-full px-2 py-0.5">
+              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 8 }}>SOON</Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Video Form Check — Future Implementation */}
+        <View className="bg-[#23233f] rounded-xl p-4 mt-3">
+          <Pressable
+            className="flex-row items-center gap-3 active:scale-[0.98]"
+            onPress={() => Alert.alert('Coming Soon', 'AI form analysis for rep counting and range-of-motion verification will be available in a future update.')}
+          >
+            <View className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center">
+              <FontAwesome name="video-camera" size={16} color="#81ecff" />
+            </View>
+            <View className="flex-1">
+              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Form Check</Text>
+              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>AI-powered rep counting and ROM analysis</Text>
+            </View>
+            <View className="bg-[#1d1d37] rounded-full px-2 py-0.5">
+              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 8 }}>SOON</Text>
+            </View>
+          </Pressable>
+        </View>
       </ScrollView>
 
       <VictoryScreen
@@ -509,7 +544,7 @@ export default function StrengthWorkoutScreen() {
         onDismiss={() => {
           setShowVictory(false);
           reset();
-          router.back();
+          router.replace('/(app)/home');
         }}
       />
     </SafeAreaView>

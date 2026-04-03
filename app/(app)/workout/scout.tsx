@@ -134,7 +134,7 @@ export default function ScoutWorkoutScreen() {
       Alert.alert(
         'Run Saved Locally',
         `${guestWorkouts.length + 1}/5 guest workouts used. Sign up to sync to server.`,
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ text: 'OK', onPress: () => router.replace('/(app)/home') }]
       );
       return;
     }
@@ -189,7 +189,7 @@ export default function ScoutWorkoutScreen() {
         style: 'destructive',
         onPress: () => {
           reset();
-          router.back();
+          router.replace('/(app)/home');
         },
       },
     ]);
@@ -394,7 +394,7 @@ export default function ScoutWorkoutScreen() {
         onDismiss={() => {
           setShowVictory(false);
           reset();
-          router.back();
+          router.replace('/(app)/home');
         }}
       />
 

@@ -76,6 +76,7 @@ export default function BiodataScreen() {
   const { data: profile } = useProfile();
   const updateBiodata = useUpdateBiodata();
 
+  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('imperial');
   const [bodyWeight, setBodyWeight] = useState('');
   const [height, setHeight] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -118,17 +119,31 @@ export default function BiodataScreen() {
       : null;
 
   function handleSave() {
-    const bw = bodyWeight ? parseFloat(bodyWeight) : null;
-    const ht = height ? parseFloat(height) : null;
+    let bw = bodyWeight ? parseFloat(bodyWeight) : null;
+    let ht = height ? parseFloat(height) : null;
     const hr = restingHR ? parseInt(restingHR, 10) : null;
 
-    if (bw !== null && (bw < 20 || bw > 300)) {
-      Alert.alert('Error', 'Body weight must be between 20 and 300 kg');
-      return;
-    }
-    if (ht !== null && (ht < 100 || ht > 250)) {
-      Alert.alert('Error', 'Height must be between 100 and 250 cm');
-      return;
+    if (unitSystem === 'imperial') {
+      if (bw !== null && (bw < 44 || bw > 660)) {
+        Alert.alert('Error', 'Body weight must be between 44 and 660 lbs');
+        return;
+      }
+      if (ht !== null && (ht < 39 || ht > 98)) {
+        Alert.alert('Error', 'Height must be between 39 and 98 inches');
+        return;
+      }
+      // Convert imperial to metric for storage
+      if (bw !== null) bw = bw * 0.453592;
+      if (ht !== null) ht = ht * 2.54;
+    } else {
+      if (bw !== null && (bw < 20 || bw > 300)) {
+        Alert.alert('Error', 'Body weight must be between 20 and 300 kg');
+        return;
+      }
+      if (ht !== null && (ht < 100 || ht > 250)) {
+        Alert.alert('Error', 'Height must be between 100 and 250 cm');
+        return;
+      }
     }
     if (hr !== null && (hr < 30 || hr > 120)) {
       Alert.alert('Error', 'Resting heart rate must be between 30 and 120 bpm');
@@ -173,14 +188,34 @@ export default function BiodataScreen() {
           competition fairer. Your data is private and only used server-side.
         </Text>
 
+        <View className="flex-row items-center justify-between mb-4">
+          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>UNIT SYSTEM</Text>
+          <View className="flex-row gap-2">
+            <Pressable
+              className="rounded-lg px-3 py-1.5 active:scale-[0.98]"
+              style={{ backgroundColor: unitSystem === 'imperial' ? '#a434ff' : '#23233f' }}
+              onPress={() => setUnitSystem('imperial')}
+            >
+              <Text style={{ color: unitSystem === 'imperial' ? '#fff' : '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>LBS</Text>
+            </Pressable>
+            <Pressable
+              className="rounded-lg px-3 py-1.5 active:scale-[0.98]"
+              style={{ backgroundColor: unitSystem === 'metric' ? '#a434ff' : '#23233f' }}
+              onPress={() => setUnitSystem('metric')}
+            >
+              <Text style={{ color: unitSystem === 'metric' ? '#fff' : '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>KG</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <View className="gap-5 mb-8">
           {/* Body Weight */}
           <View>
-            <SectionLabel text="Body Weight (kg)" />
+            <SectionLabel text={unitSystem === 'imperial' ? 'Body Weight (lbs)' : 'Body Weight (kg)'} />
             <TextInput
               className="bg-[#000000] rounded-xl px-4 py-3 text-base"
               style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
-              placeholder="e.g. 80"
+              placeholder={unitSystem === 'imperial' ? 'e.g. 175' : 'e.g. 80'}
               placeholderTextColor="#74738b"
               value={bodyWeight}
               onChangeText={setBodyWeight}
@@ -190,11 +225,11 @@ export default function BiodataScreen() {
 
           {/* Height */}
           <View>
-            <SectionLabel text="Height (cm)" />
+            <SectionLabel text={unitSystem === 'imperial' ? 'Height (inches)' : 'Height (cm)'} />
             <TextInput
               className="bg-[#000000] rounded-xl px-4 py-3 text-base"
               style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
-              placeholder="e.g. 175"
+              placeholder={unitSystem === 'imperial' ? 'e.g. 70' : 'e.g. 175'}
               placeholderTextColor="#74738b"
               value={height}
               onChangeText={setHeight}

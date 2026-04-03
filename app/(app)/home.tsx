@@ -170,7 +170,7 @@ export default function HomeScreen() {
         >
           <Pressable
             className="w-9 h-9 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
-            onPress={() => router.push('/(app)/settings' as any)}
+            onPress={() => router.push('/(app)/settings/index' as any)}
           >
             <FontAwesome name="cog" size={16} color={VP.textSec} />
           </Pressable>
@@ -428,29 +428,6 @@ export default function HomeScreen() {
               </Text>
             </View>
           </Pressable>
-
-          {/* Quick actions */}
-          <Animated.View style={actionsAnim.style}>
-            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, letterSpacing: 2, color: VP.textMuted, textTransform: 'uppercase', marginBottom: 12, fontWeight: 'bold' }}>
-              Train
-            </Text>
-            <View className="gap-2 mb-5">
-              <QuickAction
-                label="Strength"
-                icon="heartbeat"
-                subtitle="Log sets, reps, and weight"
-                onPress={() => router.push('/(app)/workout/strength')}
-                accentColor={Colors.danger}
-              />
-              <QuickAction
-                label="Run"
-                icon="road"
-                subtitle="Log distance and pace"
-                onPress={() => router.push('/(app)/workout/scout')}
-                accentColor={VP.cyan}
-              />
-            </View>
-          </Animated.View>
 
           {/* Clan war / no clan */}
           {!activeWar && !myClan && (

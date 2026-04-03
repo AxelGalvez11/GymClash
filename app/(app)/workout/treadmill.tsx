@@ -111,7 +111,7 @@ export default function TreadmillWorkoutScreen() {
       Alert.alert(
         'Treadmill Session Saved Locally',
         `${guestWorkouts.length + 1}/5 guest workouts used. Sign up to sync to server.`,
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ text: 'OK', onPress: () => router.replace('/(app)/home') }]
       );
       return;
     }
@@ -164,7 +164,7 @@ export default function TreadmillWorkoutScreen() {
         style: 'destructive',
         onPress: () => {
           reset();
-          router.back();
+          router.replace('/(app)/home');
         },
       },
     ]);
@@ -387,7 +387,7 @@ export default function TreadmillWorkoutScreen() {
         onDismiss={() => {
           setShowVictory(false);
           reset();
-          router.back();
+          router.replace('/(app)/home');
         }}
       />
     </SafeAreaView>

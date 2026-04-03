@@ -25,7 +25,7 @@ export const INITIAL_FORM_STATE: OnboardingFormState = {
   height: '',
   birthDate: '',
   sex: '',
-  unitSystem: 'metric',
+  unitSystem: 'imperial',
   liftingExperience: '',
   runningExperience: '',
   squat1RM: '',
