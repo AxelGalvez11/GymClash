@@ -89,6 +89,8 @@ export default function AppLayout() {
       <Tabs.Screen name="settings/biodata" options={{ href: null }} />
       <Tabs.Screen name="player/[userId]" options={{ href: null }} />
       <Tabs.Screen name="war-chat/[warId]" options={{ href: null }} />
+      <Tabs.Screen name="clan-chat/[clanId]" options={{ href: null }} />
+      <Tabs.Screen name="clan-view/[clanId]" options={{ href: null }} />
     </Tabs>
   );
 }

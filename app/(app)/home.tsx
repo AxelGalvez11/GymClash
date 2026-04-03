@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Animated, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -92,6 +92,7 @@ export default function HomeScreen() {
   const [showMilestone, setShowMilestone] = useState(false);
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMilestones, setShowMilestones] = useState(false);
   const prevMilestoneRef = useRef(false);
 
   const trophies = profile?.trophy_rating ?? 0;
@@ -130,8 +131,7 @@ export default function HomeScreen() {
   const heroAnim = useFadeSlide(0);
   const statsAnim = useFadeSlide(100);
   const arenaAnim = useFadeSlide(200);
-  const milestonesAnim = useFadeSlide(300);
-  const ctaAnim = useFadeSlide(400);
+  const ctaAnim = useFadeSlide(300);
 
   if (profileLoading) {
     return (
@@ -150,14 +150,20 @@ export default function HomeScreen() {
           style={{ backgroundColor: VP.raised }}
         >
           <Pressable
-            className="w-9 h-9 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
-            onPress={() => router.navigate('/(app)/settings/index' as any)}
+            className="w-11 h-11 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            onPress={() => router.push('/(app)/settings/index' as any)}
           >
-            <FontAwesome name="cog" size={16} color={VP.textSec} />
+            <FontAwesome name="cog" size={18} color={VP.textSec} />
           </Pressable>
 
-          {/* Spacer to keep cog on the left */}
-          <View className="w-9" />
+          <Pressable
+            className="w-11 h-11 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            onPress={() => setShowMilestones(true)}
+          >
+            <FontAwesome name="trophy" size={16} color="#ffd709" />
+          </Pressable>
         </View>
 
         {/* Guest banner */}
@@ -253,35 +259,6 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-          {/* 6. Milestones */}
-          <Animated.View style={milestonesAnim.style}>
-            <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
-              <Text style={{ fontFamily: 'Epilogue-Bold', color: VP.textPri, fontSize: 14, marginBottom: 8 }}>
-                Milestones
-              </Text>
-              <View className="gap-2">
-                {[
-                  { label: 'First Workout', done: (workouts?.length ?? 0) > 0 },
-                  { label: 'Join a Clan', done: !!myClan },
-                  { label: '7-Day Streak', done: (profile?.current_streak ?? 0) >= 7 },
-                  { label: '10 Workouts', done: (workouts?.length ?? 0) >= 10 },
-                  { label: 'Win a Clan War', done: false },
-                ].map((m) => (
-                  <View key={m.label} className="flex-row items-center gap-2">
-                    <FontAwesome
-                      name={m.done ? 'check-circle' : 'circle-o'}
-                      size={14}
-                      color={m.done ? '#22c55e' : '#74738b'}
-                    />
-                    <Text style={{ color: m.done ? '#e5e3ff' : '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>
-                      {m.label}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </Animated.View>
-
           {/* Flagged workout alert */}
           {!isGuest && workouts && (() => {
             const flagged = workouts.filter((w: any) =>
@@ -365,6 +342,33 @@ export default function HomeScreen() {
         visible={showNotifications}
         onClose={() => setShowNotifications(false)}
       />
+
+      <Modal visible={showMilestones} animationType="slide" transparent>
+        <View className="flex-1 bg-[rgba(12,12,31,0.9)] justify-end">
+          <View className="bg-[#1d1d37] rounded-t-2xl px-6 pt-6 pb-10">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text style={{ fontFamily: 'Epilogue-Bold', color: '#e5e3ff', fontSize: 18 }}>Milestones</Text>
+              <Pressable onPress={() => setShowMilestones(false)}>
+                <FontAwesome name="times" size={18} color="#74738b" />
+              </Pressable>
+            </View>
+            <View className="gap-3">
+              {[
+                { label: 'First Workout', done: (workouts?.length ?? 0) > 0 },
+                { label: 'Join a Clan', done: !!myClan },
+                { label: '7-Day Streak', done: (profile?.current_streak ?? 0) >= 7 },
+                { label: '10 Workouts', done: (workouts?.length ?? 0) >= 10 },
+                { label: 'Win a Clan War', done: false },
+              ].map((m) => (
+                <View key={m.label} className="flex-row items-center gap-3 bg-[#23233f] rounded-xl p-3">
+                  <FontAwesome name={m.done ? 'check-circle' : 'circle-o'} size={18} color={m.done ? '#22c55e' : '#74738b'} />
+                  <Text style={{ color: m.done ? '#e5e3ff' : '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 14 }}>{m.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

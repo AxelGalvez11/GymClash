@@ -272,20 +272,6 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </Text>
       </Animated.View>
 
-      {/* Initiate War Button — leaders and officers only, when no active war */}
-      {!war && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
-        <Pressable
-          className="mx-0 mb-4 py-3 rounded-xl flex-row items-center justify-center gap-2 active:scale-[0.98]"
-          style={{ backgroundColor: '#a434ff' }}
-          onPress={() => setShowWarModal(true)}
-        >
-          <FontAwesome name="fire" size={16} color="#ffffff" />
-          <Text style={{ color: '#ffffff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">
-            INITIATE WAR
-          </Text>
-        </Pressable>
-      )}
-
       {/* War Initiation Modal */}
       <WarInitiationModal
         visible={showWarModal}
@@ -335,38 +321,25 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </View>
       )}
 
-      {/* War Status */}
+      {/* Active War — compact score card */}
       {war && (
-        <View
-          className="bg-[#1d1d37] rounded-xl p-4 mb-4"
-          style={{
-            shadowColor: '#a434ff',
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.25,
-            shadowRadius: 12,
-            elevation: 8,
-          }}
+        <Pressable
+          className="bg-[#1d1d37] rounded-xl p-4 mb-4 active:scale-[0.98]"
+          onPress={() => router.push(`/(app)/war-chat/${war.id}` as any)}
         >
-          <View className="flex-row items-center justify-between mb-2">
-            <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold text-lg">Active War — Week {war.week_number}</Text>
-            {war.war_type && war.war_type !== 'mixed' && (
-              <View className="bg-[#23233f] rounded-full px-2 py-0.5">
-                <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="text-xs font-bold">{WAR_TYPE_LABELS[war.war_type]}</Text>
-              </View>
-            )}
-          </View>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold text-sm mb-2">
+            Active War — Week {war.week_number}
+          </Text>
           <View className="flex-row items-center justify-between">
             <View className="items-center flex-1">
-              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs">Your Clan</Text>
               <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }} className="text-2xl font-bold">
                 {war.clan_a_id === myClanId
                   ? (war.clan_a_score?.total ?? 0)
                   : (war.clan_b_score?.total ?? 0)}
               </Text>
             </View>
-            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xl mx-4">vs</Text>
+            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-lg mx-3">vs</Text>
             <View className="items-center flex-1">
-              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs">Opponent</Text>
               <Text style={{ color: '#ff6e84', fontFamily: 'Lexend-SemiBold' }} className="text-2xl font-bold">
                 {war.clan_a_id === myClanId
                   ? (war.clan_b_score?.total ?? 0)
@@ -374,29 +347,24 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
               </Text>
             </View>
           </View>
+          <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }} className="text-xs text-center mt-2">
+            View War Details <FontAwesome name="chevron-right" size={9} color="#ce96ff" />
+          </Text>
+        </Pressable>
+      )}
 
-          {/* War countdown */}
-          {war.ended_at && <WarCountdown endedAt={war.ended_at} />}
-
-          {/* War Chat link */}
-          <Pressable
-            className="bg-[#a434ff]/10 rounded-lg py-2 items-center mt-3 active:scale-[0.98]"
-            onPress={() => router.push(`/(app)/war-chat/${war.id}` as any)}
-          >
-            <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold text-sm">
-              <FontAwesome name="comments" size={14} color="#ce96ff" />  War Chat
-            </Text>
-          </Pressable>
-
-          {/* Top contributors — visual bars */}
-          {contributions && contributions.length > 0 && (
-            <ContributionBars
-              contributions={contributions ?? []}
-              maxPoints={Math.max(...(contributions ?? []).map((c: any) => c.contribution_points), 1)}
-              accentColor="#ce96ff"
-            />
-          )}
-        </View>
+      {/* Initiate Clan War — leaders/officers only, when no active war */}
+      {!war && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
+        <Pressable
+          className="w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 mb-4 active:scale-[0.98]"
+          style={{ backgroundColor: '#a434ff' }}
+          onPress={() => setShowWarModal(true)}
+        >
+          <FontAwesome name="fire" size={18} color="#ffffff" />
+          <Text style={{ color: '#ffffff', fontFamily: 'Epilogue-Bold', textTransform: 'uppercase' }} className="font-bold text-base">
+            INITIATE CLAN WAR
+          </Text>
+        </Pressable>
       )}
       </Animated.View>
 
@@ -457,13 +425,11 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       <Animated.View style={fadeRoster.style}>
       <Pressable
         className="bg-[#1d1d37] rounded-xl p-4 mb-3 flex-row items-center active:scale-[0.98]"
-        onPress={() => Alert.alert('Coming Soon', 'Clan messaging will be available in a future update. During wars, use War Chat to coordinate with your clan.')}
+        onPress={() => router.push(`/(app)/clan-chat/${clan.id}` as any)}
       >
         <FontAwesome name="comments" size={18} color="#ce96ff" />
         <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold ml-3 flex-1">Clan Chat</Text>
-        <View className="bg-[#23233f] rounded-full px-2 py-0.5">
-          <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 8 }}>SOON</Text>
-        </View>
+        <FontAwesome name="chevron-right" size={14} color="#74738b" />
       </Pressable>
 
       {/* Leaderboard Link */}
@@ -520,7 +486,11 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         onClose={() => setSelectedMember(null)}
         onViewProfile={() => {
           if (selectedMember) {
-            router.push(`/(app)/player/${selectedMember.userId}` as any);
+            if (selectedMember.userId === currentUserId) {
+              router.push('/(app)/profile' as any);
+            } else {
+              router.push(`/(app)/player/${selectedMember.userId}` as any);
+            }
           }
           setSelectedMember(null);
         }}

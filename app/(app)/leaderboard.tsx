@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, Animated, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -50,10 +50,12 @@ function ClanRow({
   item,
   index,
   zone,
+  onPress,
 }: {
   readonly item: any;
   readonly index: number;
   readonly zone: LeaderboardZone;
+  readonly onPress: () => void;
 }) {
   const zoneBg =
     zone === 'promote'
@@ -73,13 +75,7 @@ function ClanRow({
     <Pressable
       className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center active:scale-[0.98]"
       style={[zoneBg, zoneBorder]}
-      onPress={() =>
-        Alert.alert(
-          item.name,
-          `Tag: [${item.tag}]\nMembers: ${item.member_count}\nWar Wins: ${item.war_wins ?? 0}\nTotal Trophies: ${item.total_trophies ?? 0}${item.description ? '\n\n' + item.description : ''}`,
-          [{ text: 'Close' }]
-        )
-      }
+      onPress={onPress}
     >
       <ZoneIndicator zone={zone} />
       <MedalIcon position={index} />
@@ -278,7 +274,7 @@ export default function LeaderboardScreen() {
     ({ item, index }: { item: any; index: number }) => {
       const zone = getZoneForIndex(index);
       if (tab === 'clans') {
-        return <ClanRow item={item} index={index} zone={zone} />;
+        return <ClanRow item={item} index={index} zone={zone} onPress={() => router.push(`/(app)/clan-view/${item.id}` as any)} />;
       }
       return (
         <PlayerRow
