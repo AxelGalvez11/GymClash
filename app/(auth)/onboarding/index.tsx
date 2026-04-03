@@ -13,6 +13,7 @@ import StepExperience from '@/components/onboarding/StepExperience';
 import { StepOneRepMax } from '@/components/onboarding/StepOneRepMax';
 import StepCardioBaseline from '@/components/onboarding/StepCardioBaseline';
 import StepDeviceConnect from '@/components/onboarding/StepDeviceConnect';
+import StepConsent from '@/components/onboarding/StepConsent';
 import { StepSummary } from '@/components/onboarding/StepSummary';
 import {
   INITIAL_FORM_STATE,
@@ -35,7 +36,7 @@ export default function OnboardingScreen() {
   }, []);
 
   function goNext() {
-    setStep((prev) => Math.min(prev + 1, 6) as OnboardingStep);
+    setStep((prev) => Math.min(prev + 1, 7) as OnboardingStep);
   }
 
   function goBack() {
@@ -88,7 +89,7 @@ export default function OnboardingScreen() {
   }
 
   // Steps 1-5 show back button (not step 0 = name, not step 6 = summary)
-  const showBack = step > 0 && step < 6;
+  const showBack = step > 0 && step < 7;
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
@@ -138,6 +139,9 @@ export default function OnboardingScreen() {
         )}
         {step === 5 && <StepDeviceConnect onNext={goNext} />}
         {step === 6 && (
+          <StepConsent form={form} onUpdate={handleUpdate} onNext={goNext} />
+        )}
+        {step === 7 && (
           <StepSummary
             form={form}
             onFinish={handleFinish}

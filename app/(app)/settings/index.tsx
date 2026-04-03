@@ -248,6 +248,41 @@ export default function SettingsScreen() {
               SIGN OUT
             </Text>
           </Pressable>
+
+          {/* Privacy Section */}
+          <View className="gap-3 mt-6">
+            <Text className="text-xs uppercase px-1" style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}>
+              Privacy
+            </Text>
+            <SettingsRow
+              icon="shield"
+              label="Privacy Policy"
+              onPress={() => Alert.alert('Privacy Policy', 'Our full privacy policy is available at gymclash.app/privacy')}
+              delay={350}
+            />
+            <SettingsRow
+              icon="ban"
+              label="Do Not Sell My Data"
+              detail="CCPA"
+              onPress={() => Alert.alert('Data Not Sold', 'GymClash does not sell your personal data to third parties. This complies with CCPA requirements.')}
+              color="#eab308"
+              delay={400}
+            />
+            <SettingsRow
+              icon="trash"
+              label="Delete My Data"
+              onPress={() => Alert.alert(
+                'Delete All Data?',
+                'This will permanently delete your account, workout history, clan membership, and all associated data. This cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Delete Everything', style: 'destructive', onPress: () => Alert.alert('Coming Soon', 'Account deletion will be available in a future update. Contact support@gymclash.app for immediate data deletion requests.') },
+                ]
+              )}
+              color="#ef4444"
+              delay={450}
+            />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

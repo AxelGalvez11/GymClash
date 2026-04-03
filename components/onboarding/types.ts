@@ -17,6 +17,9 @@ export interface OnboardingFormState {
   readonly ohp1RM: string;
   readonly restingHR: string;
   readonly maxHROverride: string;
+  readonly consentGps: boolean;
+  readonly consentHr: boolean;
+  readonly consentBiodata: boolean;
 }
 
 export const INITIAL_FORM_STATE: OnboardingFormState = {
@@ -34,6 +37,9 @@ export const INITIAL_FORM_STATE: OnboardingFormState = {
   ohp1RM: '',
   restingHR: '',
   maxHROverride: '',
+  consentGps: false,
+  consentHr: false,
+  consentBiodata: false,
 };
 
 export const STEP_LABELS = [
@@ -43,8 +49,9 @@ export const STEP_LABELS = [
   'Strength',
   'Cardio',
   'Devices',
+  'Privacy',
   'Summary',
 ] as const;
 
-export type OnboardingStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export const TOTAL_STEPS = 7;
+export type OnboardingStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export const TOTAL_STEPS = 8;

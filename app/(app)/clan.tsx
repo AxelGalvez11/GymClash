@@ -63,6 +63,7 @@ function MemberRow({
   level,
   role,
   lastWorkoutDate,
+  trophyRating,
   onPress,
 }: {
   userId: string;
@@ -71,6 +72,7 @@ function MemberRow({
   level: number;
   role: ClanRole;
   lastWorkoutDate?: string | null;
+  trophyRating?: number;
   onPress?: () => void;
 }) {
   const rankConfig = Rank[rank] ?? Rank.rookie;
@@ -87,6 +89,9 @@ function MemberRow({
         <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }} className="font-bold">{displayName || 'Warrior'}</Text>
         <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
           Lv.{level} · <Text style={{ color: rankConfig.color }}>{rankConfig.label}</Text>
+        </Text>
+        <Text style={{ color: '#ffd709', fontFamily: 'Lexend-SemiBold' }} className="text-xs">
+          {trophyRating ?? 0} <FontAwesome name="trophy" size={8} color="#ffd709" />
         </Text>
       </View>
       <Text style={{ color: ROLE_COLORS[role], fontFamily: 'Lexend-SemiBold' }} className="text-xs mr-2">{ROLE_LABELS[role]}</Text>
@@ -241,6 +246,9 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         ) : null}
         <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-sm mt-2">
           {clan.member_count} / {clan.max_members} members · Your role: {ROLE_LABELS[clan.my_role as ClanRole]}
+        </Text>
+        <Text style={{ color: '#ffd709', fontFamily: 'Lexend-SemiBold' }} className="text-sm mt-1">
+          <FontAwesome name="trophy" size={12} color="#ffd709" /> {roster ? roster.reduce((sum: number, m: any) => sum + (m.trophy_rating ?? 0), 0) : 0} Total Trophies
         </Text>
       </Animated.View>
 
@@ -463,6 +471,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
               level={m.level}
               role={m.role}
               lastWorkoutDate={m.last_workout_date}
+              trophyRating={m.trophy_rating}
               onPress={() => setSelectedMember({ userId: m.user_id, name: m.display_name || 'Warrior', role: m.role })}
             />
           ))}
