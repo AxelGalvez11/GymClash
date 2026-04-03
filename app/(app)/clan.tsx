@@ -325,7 +325,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       {war && (
         <Pressable
           className="bg-[#1d1d37] rounded-xl p-4 mb-4 active:scale-[0.98]"
-          onPress={() => router.push(`/(app)/war-chat/${war.id}` as any)}
+          onPress={() => router.push(`/(app)/war-details/${war.id}` as any)}
         >
           <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold text-sm mb-2">
             Active War — Week {war.week_number}

@@ -100,7 +100,7 @@ export default function HistoryScreen() {
       {/* Header */}
       <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.replace('/(app)/profile' as any)}>
             <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
           </Pressable>
           <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>Workout History</Text>

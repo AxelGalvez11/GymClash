@@ -91,6 +91,7 @@ export default function AppLayout() {
       <Tabs.Screen name="war-chat/[warId]" options={{ href: null }} />
       <Tabs.Screen name="clan-chat/[clanId]" options={{ href: null }} />
       <Tabs.Screen name="clan-view/[clanId]" options={{ href: null }} />
+      <Tabs.Screen name="war-details/[warId]" options={{ href: null }} />
     </Tabs>
   );
 }

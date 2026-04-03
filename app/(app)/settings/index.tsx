@@ -164,7 +164,7 @@ export default function SettingsScreen() {
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center px-5 pt-3 pb-5">
-          <Pressable onPress={() => router.back()} className="mr-4 active:scale-[0.98]">
+          <Pressable onPress={() => router.replace('/(app)/home' as any)} className="mr-4 active:scale-[0.98]">
             <FontAwesome name="arrow-left" size={18} color="#aaa8c3" />
           </Pressable>
           <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, letterSpacing: 1 }}>

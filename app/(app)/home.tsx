@@ -152,7 +152,7 @@ export default function HomeScreen() {
           <Pressable
             className="w-11 h-11 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            onPress={() => router.push('/(app)/settings/index' as any)}
+            onPress={() => router.push('/(app)/settings' as any)}
           >
             <FontAwesome name="cog" size={18} color={VP.textSec} />
           </Pressable>

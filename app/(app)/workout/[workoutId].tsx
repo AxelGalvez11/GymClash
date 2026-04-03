@@ -115,7 +115,7 @@ export default function WorkoutDetailScreen() {
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Back button */}
-        <Pressable onPress={() => router.back()} className="py-4 active:scale-[0.98]">
+        <Pressable onPress={() => router.replace('/(app)/home' as any)} className="py-4 active:scale-[0.98]">
           <Text className="text-base" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>← Back</Text>
         </Pressable>
 

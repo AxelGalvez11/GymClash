@@ -132,7 +132,7 @@ export default function WarChatScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <View className="px-4 py-3 flex-row items-center" style={{ borderBottomWidth: 1, borderBottomColor: '#23233f' }}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.replace('/(app)/clan' as any)}>
           <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }} className="text-base">← Back</Text>
         </Pressable>
         <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold ml-4 flex-1">War Chat</Text>

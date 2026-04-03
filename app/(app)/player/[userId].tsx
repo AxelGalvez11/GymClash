@@ -40,7 +40,7 @@ export default function PublicProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
-        <Pressable onPress={() => router.back()} className="py-4 active:scale-[0.98]">
+        <Pressable onPress={() => router.replace('/(app)/home' as any)} className="py-4 active:scale-[0.98]">
           <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
         </Pressable>
 
