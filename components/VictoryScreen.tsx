@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, Modal, Animated, Easing, Pressable } from 'react-native';
+import { View, Text, Modal, Animated, Easing, Pressable, ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors } from '@/constants/theme';
@@ -9,6 +9,12 @@ import { ConfettiBurst } from '@/components/ConfettiBurst';
 import type { StreakTier } from '@/types';
 
 // ─── Types ───────────────────────────────────────────────
+
+interface ExerciseBreakdownItem {
+  readonly exercise: string;
+  readonly score: number;
+  readonly rating: 'exceeded' | 'met' | 'below';
+}
 
 interface VictoryScreenProps {
   readonly visible: boolean;
@@ -25,6 +31,8 @@ interface VictoryScreenProps {
   readonly clanContribution?: number | null;
   readonly dailyGoalCompleted?: boolean | null;
   readonly streakTier?: StreakTier;
+  readonly exerciseBreakdown?: ReadonlyArray<ExerciseBreakdownItem>;
+  readonly currencyEarned?: number;
 }
 
 // ─── Confetti-worthy streak tiers ────────────────────────
@@ -259,6 +267,52 @@ function XpBar({
   );
 }
 
+// ─── Exercise Score Card ────────────────────────────────
+
+function ExerciseScoreCard({ exercise, score, rating }: {
+  readonly exercise: string;
+  readonly score: number;
+  readonly rating: 'exceeded' | 'met' | 'below';
+}) {
+  const ratingConfig = {
+    exceeded: { color: '#22c55e', label: 'Exceeded', icon: 'arrow-up' as const },
+    met: { color: '#eab308', label: 'On Target', icon: 'minus' as const },
+    below: { color: '#ef4444', label: 'Below', icon: 'arrow-down' as const },
+  };
+  const config = ratingConfig[rating];
+
+  return (
+    <View
+      className="bg-[#1d1d37] rounded-xl p-3 flex-row items-center justify-between"
+    >
+      <Text
+        className="flex-1"
+        style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular', fontSize: 14 }}
+        numberOfLines={1}
+      >
+        {exercise}
+      </Text>
+      <Text
+        className="mx-3"
+        style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}
+      >
+        {score}
+      </Text>
+      <View
+        className="rounded-full px-2 py-0.5 flex-row items-center gap-1"
+        style={{ backgroundColor: config.color + '33' }}
+      >
+        <FontAwesome name={config.icon} size={10} color={config.color} />
+        <Text
+          style={{ color: config.color, fontFamily: 'Lexend-SemiBold', fontSize: 11 }}
+        >
+          {config.label}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 // ─── Component ──────────────────────────────────────────
 
 export function VictoryScreen({
@@ -275,6 +329,8 @@ export function VictoryScreen({
   clanContribution,
   dailyGoalCompleted,
   streakTier,
+  exerciseBreakdown,
+  currencyEarned,
 }: VictoryScreenProps) {
   const accent = useAccent();
   const [skipped, setSkipped] = useState(false);
@@ -299,6 +355,7 @@ export function VictoryScreen({
   // ─── Staggered entry animations ───────────────────────
   // Score counter finishes at ~1500ms, then badges stagger
 
+  const breakdownAnim = useFadeIn(1500 + 100, visible);
   const trophyAnim = useSlideInRight(1500 + 200, visible);
   const streakAnim = useFadeScale(1500 + 400, visible);
   const pbAnim = useFlashIn(1500 + 600, visible);
@@ -307,6 +364,7 @@ export function VictoryScreen({
   const xpAnim = useSlideInRight(1700, visible);
   const clanAnim = useSlideInRight(1900, visible);
   const dailyGoalAnim = useFadeIn(2100, visible);
+  const currencyAnim = useSlideInRight(2300, visible);
 
   // Button fade — appears after all badges
   const buttonOpacity = useRef(new Animated.Value(0)).current;
@@ -321,6 +379,7 @@ export function VictoryScreen({
     if (xpEarned != null) d = Math.max(d, 2100);
     if (clanContribution != null) d = Math.max(d, 2300);
     if (dailyGoalCompleted) d = Math.max(d, 2500);
+    if (currencyEarned != null && currencyEarned > 0) d = Math.max(d, 2700);
 
     return d;
   })();
@@ -344,24 +403,28 @@ export function VictoryScreen({
     setSkipped(true);
 
     // Jump all animations to final state
+    breakdownAnim.skipToEnd();
     trophyAnim.skipToEnd();
     streakAnim.skipToEnd();
     pbAnim.skipToEnd();
     xpAnim.skipToEnd();
     clanAnim.skipToEnd();
     dailyGoalAnim.skipToEnd();
+    currencyAnim.skipToEnd();
 
     // Show button immediately
     buttonOpacity.stopAnimation();
     buttonOpacity.setValue(1);
   }, [
     skipped,
+    breakdownAnim,
     trophyAnim,
     streakAnim,
     pbAnim,
     xpAnim,
     clanAnim,
     dailyGoalAnim,
+    currencyAnim,
     buttonOpacity,
   ]);
 
@@ -380,10 +443,16 @@ export function VictoryScreen({
   const workoutIcon = workoutType === 'strength' ? 'heartbeat' : 'road';
   const workoutColor = workoutType === 'strength' ? Colors.danger : Colors.info;
 
+  const hasBreakdown =
+    exerciseBreakdown != null && exerciseBreakdown.length > 0;
   const hasXp =
     xpEarned != null && xpTotal != null && xpToNextLevel != null;
   const hasClan = clanContribution != null && clanContribution > 0;
   const hasDailyGoal = dailyGoalCompleted === true;
+  const hasCurrency = currencyEarned != null && currencyEarned > 0;
+  const currencyIcon = workoutType === 'strength' ? 'bolt' : 'road';
+  const currencyColor = workoutType === 'strength' ? '#eab308' : '#81ecff';
+  const currencyLabel = workoutType === 'strength' ? 'Lifting Coins' : 'Running Coins';
 
   return (
     <Modal
@@ -436,6 +505,28 @@ export function VictoryScreen({
                 accentColor={accent.DEFAULT}
               />
             </View>
+
+            {/* Exercise breakdown — fades in after score */}
+            {hasBreakdown && (
+              <Animated.View style={breakdownAnim.style} className="w-full mb-4">
+                <ScrollView
+                  style={{ maxHeight: 180 }}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
+                >
+                  <View className="gap-2">
+                    {exerciseBreakdown.map((item) => (
+                      <ExerciseScoreCard
+                        key={item.exercise}
+                        exercise={item.exercise}
+                        score={item.score}
+                        rating={item.rating}
+                      />
+                    ))}
+                  </View>
+                </ScrollView>
+              </Animated.View>
+            )}
 
             {/* Trophy badge — slides in from right */}
             <Animated.View
@@ -559,6 +650,29 @@ export function VictoryScreen({
                     }}
                   >
                     DAILY GOAL COMPLETE!
+                  </Text>
+                </View>
+              </Animated.View>
+            )}
+
+            {/* Currency earned — slides in at 2300ms */}
+            {hasCurrency && (
+              <Animated.View
+                style={currencyAnim.style}
+                className="mb-4"
+              >
+                <View
+                  className="bg-[#1d1d37] rounded-xl p-3 flex-row items-center gap-2"
+                >
+                  <FontAwesome name={currencyIcon} size={16} color={currencyColor} />
+                  <Text
+                    className="font-bold text-sm"
+                    style={{
+                      color: currencyColor,
+                      fontFamily: 'SpaceMono',
+                    }}
+                  >
+                    {currencyEarned} {currencyLabel}
                   </Text>
                 </View>
               </Animated.View>

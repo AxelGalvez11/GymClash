@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,11 +12,14 @@ import { Colors, TrophyRewards } from '@/constants/theme';
 import { useProfile } from '@/hooks/use-profile';
 import { useGpsTracking } from '@/hooks/use-gps-tracking';
 import { VictoryScreen } from '@/components/VictoryScreen';
+import { CardioModeSelector } from '@/components/CardioModeSelector';
+import { GpsDropOverlay } from '@/components/GpsDropOverlay';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function ScoutWorkoutScreen() {
   const router = useRouter();
   const { isGuest } = useAuthStore();
+  const [mode, setMode] = useState<'select' | 'territory'>('select');
   const {
     isActive,
     startWorkout,
@@ -37,22 +40,36 @@ export default function ScoutWorkoutScreen() {
   const [useGps, setUseGps] = useState(false);
   const [distanceInput, setDistanceInput] = useState('');
   const [showVictory, setShowVictory] = useState(false);
-  const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false });
+  const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false, currencyEarned: 0 });
+  const [gpsDropped, setGpsDropped] = useState(false);
+  const timerStopped = useRef(false);
 
   // Start workout on mount if not active
   useEffect(() => {
+    if (mode !== 'territory') return;
     if (!isActive) {
       startWorkout('scout');
     }
-  }, [isActive, startWorkout]);
+  }, [isActive, startWorkout, mode]);
 
   // Track elapsed time silently for duration_seconds on submission
   useEffect(() => {
+    if (mode !== 'territory') return;
+    if (timerStopped.current) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [elapsedSeconds, updateElapsed]);
+  }, [elapsedSeconds, updateElapsed, mode]);
+
+  // Watch for GPS signal drops in territory mode
+  useEffect(() => {
+    if (mode === 'territory' && useGps && gps.error) {
+      setGpsDropped(true);
+    } else if (!gps.error) {
+      setGpsDropped(false);
+    }
+  }, [gps.error, mode, useGps]);
 
   // Compute pace from elapsed time and distance
   const computePace = useCallback(() => {
@@ -74,6 +91,7 @@ export default function ScoutWorkoutScreen() {
       : 0;
 
   async function handleFinishWorkout() {
+    timerStopped.current = true;
     const km = parseFloat(distanceInput);
     if (!km || km <= 0) {
       Alert.alert('Error', 'Enter the distance you ran');
@@ -143,11 +161,24 @@ export default function ScoutWorkoutScreen() {
         trophies: TrophyRewards.ACCEPTED_WORKOUT,
         streak: profile?.current_streak ?? 0,
         isPB: false,
+        currencyEarned: Math.round(provisionalScore * 0.1),
       });
       setShowVictory(true);
     } catch (err) {
       Alert.alert('Error', 'Failed to submit run. Please try again.');
     }
+  }
+
+  function handleConcludePress() {
+    if (submitWorkout.isPending) return;
+    Alert.alert(
+      'Finish Workout?',
+      'Are you sure you want to finish this session?',
+      [
+        { text: 'Keep Going', style: 'cancel' },
+        { text: 'Finish', onPress: handleFinishWorkout },
+      ]
+    );
   }
 
   function handleDiscard() {
@@ -171,6 +202,16 @@ export default function ScoutWorkoutScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
+  if (mode === 'select') {
+    return (
+      <CardioModeSelector
+        onSelectTerritory={() => setMode('territory')}
+        onSelectTreadmill={() => router.push('/(app)/workout/treadmill')}
+        onBack={() => router.back()}
+      />
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
@@ -186,7 +227,7 @@ export default function ScoutWorkoutScreen() {
             </Text>
           </View>
           <Pressable
-            onPress={handleFinishWorkout}
+            onPress={handleConcludePress}
             disabled={submitWorkout.isPending}
             className="active:scale-[0.98]"
           >
@@ -349,10 +390,20 @@ export default function ScoutWorkoutScreen() {
         trophiesEarned={victoryData.trophies}
         streakCount={victoryData.streak}
         isPersonalBest={victoryData.isPB}
+        currencyEarned={victoryData.currencyEarned}
         onDismiss={() => {
           setShowVictory(false);
           reset();
           router.back();
+        }}
+      />
+
+      <GpsDropOverlay
+        visible={gpsDropped}
+        onWaitForSignal={() => setGpsDropped(false)}
+        onEndSession={() => {
+          setGpsDropped(false);
+          handleConcludePress();
         }}
       />
     </SafeAreaView>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Colors } from '@/constants/theme';
 import { supabase } from '@/services/supabase';
 
@@ -13,6 +14,23 @@ export default function LoginScreen() {
   const [isSignUp, setIsSignUp] = useState(mode === 'signup');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  async function handleOAuthSignIn(provider: 'apple' | 'google') {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: 'gymclash://auth/callback',
+        },
+      });
+      if (error) Alert.alert('Error', error.message);
+    } catch {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleAuth() {
     if (!email || !password) {
@@ -149,6 +167,67 @@ export default function LoginScreen() {
         )}
 
         {isSignUp && <View className="mb-2" />}
+
+        {/* SSO Divider */}
+        <View className="flex-row items-center mb-6">
+          <View className="flex-1 h-px" style={{ backgroundColor: 'rgba(206,150,255,0.15)' }} />
+          <Text
+            className="mx-4"
+            style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}
+          >
+            OR
+          </Text>
+          <View className="flex-1 h-px" style={{ backgroundColor: 'rgba(206,150,255,0.15)' }} />
+        </View>
+
+        {/* SSO Buttons */}
+        <View className="gap-3 mb-6">
+          <Pressable
+            className="flex-row items-center justify-center py-3.5 rounded-[2rem] active:scale-[0.98]"
+            style={{
+              backgroundColor: '#23233f',
+              borderWidth: 0.5,
+              borderColor: 'rgba(206,150,255,0.25)',
+            }}
+            onPress={() => handleOAuthSignIn('apple')}
+            disabled={loading}
+          >
+            <FontAwesome name="apple" size={18} color="#fff" style={{ marginRight: 10 }} />
+            <Text
+              style={{
+                color: '#e5e3ff',
+                fontFamily: 'Lexend-SemiBold',
+                fontSize: 13,
+                letterSpacing: 1,
+              }}
+            >
+              CONTINUE WITH APPLE
+            </Text>
+          </Pressable>
+
+          <Pressable
+            className="flex-row items-center justify-center py-3.5 rounded-[2rem] active:scale-[0.98]"
+            style={{
+              backgroundColor: '#23233f',
+              borderWidth: 0.5,
+              borderColor: 'rgba(206,150,255,0.25)',
+            }}
+            onPress={() => handleOAuthSignIn('google')}
+            disabled={loading}
+          >
+            <FontAwesome name="google" size={18} color="#fff" style={{ marginRight: 10 }} />
+            <Text
+              style={{
+                color: '#e5e3ff',
+                fontFamily: 'Lexend-SemiBold',
+                fontSize: 13,
+                letterSpacing: 1,
+              }}
+            >
+              CONTINUE WITH GOOGLE
+            </Text>
+          </Pressable>
+        </View>
 
         {/* Toggle */}
         <Pressable

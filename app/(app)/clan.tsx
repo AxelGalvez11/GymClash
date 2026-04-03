@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors, Rank } from '@/constants/theme';
+import ContributionBars from '@/components/ContributionBars';
 import {
   useMyClan,
   useSearchClans,
@@ -27,8 +28,12 @@ import {
   useWarHistory,
   useMyClanChallenges,
   useRespondToChallenge,
+  useSendChallenge,
 } from '@/hooks/use-clan';
+import WarInitiationModal from '@/components/WarInitiationModal';
+import MemberActionSheet from '@/components/MemberActionSheet';
 import { useFadeSlide } from '@/hooks/use-fade-slide';
+import { useAuthStore } from '@/stores/auth-store';
 import type { Rank as RankType, ClanRole } from '@/types';
 
 type ClanView = 'my-clan' | 'search' | 'create';
@@ -176,6 +181,10 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   const { data: challenges } = useMyClanChallenges();
   const respondMutation = useRespondToChallenge();
   const leaveMutation = useLeaveClan();
+  const sendChallengeMutation = useSendChallenge();
+  const [showWarModal, setShowWarModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<{ userId: string; name: string; role: ClanRole } | null>(null);
+  const currentUserId = useAuthStore((s) => s.user?.id);
 
   // Entrance animations
   const fadeHeader = useFadeSlide(0);
@@ -219,6 +228,36 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           {clan.member_count} / {clan.max_members} members · Your role: {ROLE_LABELS[clan.my_role as ClanRole]}
         </Text>
       </Animated.View>
+
+      {/* Initiate War Button — leaders and officers only, when no active war */}
+      {!war && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
+        <Pressable
+          className="mx-0 mb-4 py-3 rounded-xl flex-row items-center justify-center gap-2 active:scale-[0.98]"
+          style={{ backgroundColor: '#a434ff' }}
+          onPress={() => setShowWarModal(true)}
+        >
+          <FontAwesome name="fire" size={16} color="#ffffff" />
+          <Text style={{ color: '#ffffff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">
+            INITIATE WAR
+          </Text>
+        </Pressable>
+      )}
+
+      {/* War Initiation Modal */}
+      <WarInitiationModal
+        visible={showWarModal}
+        onClose={() => setShowWarModal(false)}
+        sending={sendChallengeMutation.isPending}
+        onSendChallenge={(warType, _durationDays) => {
+          // TODO: Implement opponent search/matchmaking UI
+          // For now, matchmaking is not yet available
+          Alert.alert(
+            'Matchmaking Coming Soon',
+            'Automatic opponent matching will be available in a future update. For now, ask a rival clan leader to challenge you!',
+            [{ text: 'OK', onPress: () => setShowWarModal(false) }]
+          );
+        }}
+      />
 
       {/* Incoming Challenges */}
       <Animated.View style={fadeWar.style}>
@@ -306,21 +345,13 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
             </Text>
           </Pressable>
 
-          {/* Top contributors */}
+          {/* Top contributors — visual bars */}
           {contributions && contributions.length > 0 && (
-            <View className="mt-4 pt-3" style={{ borderTopWidth: 1, borderTopColor: '#23233f' }}>
-              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-xs uppercase mb-2">Top Contributors</Text>
-              {contributions.slice(0, 5).map((c: any, i: number) => (
-                <View key={c.user_id} className="flex-row justify-between py-1">
-                  <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}>
-                    {i + 1}. {c.display_name || 'Warrior'}
-                  </Text>
-                  <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">
-                    {Math.round(c.contribution_points)} pts ({c.workout_count} workouts)
-                  </Text>
-                </View>
-              ))}
-            </View>
+            <ContributionBars
+              contributions={contributions ?? []}
+              maxPoints={Math.max(...(contributions ?? []).map((c: any) => c.contribution_points), 1)}
+              accentColor="#ce96ff"
+            />
           )}
         </View>
       )}
@@ -404,7 +435,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
               rank={m.rank}
               level={m.level}
               role={m.role}
-              onPress={() => router.push(`/(app)/player/${m.user_id}` as any)}
+              onPress={() => setSelectedMember({ userId: m.user_id, name: m.display_name || 'Warrior', role: m.role })}
             />
           ))}
         </View>
@@ -422,6 +453,34 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </Text>
       </Pressable>
       </Animated.View>
+
+      {/* Member Action Sheet */}
+      <MemberActionSheet
+        visible={selectedMember !== null}
+        memberName={selectedMember?.name ?? ''}
+        memberRole={selectedMember?.role ?? 'member'}
+        myRole={(selectedMember?.userId === currentUserId ? 'member' : clan.my_role) as ClanRole}
+        onClose={() => setSelectedMember(null)}
+        onViewProfile={() => {
+          if (selectedMember) {
+            router.push(`/(app)/player/${selectedMember.userId}` as any);
+          }
+          setSelectedMember(null);
+        }}
+        onPromote={() => {
+          Alert.alert('Coming Soon', 'Role management will be available in a future update.');
+          setSelectedMember(null);
+        }}
+        onDemote={() => {
+          Alert.alert('Coming Soon', 'Role management will be available in a future update.');
+          setSelectedMember(null);
+        }}
+        onKick={() => {
+          Alert.alert('Coming Soon', 'Role management will be available in a future update.');
+          setSelectedMember(null);
+        }}
+        actionPending={false}
+      />
     </ScrollView>
   );
 }

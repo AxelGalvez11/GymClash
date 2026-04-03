@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, AccessibilityInfo } from 'react-native';
+import { Animated, AccessibilityInfo, Platform } from 'react-native';
 
 /**
  * Reusable entrance animation: fade in + slide up.
@@ -21,18 +21,20 @@ export function useFadeSlide(delay = 0) {
         return;
       }
 
+      const nativeDriver = Platform.OS !== 'web';
+
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 1,
           duration: 500,
           delay,
-          useNativeDriver: true,
+          useNativeDriver: nativeDriver,
         }),
         Animated.timing(translateY, {
           toValue: 0,
           duration: 400,
           delay,
-          useNativeDriver: true,
+          useNativeDriver: nativeDriver,
         }),
       ]).start();
     });

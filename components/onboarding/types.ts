@@ -1,0 +1,50 @@
+export type ExperienceLevel = 'never_trained' | 'beginner' | 'intermediate' | 'advanced';
+export type SexOption = 'male' | 'female' | 'prefer_not_to_say';
+export type UnitSystem = 'metric' | 'imperial';
+
+export interface OnboardingFormState {
+  readonly displayName: string;
+  readonly bodyWeight: string;
+  readonly height: string;
+  readonly birthDate: string;
+  readonly sex: SexOption | '';
+  readonly unitSystem: UnitSystem;
+  readonly liftingExperience: ExperienceLevel | '';
+  readonly runningExperience: ExperienceLevel | '';
+  readonly squat1RM: string;
+  readonly bench1RM: string;
+  readonly deadlift1RM: string;
+  readonly ohp1RM: string;
+  readonly restingHR: string;
+  readonly maxHROverride: string;
+}
+
+export const INITIAL_FORM_STATE: OnboardingFormState = {
+  displayName: '',
+  bodyWeight: '',
+  height: '',
+  birthDate: '',
+  sex: '',
+  unitSystem: 'metric',
+  liftingExperience: '',
+  runningExperience: '',
+  squat1RM: '',
+  bench1RM: '',
+  deadlift1RM: '',
+  ohp1RM: '',
+  restingHR: '',
+  maxHROverride: '',
+};
+
+export const STEP_LABELS = [
+  'Name',
+  'Body Data',
+  'Experience',
+  'Strength',
+  'Cardio',
+  'Devices',
+  'Summary',
+] as const;
+
+export type OnboardingStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export const TOTAL_STEPS = 7;

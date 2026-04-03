@@ -8,9 +8,11 @@ import { Colors, Rank, Arena, getArenaTier } from '@/constants/theme';
 import { useAuthStore } from '@/stores/auth-store';
 import { useGuestWorkoutStore, useWorkoutStore } from '@/stores/workout-store';
 import { useAccent } from '@/stores/accent-store';
+import { useNotificationStore } from '@/stores/notification-store';
 import { CharacterDisplay } from '@/components/ui/CharacterDisplay';
 import { Card } from '@/components/ui/Card';
 import { StreakFlame } from '@/components/StreakFlame';
+import { NotificationPanel } from '@/components/NotificationPanel';
 import { useProfile } from '@/hooks/use-profile';
 import { useFadeSlide } from '@/hooks/use-fade-slide';
 import { useMyWorkouts } from '@/hooks/use-workouts';
@@ -20,6 +22,7 @@ import { usePlayerType } from '@/hooks/use-player-type';
 import { useStreakMilestone } from '@/hooks/use-streak-milestone';
 import { PlayerTypeBadge } from '@/components/PlayerTypeBadge';
 import { ConfettiBurst } from '@/components/ConfettiBurst';
+import { WorkoutTypeModal } from '@/components/WorkoutTypeModal';
 import type { Rank as RankType, ArenaTier } from '@/types';
 
 // ─── Victory Peak palette ───────────────────────────────
@@ -124,6 +127,9 @@ export default function HomeScreen() {
   const { playerType } = usePlayerType();
   const { isMilestone, tier } = useStreakMilestone(profile?.current_streak ?? 0);
   const [showMilestone, setShowMilestone] = useState(false);
+  const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { unreadCount } = useNotificationStore();
   const prevMilestoneRef = useRef(false);
 
   const trophies = profile?.trophy_rating ?? 0;
@@ -173,13 +179,27 @@ export default function HomeScreen() {
             GYMCLASH
           </Text>
 
-          {profile?.gym_coins != null && (
-            <View className="flex-row items-center gap-1.5 bg-[#23233f] rounded-full px-3 py-1.5">
-              <FontAwesome name="circle" size={6} color={VP.gold} />
-              <Text className="text-xs font-bold" style={{ color: '#ffffff' }}>{profile.gym_coins}</Text>
-            </View>
-          )}
-          {profile?.gym_coins == null && <View className="w-9" />}
+          <View className="flex-row items-center gap-3">
+            {/* Notification bell */}
+            <Pressable onPress={() => setShowNotifications(true)} className="relative active:scale-[0.98]">
+              <FontAwesome name="bell" size={18} color={VP.textSec} />
+              {unreadCount > 0 && (
+                <View className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#ef4444] items-center justify-center">
+                  <Text style={{ color: '#fff', fontSize: 9, fontFamily: 'Lexend-SemiBold' }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+
+            {profile?.gym_coins != null && (
+              <View className="flex-row items-center gap-1.5 bg-[#23233f] rounded-full px-3 py-1.5">
+                <FontAwesome name="circle" size={6} color={VP.gold} />
+                <Text className="text-xs font-bold" style={{ color: '#ffffff' }}>{profile.gym_coins}</Text>
+              </View>
+            )}
+            {profile?.gym_coins == null && <View className="w-9" />}
+          </View>
         </View>
 
         {/* Guest banner */}
@@ -399,7 +419,7 @@ export default function HomeScreen() {
               shadowOpacity: 0.4,
               elevation: 12,
             }}
-            onPress={() => router.push('/(app)/workout/strength')}
+            onPress={() => setShowWorkoutModal(true)}
           >
             <View className="flex-row items-center gap-3">
               <FontAwesome name="fire" size={24} color={VP.surface} />
@@ -544,6 +564,24 @@ export default function HomeScreen() {
           </View>
         </Pressable>
       )}
+
+      <WorkoutTypeModal
+        visible={showWorkoutModal}
+        onClose={() => setShowWorkoutModal(false)}
+        onSelectStrength={() => {
+          setShowWorkoutModal(false);
+          router.push('/(app)/workout/strength');
+        }}
+        onSelectCardio={() => {
+          setShowWorkoutModal(false);
+          router.push('/(app)/workout/scout');
+        }}
+      />
+
+      <NotificationPanel
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -23,3 +23,12 @@ export {
   applyWeeklyContributionCap,
   calculateClanWarScore,
 } from './clan-contribution';
+
+export {
+  HR_ZONE_DEFINITIONS,
+  getHRZone,
+  calculateZoneScore,
+  calculateCombinedCardioScore,
+  karvonen,
+  getPersonalizedZoneBoundaries,
+} from './hr-zones';

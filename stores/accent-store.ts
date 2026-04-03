@@ -36,8 +36,8 @@ export const useAccentStore = create<AccentState>()(
   )
 );
 
-/** Get the active accent palette. */
+/** Get the active accent palette. Falls back to purple if stored key is stale. */
 export function useAccent(): AccentPalette {
   const key = useAccentStore((s) => s.accentKey);
-  return ACCENT_OPTIONS[key];
+  return ACCENT_OPTIONS[key] ?? ACCENT_OPTIONS.purple;
 }

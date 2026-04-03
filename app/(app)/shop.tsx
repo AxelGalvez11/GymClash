@@ -1,4 +1,5 @@
-import { View, Text, FlatList, Pressable, Alert, ActivityIndicator, Animated } from 'react-native';
+import { useState } from 'react';
+import { View, Text, FlatList, Pressable, Alert, ActivityIndicator, Animated, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +9,8 @@ import { useAccent } from '@/stores/accent-store';
 import { supabase } from '@/services/supabase';
 import { useProfile } from '@/hooks/use-profile';
 import { useFadeSlide } from '@/hooks/use-fade-slide';
+import CratePreview from '@/components/shop/CratePreview';
+import PowerUpPreview from '@/components/shop/PowerUpPreview';
 import type { CosmeticRarity } from '@/types';
 
 const RARITY_COLORS: Record<CosmeticRarity, string> = {
@@ -68,12 +71,22 @@ function usePurchase() {
   });
 }
 
+type ShopTab = 'cosmetics' | 'emotes' | 'powerups' | 'crates';
+
+const SHOP_TABS: { key: ShopTab; label: string }[] = [
+  { key: 'cosmetics', label: 'Cosmetics' },
+  { key: 'emotes', label: 'Emotes' },
+  { key: 'powerups', label: 'Power-Ups' },
+  { key: 'crates', label: 'Crates' },
+];
+
 export default function ShopScreen() {
   const accent = useAccent();
   const { data: profile } = useProfile();
   const { data: catalog, isLoading } = useCatalog();
   const { data: inventory } = useMyInventory();
   const purchaseMutation = usePurchase();
+  const [activeTab, setActiveTab] = useState<ShopTab>('cosmetics');
 
   // Entrance animations
   const fadeHeader = useFadeSlide(0);
@@ -108,22 +121,82 @@ export default function ShopScreen() {
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
-          <Text
-            style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}
-          >
-            Shop
-          </Text>
-          <View className="flex-row items-center gap-1">
-            <FontAwesome name="circle" size={10} color="#ffd709" />
-            <Text style={{ color: '#ffd709', fontFamily: 'Lexend-Bold', fontWeight: '700' }}>
-              {profile?.gym_coins ?? 0}
-            </Text>
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>Shop</Text>
+          <View className="flex-row items-center gap-4">
+            {/* Lifting Coins */}
+            <View className="flex-row items-center gap-1">
+              <FontAwesome name="bolt" size={12} color="#eab308" />
+              <Text style={{ color: '#eab308', fontFamily: 'Lexend-Bold', fontWeight: '700', fontSize: 12 }}>
+                {profile?.gym_coins ?? 0}
+              </Text>
+            </View>
+            {/* Running Coins */}
+            <View className="flex-row items-center gap-1">
+              <FontAwesome name="road" size={12} color="#81ecff" />
+              <Text style={{ color: '#81ecff', fontFamily: 'Lexend-Bold', fontWeight: '700', fontSize: 12 }}>
+                {profile?.gym_coins ?? 0}
+              </Text>
+            </View>
+            {/* Diamonds */}
+            <Pressable
+              className="flex-row items-center gap-1 bg-[#23233f] rounded-full px-2 py-1 active:scale-[0.98]"
+              onPress={() => Alert.alert('Coming Soon', 'Diamond purchases will be available in a future update.')}
+            >
+              <FontAwesome name="diamond" size={10} color="#ce96ff" />
+              <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-Bold', fontWeight: '700', fontSize: 12 }}>0</Text>
+              <Text style={{ color: '#74738b', fontSize: 14 }}>+</Text>
+            </Pressable>
           </View>
         </View>
+
+        {/* Tab Row */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+          <View className="flex-row gap-2">
+            {SHOP_TABS.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <Pressable
+                  key={tab.key}
+                  className={`rounded-full px-4 py-1.5 ${isActive ? 'bg-[#a434ff]' : 'bg-[#23233f]'}`}
+                  onPress={() => setActiveTab(tab.key)}
+                >
+                  <Text
+                    style={{
+                      color: isActive ? '#ffffff' : '#74738b',
+                      fontFamily: 'Lexend-Bold',
+                      fontWeight: '700',
+                      fontSize: 12,
+                    }}
+                  >
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
       </Animated.View>
 
       <Animated.View style={fadeGrid.style} className="flex-1">
-      {isLoading ? (
+      {activeTab === 'crates' ? (
+        <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8 pt-4">
+          <CratePreview />
+        </ScrollView>
+      ) : activeTab === 'powerups' ? (
+        <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8 pt-4">
+          <PowerUpPreview />
+        </ScrollView>
+      ) : activeTab === 'emotes' ? (
+        <View className="flex-1 items-center justify-center px-4">
+          <FontAwesome name="comment" size={32} color="#74738b" />
+          <Text className="text-lg mt-3" style={{ color: '#74738b', fontFamily: 'Epilogue-Bold' }}>
+            Emotes Coming Soon
+          </Text>
+          <Text className="text-sm mt-1 text-center" style={{ color: '#74738b' }}>
+            Text emotes for clan chat and war chat
+          </Text>
+        </View>
+      ) : isLoading ? (
         <ActivityIndicator color={accent.DEFAULT} className="mt-8" />
       ) : (
         <FlatList
@@ -148,7 +221,7 @@ export default function ShopScreen() {
                   elevation: 8,
                 }}
                 onPress={() => !owned && item.price_coins && handlePurchase(item)}
-                disabled={owned || !item.price_coins}
+                disabled={!profile || owned || !item.price_coins}
               >
                 <View className="items-center mb-2">
                   <View className="w-16 h-16 bg-[#23233f] rounded-lg items-center justify-center">

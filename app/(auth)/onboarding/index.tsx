@@ -1,31 +1,82 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, Alert } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Pressable, Text, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-
-import { Colors } from '@/constants/theme';
-import { updateProfile } from '@/services/api';
 import { useQueryClient } from '@tanstack/react-query';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-type Step = 'name' | 'ready';
+import { updateProfile, updateBiodata } from '@/services/api';
+import { StepIndicator } from '@/components/onboarding/StepIndicator';
+import { StepName } from '@/components/onboarding/StepName';
+import { StepBiodata } from '@/components/onboarding/StepBiodata';
+import StepExperience from '@/components/onboarding/StepExperience';
+import { StepOneRepMax } from '@/components/onboarding/StepOneRepMax';
+import StepCardioBaseline from '@/components/onboarding/StepCardioBaseline';
+import StepDeviceConnect from '@/components/onboarding/StepDeviceConnect';
+import { StepSummary } from '@/components/onboarding/StepSummary';
+import {
+  INITIAL_FORM_STATE,
+  type OnboardingFormState,
+  type OnboardingStep,
+} from '@/components/onboarding/types';
+
+const LB_TO_KG = 0.453592;
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [step, setStep] = useState<Step>('name');
-  const [displayName, setDisplayName] = useState('');
+  const [step, setStep] = useState<OnboardingStep>(0);
+  const [form, setForm] = useState<OnboardingFormState>(INITIAL_FORM_STATE);
   const [saving, setSaving] = useState(false);
 
+  const handleUpdate = useCallback((updates: Partial<OnboardingFormState>) => {
+    setForm((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  function goNext() {
+    setStep((prev) => Math.min(prev + 1, 6) as OnboardingStep);
+  }
+
+  function goBack() {
+    setStep((prev) => Math.max(prev - 1, 0) as OnboardingStep);
+  }
+
   async function handleFinish() {
-    if (!displayName.trim()) {
-      Alert.alert('Error', 'Enter a display name');
+    if (!form.displayName.trim()) {
+      Alert.alert('Error', 'Display name is required');
       return;
     }
 
     setSaving(true);
     try {
-      await updateProfile({ display_name: displayName.trim() });
+      // Save display name
+      await updateProfile({ display_name: form.displayName.trim() });
+
+      // Save biodata if any fields were filled
+      const hasBiodata =
+        form.bodyWeight || form.height || form.birthDate || form.sex;
+
+      if (hasBiodata) {
+        const isImperial = form.unitSystem === 'imperial';
+        const bw = form.bodyWeight ? parseFloat(form.bodyWeight) : null;
+        const ht = form.height ? parseFloat(form.height) : null;
+
+        await updateBiodata({
+          body_weight_kg:
+            bw !== null ? (isImperial ? bw * LB_TO_KG : bw) : null,
+          height_cm:
+            ht !== null ? (isImperial ? ht * 2.54 : ht) : null,
+          birth_date: form.birthDate || null,
+          biological_sex: form.sex || null,
+          lifting_experience: form.liftingExperience || null,
+          running_experience: form.runningExperience || null,
+          resting_hr: form.restingHR
+            ? parseInt(form.restingHR, 10)
+            : null,
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['needs-onboarding'] });
       router.replace('/(app)/home');
@@ -36,130 +87,63 @@ export default function OnboardingScreen() {
     }
   }
 
+  // Steps 1-5 show back button (not step 0 = name, not step 6 = summary)
+  const showBack = step > 0 && step < 6;
+
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
-      <View className="flex-1 px-8 justify-center">
-        {/* Step 1: Name */}
-        {step === 'name' && (
-          <View>
-            <Text className="text-4xl mb-2">///</Text>
-            <Text
-              className="text-3xl mb-2"
-              style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}
-            >
-              Choose your name
-            </Text>
-            <Text
-              className="mb-8"
-              style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}
-            >
-              This is how other warriors will see you.
-            </Text>
+      {/* Progress indicator */}
+      <StepIndicator currentStep={step} />
 
-            <TextInput
-              className="bg-[#000000] rounded-xl px-4 py-4 text-lg mb-6"
-              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
-              placeholder="Your warrior name"
-              placeholderTextColor="#74738b"
-              value={displayName}
-              onChangeText={setDisplayName}
-              autoFocus
-              maxLength={20}
-            />
-
-            <Pressable
-              className="py-3.5 items-center rounded-[2rem] active:scale-[0.98]"
-              style={{
-                backgroundColor: '#a434ff',
-                shadowColor: '#a434ff',
-                shadowOpacity: 0.4,
-                shadowRadius: 16,
-                shadowOffset: { width: 0, height: 4 },
-                elevation: 10,
-              }}
-              onPress={() => {
-                if (!displayName.trim()) {
-                  Alert.alert('Error', 'Enter a name to continue');
-                  return;
-                }
-                setStep('ready');
-              }}
-            >
-              <Text
-                style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 14, letterSpacing: 2 }}
-              >
-                CONTINUE
-              </Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Step 2: Ready */}
-        {step === 'ready' && (
-          <View className="items-center">
-            <Text className="text-6xl mb-4" style={{ color: '#ffd709' }}>{'<>'}</Text>
-            <Text
-              className="text-3xl mb-2 text-center"
-              style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}
-            >
-              You're ready, {displayName}
-            </Text>
-            <Text
-              className="text-center mb-2"
-              style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}
-            >
-              Train in real life. Level up in game. Help your clan win.
-            </Text>
-
-            <View className="bg-[#1d1d37] rounded-xl p-4 w-full mt-6 mb-8">
-              <View className="flex-row justify-between mb-2">
-                <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>Rank</Text>
-                <Text className="text-rank-bronze" style={{ fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>Rookie</Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>Level</Text>
-                <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>1</Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>First mission</Text>
-                <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontWeight: '700' }}>Log your first workout</Text>
-              </View>
-            </View>
-
-            <Pressable
-              className="py-3.5 items-center w-full rounded-[2rem] active:scale-[0.98]"
-              style={{
-                backgroundColor: '#a434ff',
-                shadowColor: '#a434ff',
-                shadowOpacity: 0.4,
-                shadowRadius: 16,
-                shadowOffset: { width: 0, height: 4 },
-                elevation: 10,
-              }}
-              onPress={handleFinish}
-              disabled={saving}
-            >
-              <Text
-                style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 14, letterSpacing: 2 }}
-              >
-                {saving ? 'SETTING UP...' : 'ENTER THE ARENA'}
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      {/* Step indicator */}
-      <View className="flex-row justify-center gap-2 pb-8">
-        {(['name', 'ready'] as Step[]).map((s) => (
-          <View
-            key={s}
-            className="w-2 h-2 rounded-full"
+      {/* Back button */}
+      {showBack && (
+        <Pressable
+          onPress={goBack}
+          className="px-8 py-2 flex-row items-center active:scale-[0.98]"
+        >
+          <FontAwesome name="arrow-left" size={14} color="#aaa8c3" />
+          <Text
+            className="ml-2"
             style={{
-              backgroundColor: s === step ? '#ce96ff' : 'rgba(206,150,255,0.2)',
+              color: '#aaa8c3',
+              fontFamily: 'Lexend-SemiBold',
+              fontSize: 13,
             }}
+          >
+            BACK
+          </Text>
+        </Pressable>
+      )}
+
+      {/* Step content */}
+      <View className="flex-1">
+        {step === 0 && (
+          <StepName form={form} onUpdate={handleUpdate} onNext={goNext} />
+        )}
+        {step === 1 && (
+          <StepBiodata form={form} onUpdate={handleUpdate} onNext={goNext} />
+        )}
+        {step === 2 && (
+          <StepExperience form={form} onUpdate={handleUpdate} onNext={goNext} />
+        )}
+        {step === 3 && (
+          <StepOneRepMax form={form} onUpdate={handleUpdate} onNext={goNext} />
+        )}
+        {step === 4 && (
+          <StepCardioBaseline
+            form={form}
+            onUpdate={handleUpdate}
+            onNext={goNext}
           />
-        ))}
+        )}
+        {step === 5 && <StepDeviceConnect onNext={goNext} />}
+        {step === 6 && (
+          <StepSummary
+            form={form}
+            onFinish={handleFinish}
+            saving={saving}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

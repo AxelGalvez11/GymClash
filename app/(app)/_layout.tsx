@@ -111,15 +111,20 @@ export default function AppLayout() {
         }}
       />
 
-      {/* ─── Hidden routes (accessible via navigation, not tab bar) ─── */}
+      {/* ─── Hidden routes — every file must be listed explicitly ─── */}
       <Tabs.Screen name="leaderboard" options={{ href: null }} />
-      <Tabs.Screen name="history" options={{ href: null }} />
-      <Tabs.Screen name="workout" options={{ href: null }} />
-      <Tabs.Screen name="review" options={{ href: null }} />
-      <Tabs.Screen name="report" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
-      <Tabs.Screen name="player" options={{ href: null }} />
-      <Tabs.Screen name="war-chat" options={{ href: null }} />
+      <Tabs.Screen name="history/index" options={{ href: null }} />
+      <Tabs.Screen name="workout/strength" options={{ href: null }} />
+      <Tabs.Screen name="workout/scout" options={{ href: null }} />
+      <Tabs.Screen name="workout/treadmill" options={{ href: null }} />
+      <Tabs.Screen name="workout/recovery" options={{ href: null }} />
+      <Tabs.Screen name="workout/[workoutId]" options={{ href: null }} />
+      <Tabs.Screen name="review/[workoutId]" options={{ href: null }} />
+      <Tabs.Screen name="report/[userId]" options={{ href: null }} />
+      <Tabs.Screen name="settings/index" options={{ href: null }} />
+      <Tabs.Screen name="settings/biodata" options={{ href: null }} />
+      <Tabs.Screen name="player/[userId]" options={{ href: null }} />
+      <Tabs.Screen name="war-chat/[warId]" options={{ href: null }} />
     </Tabs>
   );
 }

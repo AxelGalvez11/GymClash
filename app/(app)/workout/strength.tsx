@@ -129,7 +129,21 @@ export default function StrengthWorkoutScreen() {
 
   // Victory screen state
   const [showVictory, setShowVictory] = useState(false);
-  const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false });
+  const [victoryData, setVictoryData] = useState<{
+    readonly score: number;
+    readonly trophies: number;
+    readonly streak: number;
+    readonly isPB: boolean;
+    readonly currencyEarned: number;
+    readonly breakdown: ReadonlyArray<{
+      readonly exercise: string;
+      readonly score: number;
+      readonly rating: 'exceeded' | 'met' | 'below';
+    }>;
+  }>({ score: 0, trophies: 12, streak: 0, isPB: false, currencyEarned: 0, breakdown: [] });
+
+  // Timer stop guard
+  const timerStopped = useRef(false);
 
   // Per-exercise score feedback
   const [lastAddedScore, setLastAddedScore] = useState(0);
@@ -144,6 +158,7 @@ export default function StrengthWorkoutScreen() {
 
   // Timer
   useEffect(() => {
+    if (timerStopped.current) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
@@ -207,6 +222,7 @@ export default function StrengthWorkoutScreen() {
   }
 
   async function handleFinishWorkout() {
+    timerStopped.current = true;
     if (strengthSets.length === 0) {
       Alert.alert('Error', 'Add at least one set before finishing');
       return;
@@ -261,16 +277,42 @@ export default function StrengthWorkoutScreen() {
         idempotency_key: idempotencyKey,
       });
 
+      // Group sets by exercise and compute per-exercise scores
+      const exerciseMap = new Map<string, number>();
+      for (const s of strengthSets) {
+        const setScore = calculateStrengthRawScore([s]);
+        exerciseMap.set(s.exercise, (exerciseMap.get(s.exercise) ?? 0) + setScore);
+      }
+      const avgScore = provisionalScore / Math.max(exerciseMap.size, 1);
+      const breakdown = Array.from(exerciseMap.entries()).map(([exercise, score]) => ({
+        exercise,
+        score: Math.round(score),
+        rating: score > avgScore * 1.2 ? 'exceeded' as const : score < avgScore * 0.8 ? 'below' as const : 'met' as const,
+      }));
+
       setVictoryData({
         score: provisionalScore,
         trophies: TrophyRewards.ACCEPTED_WORKOUT,
         streak: profile?.current_streak ?? 0,
         isPB: false, // TODO: check against profile 1RM records
+        currencyEarned: Math.round(provisionalScore * 0.1),
+        breakdown,
       });
       setShowVictory(true);
     } catch (err) {
       Alert.alert('Error', 'Failed to submit workout. Please try again.');
     }
+  }
+
+  function handleConcludePress() {
+    Alert.alert(
+      'Finish Workout?',
+      'Are you sure you want to finish this session?',
+      [
+        { text: 'Keep Going', style: 'cancel' },
+        { text: 'Finish', onPress: handleFinishWorkout },
+      ]
+    );
   }
 
   function handleDiscard() {
@@ -304,7 +346,7 @@ export default function StrengthWorkoutScreen() {
             </Text>
           </View>
           <Pressable
-            onPress={handleFinishWorkout}
+            onPress={handleConcludePress}
             disabled={submitWorkout.isPending}
             className="active:scale-[0.98]"
           >
@@ -462,6 +504,8 @@ export default function StrengthWorkoutScreen() {
         trophiesEarned={victoryData.trophies}
         streakCount={victoryData.streak}
         isPersonalBest={victoryData.isPB}
+        exerciseBreakdown={victoryData.breakdown}
+        currencyEarned={victoryData.currencyEarned}
         onDismiss={() => {
           setShowVictory(false);
           reset();
