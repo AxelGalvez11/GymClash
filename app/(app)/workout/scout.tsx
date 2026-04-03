@@ -14,12 +14,13 @@ import { useGpsTracking } from '@/hooks/use-gps-tracking';
 import { VictoryScreen } from '@/components/VictoryScreen';
 import { CardioModeSelector } from '@/components/CardioModeSelector';
 import { GpsDropOverlay } from '@/components/GpsDropOverlay';
+import DevicePrompt from '@/components/DevicePrompt';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export default function ScoutWorkoutScreen() {
   const router = useRouter();
   const { isGuest } = useAuthStore();
-  const [mode, setMode] = useState<'select' | 'territory'>('select');
+  const [mode, setMode] = useState<'device' | 'select' | 'territory'>('device');
   const {
     isActive,
     startWorkout,
@@ -202,12 +203,23 @@ export default function ScoutWorkoutScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
+  if (mode === 'device') {
+    return (
+      <DevicePrompt
+        workoutType="cardio"
+        onContinueWithDevice={() => setMode('select')}
+        onContinueWithout={() => setMode('select')}
+        onBack={() => router.replace('/(app)/home' as any)}
+      />
+    );
+  }
+
   if (mode === 'select') {
     return (
       <CardioModeSelector
         onSelectTerritory={() => setMode('territory')}
         onSelectTreadmill={() => router.push('/(app)/workout/treadmill')}
-        onBack={() => router.back()}
+        onBack={() => setMode('device')}
       />
     );
   }

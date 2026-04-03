@@ -144,25 +144,41 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
-        {/* Top bar: settings cog only */}
+        {/* Top bar: settings cog + currencies + milestones */}
         <View
-          className="flex-row items-center justify-between px-5 pt-2 pb-3"
+          className="flex-row items-center justify-between px-4 pt-2 pb-3"
           style={{ backgroundColor: VP.raised }}
         >
           <Pressable
-            className="w-11 h-11 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
+            className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={() => router.push('/(app)/settings' as any)}
           >
-            <FontAwesome name="cog" size={18} color={VP.textSec} />
+            <FontAwesome name="cog" size={16} color={VP.textSec} />
           </Pressable>
 
+          {/* Compact currencies */}
+          <View className="flex-row items-center gap-3">
+            <View className="flex-row items-center gap-1">
+              <FontAwesome name="heartbeat" size={10} color={Colors.danger} />
+              <Text style={{ color: Colors.danger, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>{liftingPoints}</Text>
+            </View>
+            <View className="flex-row items-center gap-1">
+              <FontAwesome name="road" size={10} color={VP.cyan} />
+              <Text style={{ color: VP.cyan, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>{cardioPoints}</Text>
+            </View>
+            <View className="flex-row items-center gap-1">
+              <FontAwesome name="diamond" size={10} color={VP.gold} />
+              <Text style={{ color: VP.gold, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>{diamondPoints}</Text>
+            </View>
+          </View>
+
           <Pressable
-            className="w-11 h-11 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
+            className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={() => setShowMilestones(true)}
           >
-            <FontAwesome name="trophy" size={16} color="#ffd709" />
+            <FontAwesome name="trophy" size={14} color="#ffd709" />
           </Pressable>
         </View>
 
@@ -235,13 +251,6 @@ export default function HomeScreen() {
                 Level {profile?.level ?? 1}
               </Text>
             </View>
-          </Animated.View>
-
-          {/* 4. Currency badges — lifting, cardio, diamonds */}
-          <Animated.View style={statsAnim.style} className="flex-row gap-2 mb-4">
-            <CurrencyBadge label="Lifting" value={liftingPoints} icon="heartbeat" color={Colors.danger} />
-            <CurrencyBadge label="Cardio" value={cardioPoints} icon="road" color={VP.cyan} />
-            <CurrencyBadge label="Diamonds" value={diamondPoints} icon="diamond" color={VP.gold} />
           </Animated.View>
 
           {/* 5. Arena Progression */}

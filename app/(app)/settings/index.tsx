@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { View, Text, Pressable, Alert, Animated, ScrollView } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, Alert, Animated, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -142,6 +142,7 @@ export default function SettingsScreen() {
   const { data: profile } = useProfile();
   const { session } = useAuthStore();
   const accent = useAccent();
+  const [showAccountInfo, setShowAccountInfo] = useState(false);
 
   const biodataStatus = profile?.body_weight_kg ? 'Complete' : 'Incomplete';
 
@@ -180,17 +181,7 @@ export default function SettingsScreen() {
               icon="user"
               label={profile?.display_name || 'Warrior'}
               detail={session?.user?.email?.split('@')[0] ?? ''}
-              onPress={() => {
-                Alert.alert(
-                  'Account',
-                  [
-                    `Name: ${profile?.display_name || 'Not set'}`,
-                    `Email: ${session?.user?.email ?? 'Not available'}`,
-                    `Level: ${profile?.level ?? 1}`,
-                    `Rank: ${(profile?.rank ?? 'rookie').replace(/_/g, ' ')}`,
-                  ].join('\n')
-                );
-              }}
+              onPress={() => setShowAccountInfo(true)}
               delay={0}
             />
           </View>
@@ -285,6 +276,63 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Styled Account Info Modal */}
+      <Modal visible={showAccountInfo} animationType="fade" transparent>
+        <Pressable
+          className="flex-1 items-center justify-center"
+          style={{ backgroundColor: 'rgba(12,12,31,0.85)' }}
+          onPress={() => setShowAccountInfo(false)}
+        >
+          <View
+            className="bg-[#1d1d37] rounded-2xl p-6 mx-8 w-[85%]"
+            style={{
+              shadowColor: '#ce96ff',
+              shadowOffset: { width: 0, height: 4 },
+              shadowRadius: 16,
+              shadowOpacity: 0.15,
+              elevation: 8,
+            }}
+          >
+            <View className="flex-row items-center justify-between mb-5">
+              <Text style={{ fontFamily: 'Epilogue-Bold', color: '#e5e3ff', fontSize: 18 }}>Account</Text>
+              <Pressable onPress={() => setShowAccountInfo(false)}>
+                <FontAwesome name="times" size={18} color="#74738b" />
+              </Pressable>
+            </View>
+            <View className="gap-4">
+              <View className="flex-row items-center gap-3">
+                <FontAwesome name="user" size={14} color="#aaa8c3" />
+                <View className="flex-1">
+                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, letterSpacing: 1, color: '#74738b', textTransform: 'uppercase' }}>Name</Text>
+                  <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 14, color: '#e5e3ff' }}>{profile?.display_name || 'Not set'}</Text>
+                </View>
+              </View>
+              <View className="flex-row items-center gap-3">
+                <FontAwesome name="envelope" size={14} color="#aaa8c3" />
+                <View className="flex-1">
+                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, letterSpacing: 1, color: '#74738b', textTransform: 'uppercase' }}>Email</Text>
+                  <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 14, color: '#e5e3ff' }}>{session?.user?.email ?? 'Not available'}</Text>
+                </View>
+              </View>
+              <View className="flex-row items-center gap-3">
+                <FontAwesome name="star" size={14} color="#aaa8c3" />
+                <View className="flex-1">
+                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, letterSpacing: 1, color: '#74738b', textTransform: 'uppercase' }}>Level</Text>
+                  <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 14, color: '#e5e3ff' }}>{profile?.level ?? 1}</Text>
+                </View>
+              </View>
+              <View className="flex-row items-center gap-3">
+                <FontAwesome name="shield" size={14} color="#aaa8c3" />
+                <View className="flex-1">
+                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, letterSpacing: 1, color: '#74738b', textTransform: 'uppercase' }}>Rank</Text>
+                  <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 14, color: '#e5e3ff' }}>{(profile?.rank ?? 'rookie').replace(/_/g, ' ')}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

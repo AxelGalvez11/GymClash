@@ -194,7 +194,7 @@ const WAR_TYPE_LABELS: Record<string, string> = {
 function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   const router = useRouter();
   const { data: roster, isLoading: rosterLoading } = useClanRoster(clan?.id);
-  const { data: war } = useActiveWar();
+  const { data: war, isLoading: warLoading } = useActiveWar();
   const myClanId = clan?.id;
   const { data: contributions } = useWarContributions(war?.id, myClanId);
   const { data: warHistory } = useWarHistory(myClanId);
@@ -321,8 +321,13 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </View>
       )}
 
+      {/* War loading indicator */}
+      {warLoading && (
+        <ActivityIndicator color="#ce96ff" size="small" className="my-4" />
+      )}
+
       {/* Active War — compact score card */}
-      {war && (
+      {!warLoading && war && (
         <Pressable
           className="bg-[#1d1d37] rounded-xl p-4 mb-4 active:scale-[0.98]"
           onPress={() => router.push(`/(app)/war-details/${war.id}` as any)}
@@ -354,7 +359,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       )}
 
       {/* Initiate Clan War — leaders/officers only, when no active war */}
-      {!war && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
+      {!warLoading && !war && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
         <Pressable
           className="w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 mb-4 active:scale-[0.98]"
           style={{ backgroundColor: '#a434ff' }}

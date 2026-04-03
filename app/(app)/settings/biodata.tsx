@@ -148,7 +148,17 @@ export default function BiodataScreen() {
         setHeightCm(htCm ? Math.round(htCm) : 175);
       }
 
-      setBirthDate(profile.birth_date ?? '');
+      // Convert YYYY-MM-DD from API to MM/DD/YYYY for display
+      if (profile.birth_date) {
+        const parts = profile.birth_date.split('-');
+        if (parts.length === 3) {
+          setBirthDate(`${parts[1]}/${parts[2]}/${parts[0]}`);
+        } else {
+          setBirthDate(profile.birth_date);
+        }
+      } else {
+        setBirthDate('');
+      }
       setSex((profile.biological_sex as SexOption) ?? '');
       setLiftingExp((profile.lifting_experience as ExperienceLevel) ?? '');
       setRunningExp((profile.running_experience as ExperienceLevel) ?? '');
@@ -158,8 +168,14 @@ export default function BiodataScreen() {
 
   // Derived calculations
   const age = useMemo(() => {
-    if (!birthDate) return null;
-    const birth = new Date(birthDate);
+    if (!birthDate || birthDate.length < 10) return null;
+    // Parse MM/DD/YYYY
+    const parts = birthDate.split('/');
+    if (parts.length !== 3) return null;
+    const month = parseInt(parts[0], 10) - 1;
+    const day = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    const birth = new Date(year, month, day);
     if (isNaN(birth.getTime())) return null;
     const today = new Date();
     let years = today.getFullYear() - birth.getFullYear();
@@ -248,15 +264,24 @@ export default function BiodataScreen() {
       return;
     }
 
+    // Convert MM/DD/YYYY to YYYY-MM-DD for API
+    let birthDateISO: string | null = null;
+    if (birthDate && birthDate.length === 10) {
+      const parts = birthDate.split('/');
+      if (parts.length === 3) {
+        birthDateISO = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+      }
+    }
+
     updateBiodata.mutate(
       {
         body_weight_kg: bwKg,
         height_cm: htCm,
-        birth_date: birthDate || null,
+        birth_date: birthDateISO,
         biological_sex: sex || null,
         lifting_experience: liftingExp || null,
         running_experience: runningExp || null,
-        resting_hr: restingHR,
+        resting_hr: profile?.resting_hr !== undefined ? restingHR : null,
       },
       {
         onSuccess: () => {
@@ -264,7 +289,14 @@ export default function BiodataScreen() {
             { text: 'OK', onPress: () => router.replace('/(app)/home' as any) },
           ]);
         },
-        onError: (err: any) => Alert.alert('Error', err.message ?? 'Failed to save'),
+        onError: (err: any) => {
+          const msg = err.message ?? 'Failed to save';
+          if (msg.includes('could not find')) {
+            Alert.alert('Setup Required', 'The biodata service needs to be configured. Please contact support or run database migrations.');
+          } else {
+            Alert.alert('Error', msg);
+          }
+        },
       }
     );
   }
@@ -277,7 +309,7 @@ export default function BiodataScreen() {
             <FontAwesome name="arrow-left" size={18} color="#aaa8c3" />
           </Pressable>
           <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, letterSpacing: 1 }}>
-            Body Data
+            Biodata
           </Text>
         </View>
 
@@ -361,14 +393,23 @@ export default function BiodataScreen() {
 
           {/* Birth Date */}
           <View>
-            <SectionLabel text="Birth Date (YYYY-MM-DD)" />
+            <Text className="text-xs uppercase mb-2" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>Birth Date</Text>
             <TextInput
               className="bg-[#000000] rounded-xl px-4 py-3 text-base"
               style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
-              placeholder="e.g. 1995-06-15"
+              placeholder="MM/DD/YYYY"
               placeholderTextColor="#74738b"
               value={birthDate}
-              onChangeText={setBirthDate}
+              onChangeText={(text) => {
+                // Auto-format: add slashes after MM and DD
+                const digits = text.replace(/\D/g, '').slice(0, 8);
+                let formatted = digits;
+                if (digits.length > 2) formatted = digits.slice(0, 2) + '/' + digits.slice(2);
+                if (digits.length > 4) formatted = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+                setBirthDate(formatted);
+              }}
+              keyboardType="number-pad"
+              maxLength={10}
             />
             {age !== null && (
               <Text className="text-xs mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Age: {age} years</Text>
