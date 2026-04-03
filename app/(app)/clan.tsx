@@ -237,6 +237,16 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       {/* Clan Header */}
       <Animated.View style={fadeHeader.style} className="items-center py-6">
         <Text className="text-4xl mb-2">⚔️</Text>
+        {clan.my_role === 'leader' && (
+          <Pressable
+            className="mt-1 active:scale-[0.98]"
+            onPress={() => Alert.alert('Coming Soon', 'Custom clan emblems will be available in a future update.')}
+          >
+            <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>
+              Change Emblem
+            </Text>
+          </Pressable>
+        )}
         <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-2xl font-bold">{clan.name}</Text>
         <Text style={{ color: '#ffd709', fontFamily: 'Epilogue-Bold' }} className="font-bold text-lg">[{clan.tag}]</Text>
         {clan.description ? (
@@ -244,6 +254,16 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
             {clan.description}
           </Text>
         ) : null}
+        {clan.my_role === 'leader' && (
+          <Pressable
+            className="mt-2 active:scale-[0.98]"
+            onPress={() => Alert.alert('Coming Soon', 'Clan description editing will be available in a future update.')}
+          >
+            <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>
+              <FontAwesome name="pencil" size={10} color="#ce96ff" /> Edit Description
+            </Text>
+          </Pressable>
+        )}
         <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold' }} className="text-sm mt-2">
           {clan.member_count} / {clan.max_members} members · Your role: {ROLE_LABELS[clan.my_role as ClanRole]}
         </Text>

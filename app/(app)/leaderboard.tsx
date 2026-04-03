@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, Animated, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -70,9 +70,16 @@ function ClanRow({
         : undefined;
 
   return (
-    <View
-      className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center"
+    <Pressable
+      className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center active:scale-[0.98]"
       style={[zoneBg, zoneBorder]}
+      onPress={() =>
+        Alert.alert(
+          item.name,
+          `Tag: [${item.tag}]\nMembers: ${item.member_count}\nWar Wins: ${item.war_wins ?? 0}\nTotal Trophies: ${item.total_trophies ?? 0}${item.description ? '\n\n' + item.description : ''}`,
+          [{ text: 'Close' }]
+        )
+      }
     >
       <ZoneIndicator zone={zone} />
       <MedalIcon position={index} />
@@ -89,7 +96,7 @@ function ClanRow({
         <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{item.total_trophies ?? 0}</Text>
         <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">🏆</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -289,7 +296,7 @@ export default function LeaderboardScreen() {
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.replace('/(app)/home' as any)}>
             <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }} className="text-base">← Back</Text>
           </Pressable>
           <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold">Leaderboard</Text>

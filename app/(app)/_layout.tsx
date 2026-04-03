@@ -1,36 +1,10 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs, useRouter } from 'expo-router';
-import { Alert } from 'react-native';
+import { Tabs } from 'expo-router';
 
 import { Colors } from '@/constants/theme';
-import { useAuthStore } from '@/stores/auth-store';
 import { useAccent } from '@/stores/accent-store';
 
-function useGuestGate() {
-  const { isGuest } = useAuthStore();
-  const router = useRouter();
-
-  return {
-    isGuest,
-    guard: () => {
-      if (isGuest) {
-        Alert.alert(
-          'Sign Up to Unlock',
-          'Create an account to access clans, profile, and competitive features.',
-          [
-            { text: 'Later', style: 'cancel' },
-            { text: 'Sign Up', onPress: () => router.push('/(auth)/login?mode=signup') },
-          ]
-        );
-        return true;
-      }
-      return false;
-    },
-  };
-}
-
 export default function AppLayout() {
-  const { isGuest, guard } = useGuestGate();
   const accent = useAccent();
 
   return (
@@ -73,14 +47,9 @@ export default function AppLayout() {
             <FontAwesome
               name="user"
               size={20}
-              color={isGuest ? Colors.text.muted : color}
+              color={color}
             />
           ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            if (guard()) e.preventDefault();
-          },
         }}
       />
       <Tabs.Screen
@@ -100,14 +69,9 @@ export default function AppLayout() {
             <FontAwesome
               name="shield"
               size={20}
-              color={isGuest ? Colors.text.muted : color}
+              color={color}
             />
           ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            if (guard()) e.preventDefault();
-          },
         }}
       />
 

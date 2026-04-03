@@ -12,6 +12,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(mode === 'signup');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
@@ -38,10 +39,21 @@ export default function LoginScreen() {
       return;
     }
 
+    if (isSignUp && !username.trim()) {
+      Alert.alert('Error', 'Please enter a username');
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = isSignUp
-        ? await supabase.auth.signUp({ email, password })
+        ? await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { display_name: username.trim() },
+            },
+          })
         : await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
@@ -77,6 +89,23 @@ export default function LoginScreen() {
 
         {/* Form */}
         <View className="gap-4 mb-8">
+          {isSignUp && (
+            <TextInput
+              className="bg-[#000000] rounded-xl px-4 py-4 text-base"
+              style={{
+                color: '#e5e3ff',
+                fontFamily: 'BeVietnamPro-Regular',
+              }}
+              placeholder="Username"
+              placeholderTextColor="#74738b"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={20}
+              textContentType="username"
+            />
+          )}
           <TextInput
             className="bg-[#000000] rounded-xl px-4 py-4 text-base"
             style={{
