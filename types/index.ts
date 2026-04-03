@@ -16,10 +16,12 @@ export type EvidenceSource = 'manual' | 'sensor' | 'wearable';
 export type Rank =
   | 'rookie'
   | 'iron'
-  | 'steel'
-  | 'titan'
-  | 'apex'
-  | 'demon_slayer';
+  | 'bronze_plate'
+  | 'silver_plate'
+  | 'gold_plate'
+  | 'elite'
+  | 'champion'
+  | 'olympian';
 
 export type ArenaTier = 'rustyard' | 'iron_forge' | 'titan_vault' | 'apex_colosseum';
 

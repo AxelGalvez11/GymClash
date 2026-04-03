@@ -271,6 +271,66 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* Workout Calendar */}
+        <Animated.View style={fadeRecords.style}>
+          <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
+            <Text className="font-bold mb-3" style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold' }}>
+              {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </Text>
+            <View className="flex-row flex-wrap">
+              {/* Day headers */}
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                <View key={`h-${i}`} className="items-center justify-center" style={{ width: '14.28%', paddingVertical: 4 }}>
+                  <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>{d}</Text>
+                </View>
+              ))}
+              {/* Calendar days */}
+              {(() => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDay = new Date(year, month, 1).getDay();
+                const workoutDates = new Set(
+                  (workouts ?? []).map((w: any) => {
+                    const d = new Date(w.started_at);
+                    if (d.getMonth() === month && d.getFullYear() === year) return d.getDate();
+                    return -1;
+                  }).filter((d: number) => d > 0)
+                );
+                const today = now.getDate();
+                const cells = [];
+                // Empty cells for padding
+                for (let i = 0; i < firstDay; i++) {
+                  cells.push(<View key={`e-${i}`} style={{ width: '14.28%', paddingVertical: 4 }} />);
+                }
+                for (let day = 1; day <= daysInMonth; day++) {
+                  const hasWorkout = workoutDates.has(day);
+                  const isToday = day === today;
+                  cells.push(
+                    <View key={day} className="items-center justify-center" style={{ width: '14.28%', paddingVertical: 3 }}>
+                      <View
+                        className="w-8 h-8 rounded-full items-center justify-center"
+                        style={isToday ? { borderWidth: 1.5, borderColor: VP.primary } : undefined}
+                      >
+                        <Text style={{
+                          color: hasWorkout ? '#fff' : VP.textMuted,
+                          fontFamily: 'Lexend-SemiBold',
+                          fontSize: 12,
+                        }}>{day}</Text>
+                        {hasWorkout && (
+                          <View className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: VP.primary }} />
+                        )}
+                      </View>
+                    </View>
+                  );
+                }
+                return cells;
+              })()}
+            </View>
+          </View>
+        </Animated.View>
+
         {/* Quick Links */}
         <Animated.View style={fadeLinks.style} className="gap-2 mb-6">
           <Pressable
@@ -293,15 +353,6 @@ export default function ProfileScreen() {
               <FontAwesome name="circle" size={8} color={VP.gold} />
               <Text className="text-xs font-bold" style={{ color: '#ffffff' }}>{profile?.gym_coins ?? 0}</Text>
             </View>
-            <FontAwesome name="chevron-right" size={14} color={VP.textMuted} />
-          </Pressable>
-          <Pressable
-            className="bg-[#1d1d37] rounded-2xl p-4 flex-row items-center active:scale-[0.98]"
-            style={chromaticShadow}
-            onPress={() => router.push('/(app)/settings')}
-          >
-            <FontAwesome name="cog" size={18} color={VP.textSec} />
-            <Text className="font-bold ml-3 flex-1" style={{ color: VP.textPri }}>Settings</Text>
             <FontAwesome name="chevron-right" size={14} color={VP.textMuted} />
           </Pressable>
         </Animated.View>

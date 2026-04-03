@@ -205,13 +205,22 @@ export default function HomeScreen() {
         {/* Guest banner */}
         {isGuest && (
           <Pressable
-            className="mx-5 mb-3 rounded-2xl py-2.5 items-center active:scale-[0.98]"
-            style={{ backgroundColor: VP.primary + '15' }}
+            className="mx-5 mb-3 bg-[#a434ff]/15 rounded-2xl p-4 active:scale-[0.98]"
+            style={{ borderWidth: 1, borderColor: '#a434ff' }}
             onPress={() => router.push('/(auth)/login?mode=signup')}
           >
-            <Text className="text-xs font-bold" style={{ color: VP.primary, fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}>
-              GUEST · {5 - guestWorkouts.length} WORKOUTS LEFT
-            </Text>
+            <View className="flex-row items-center gap-3">
+              <FontAwesome name="user-plus" size={18} color="#a434ff" />
+              <View className="flex-1">
+                <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 14 }}>
+                  Create Account
+                </Text>
+                <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>
+                  {5 - guestWorkouts.length} guest workouts left · Sign up to unlock clans, wars, and leaderboards
+                </Text>
+              </View>
+              <FontAwesome name="chevron-right" size={12} color="#a434ff" />
+            </View>
           </Pressable>
         )}
 

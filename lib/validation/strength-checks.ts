@@ -143,17 +143,147 @@ export function checkTonnageSpike(
 }
 
 /**
+ * Check if any set exceeds 125% of the user's logged one-rep max for that exercise.
+ */
+export function check1RMPlausibility(
+  sets: readonly StrengthSet[],
+  oneRepMaxRecords: Record<string, number> | null
+): ValidationResult {
+  if (!oneRepMaxRecords || Object.keys(oneRepMaxRecords).length === 0) {
+    return {
+      validation_type: 'strength_1rm_check',
+      passed: true,
+      confidence_impact: 0,
+      reason_code: 'clean',
+      details: { reason: 'no_1rm_data' },
+    };
+  }
+
+  const violations: string[] = [];
+  for (const s of sets) {
+    const max = oneRepMaxRecords[s.exercise];
+    if (max && s.weight_kg > max * 1.25) {
+      violations.push(
+        `${s.exercise}: ${s.weight_kg}kg exceeds 125% of 1RM (${max}kg)`
+      );
+    }
+  }
+
+  const passed = violations.length === 0;
+
+  return {
+    validation_type: 'strength_1rm_check',
+    passed,
+    confidence_impact: passed ? 0 : -0.5,
+    reason_code: passed ? 'clean' : '1rm_exceeded',
+    details: { violations, threshold_percent: 125 },
+  };
+}
+
+/**
+ * Validate that reps are physiologically plausible given the weight-to-1RM ratio.
+ * At 90%+ 1RM more than 5 reps is implausible; at 80%+ more than 12 reps is implausible.
+ */
+export function checkRepPlausibility(
+  sets: readonly StrengthSet[],
+  oneRepMaxRecords: Record<string, number> | null
+): ValidationResult {
+  if (!oneRepMaxRecords || Object.keys(oneRepMaxRecords).length === 0) {
+    return {
+      validation_type: 'strength_rep_plausibility',
+      passed: true,
+      confidence_impact: 0,
+      reason_code: 'clean',
+      details: { reason: 'no_1rm_data' },
+    };
+  }
+
+  const violations: string[] = [];
+  for (const s of sets) {
+    const max = oneRepMaxRecords[s.exercise];
+    if (!max || max <= 0) continue;
+    const percentOf1RM = s.weight_kg / max;
+    // At 90%+ 1RM, more than 5 reps is physiologically implausible
+    // At 80%+ 1RM, more than 12 reps is implausible
+    if (percentOf1RM >= 0.9 && s.reps > 5) {
+      violations.push(
+        `${s.exercise}: ${s.reps} reps at ${Math.round(percentOf1RM * 100)}% 1RM`
+      );
+    } else if (percentOf1RM >= 0.8 && s.reps > 12) {
+      violations.push(
+        `${s.exercise}: ${s.reps} reps at ${Math.round(percentOf1RM * 100)}% 1RM`
+      );
+    }
+  }
+
+  const passed = violations.length === 0;
+
+  return {
+    validation_type: 'strength_rep_plausibility',
+    passed,
+    confidence_impact: passed ? 0 : -0.4,
+    reason_code: passed ? 'clean' : 'implausible_reps',
+    details: { violations },
+  };
+}
+
+/**
+ * Flag exercises where the current weight exceeds last week's max by more than 10%.
+ */
+export function checkWeekOverWeekProgression(
+  sets: readonly StrengthSet[],
+  previousWeekMaxes: Record<string, number> | null
+): ValidationResult {
+  if (!previousWeekMaxes || Object.keys(previousWeekMaxes).length === 0) {
+    return {
+      validation_type: 'strength_progression_check',
+      passed: true,
+      confidence_impact: 0,
+      reason_code: 'clean',
+      details: { reason: 'no_previous_data' },
+    };
+  }
+
+  const violations: string[] = [];
+  for (const s of sets) {
+    const prevMax = previousWeekMaxes[s.exercise];
+    if (!prevMax || prevMax <= 0) continue;
+    const increase = (s.weight_kg - prevMax) / prevMax;
+    if (increase > 0.1) {
+      violations.push(
+        `${s.exercise}: ${s.weight_kg}kg is ${Math.round(increase * 100)}% above last week's max (${prevMax}kg)`
+      );
+    }
+  }
+
+  const passed = violations.length === 0;
+
+  return {
+    validation_type: 'strength_progression_check',
+    passed,
+    confidence_impact: passed ? 0 : -0.3,
+    reason_code: passed ? 'clean' : 'rapid_progression',
+    details: { violations, threshold_percent: 10 },
+  };
+}
+
+/**
  * Run all strength validation checks.
  */
 export function validateStrengthWorkout(
   sets: readonly StrengthSet[],
   durationSeconds: number,
-  recentAverageTonnage: number | null
+  recentAverageTonnage: number | null,
+  oneRepMaxRecords?: Record<string, number> | null,
+  previousWeekMaxes?: Record<string, number> | null
 ): readonly ValidationResult[] {
   return [
     checkTonnagePlausibility(sets),
     checkWorkoutDensity(sets, durationSeconds),
     checkRestIntervals(sets, durationSeconds),
     checkTonnageSpike(sets, recentAverageTonnage),
+    check1RMPlausibility(sets, oneRepMaxRecords ?? null),
+    checkRepPlausibility(sets, oneRepMaxRecords ?? null),
+    checkWeekOverWeekProgression(sets, previousWeekMaxes ?? null),
   ];
 }

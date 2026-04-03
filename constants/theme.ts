@@ -81,12 +81,14 @@ export const Colors = {
 } as const;
 
 export const Rank = {
-  rookie: { label: 'Rookie', color: Colors.rank.bronze, minXp: 0 },
-  iron: { label: 'Iron', color: Colors.rank.silver, minXp: 1000 },
-  steel: { label: 'Steel', color: Colors.rank.gold, minXp: 3000 },
-  titan: { label: 'Titan', color: Colors.rank.platinum, minXp: 7000 },
-  apex: { label: 'Apex', color: Colors.rank.diamond, minXp: 15000 },
-  demon_slayer: { label: 'Demon Slayer', color: Colors.rank.champion, minXp: 30000 },
+  rookie: { label: 'Rookie', color: '#aaa8c3', minXp: 0 },
+  iron: { label: 'Iron', color: '#8b8b8b', minXp: 1000 },
+  bronze_plate: { label: 'Bronze Plate', color: '#cd7f32', minXp: 3000 },
+  silver_plate: { label: 'Silver Plate', color: '#c0c0c0', minXp: 5000 },
+  gold_plate: { label: 'Gold Plate', color: '#ffd700', minXp: 7000 },
+  elite: { label: 'Elite', color: '#ce96ff', minXp: 12000 },
+  champion: { label: 'Champion', color: '#ff6e84', minXp: 20000 },
+  olympian: { label: 'Olympian', color: '#ffd709', minXp: 30000 },
 } as const;
 
 // ─── Arena System ────────────────────────────────────────

@@ -50,12 +50,19 @@ const ROLE_COLORS: Record<ClanRole, string> = {
   member: '#74738b',
 };
 
+function isActiveToday(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.toDateString() === now.toDateString();
+}
+
 function MemberRow({
   userId,
   displayName,
   rank,
   level,
   role,
+  lastWorkoutDate,
   onPress,
 }: {
   userId: string;
@@ -63,6 +70,7 @@ function MemberRow({
   rank: RankType;
   level: number;
   role: ClanRole;
+  lastWorkoutDate?: string | null;
   onPress?: () => void;
 }) {
   const rankConfig = Rank[rank] ?? Rank.rookie;
@@ -82,6 +90,13 @@ function MemberRow({
         </Text>
       </View>
       <Text style={{ color: ROLE_COLORS[role], fontFamily: 'Lexend-SemiBold' }} className="text-xs mr-2">{ROLE_LABELS[role]}</Text>
+      {/* Activity dot */}
+      <View
+        className="w-2 h-2 rounded-full mr-2"
+        style={{
+          backgroundColor: lastWorkoutDate && isActiveToday(lastWorkoutDate) ? '#22c55e' : '#74738b',
+        }}
+      />
       <FontAwesome name="chevron-right" size={10} color="#74738b" />
     </Pressable>
   );
@@ -410,8 +425,20 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
 
       </Animated.View>
 
-      {/* Leaderboard Link */}
+      {/* Clan Chat */}
       <Animated.View style={fadeRoster.style}>
+      <Pressable
+        className="bg-[#1d1d37] rounded-xl p-4 mb-3 flex-row items-center active:scale-[0.98]"
+        onPress={() => Alert.alert('Coming Soon', 'Clan messaging will be available in a future update. During wars, use War Chat to coordinate with your clan.')}
+      >
+        <FontAwesome name="comments" size={18} color="#ce96ff" />
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold ml-3 flex-1">Clan Chat</Text>
+        <View className="bg-[#23233f] rounded-full px-2 py-0.5">
+          <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 8 }}>SOON</Text>
+        </View>
+      </Pressable>
+
+      {/* Leaderboard Link */}
       <Pressable
         className="bg-[#1d1d37] rounded-xl p-4 mb-4 flex-row items-center active:scale-[0.98]"
         onPress={() => router.push('/(app)/leaderboard' as any)}
@@ -435,6 +462,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
               rank={m.rank}
               level={m.level}
               role={m.role}
+              lastWorkoutDate={m.last_workout_date}
               onPress={() => setSelectedMember({ userId: m.user_id, name: m.display_name || 'Warrior', role: m.role })}
             />
           ))}

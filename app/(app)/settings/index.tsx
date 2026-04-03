@@ -214,6 +214,18 @@ export default function SettingsScreen() {
             />
           </View>
 
+          {/* Notifications Section */}
+          <SectionLabel text="Notifications" />
+          <View className="gap-2 mb-6">
+            <SettingsRow
+              icon="bell"
+              label="Notifications"
+              detail="Manage"
+              onPress={() => Alert.alert('Coming Soon', 'Notification preferences will be available in a future update.')}
+              delay={150}
+            />
+          </View>
+
           {/* About Section */}
           <SectionLabel text="About" />
           <View className="gap-2 mb-8">
