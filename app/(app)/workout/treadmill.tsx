@@ -40,6 +40,7 @@ export default function TreadmillWorkoutScreen() {
     isPB: false,
   });
   const [photoTaken, setPhotoTaken] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const timerStopped = useRef(false);
 
   // Start workout on mount if not active
@@ -51,12 +52,12 @@ export default function TreadmillWorkoutScreen() {
 
   // Timer
   useEffect(() => {
-    if (timerStopped.current) return;
+    if (timerStopped.current || isPaused) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [elapsedSeconds, updateElapsed]);
+  }, [elapsedSeconds, updateElapsed, isPaused]);
 
   function formatTime(totalSeconds: number): string {
     const hrs = Math.floor(totalSeconds / 3600);
@@ -182,6 +183,13 @@ export default function TreadmillWorkoutScreen() {
           >
             <FontAwesome name="times" size={12} color="#ef4444" />
             <Text style={{ color: '#ef4444', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Cancel</Text>
+          </Pressable>
+          <Pressable
+            className="px-3 py-1.5 rounded-lg active:scale-[0.98]"
+            style={{ backgroundColor: isPaused ? '#22c55e' : '#23233f' }}
+            onPress={() => setIsPaused((v) => !v)}
+          >
+            <FontAwesome name={isPaused ? 'play' : 'pause'} size={14} color={isPaused ? '#fff' : '#aaa8c3'} />
           </Pressable>
           <View className="items-center">
             <Text

@@ -326,39 +326,20 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         <ActivityIndicator color="#ce96ff" size="small" className="my-4" />
       )}
 
-      {/* Active War — compact score card */}
+      {/* Clan War Action — always visible after loading */}
       {!warLoading && war && (
         <Pressable
-          className="bg-[#1d1d37] rounded-xl p-4 mb-4 active:scale-[0.98]"
+          className="w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 mb-4 active:scale-[0.98]"
+          style={{ backgroundColor: '#1d1d37', borderWidth: 1, borderColor: '#ce96ff' }}
           onPress={() => router.push(`/(app)/war-details/${war.id}` as any)}
         >
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold text-sm mb-2">
-            Active War — Week {war.week_number}
-          </Text>
-          <View className="flex-row items-center justify-between">
-            <View className="items-center flex-1">
-              <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }} className="text-2xl font-bold">
-                {war.clan_a_id === myClanId
-                  ? (war.clan_a_score?.total ?? 0)
-                  : (war.clan_b_score?.total ?? 0)}
-              </Text>
-            </View>
-            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-lg mx-3">vs</Text>
-            <View className="items-center flex-1">
-              <Text style={{ color: '#ff6e84', fontFamily: 'Lexend-SemiBold' }} className="text-2xl font-bold">
-                {war.clan_a_id === myClanId
-                  ? (war.clan_b_score?.total ?? 0)
-                  : (war.clan_a_score?.total ?? 0)}
-              </Text>
-            </View>
-          </View>
-          <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }} className="text-xs text-center mt-2">
-            View War Details <FontAwesome name="chevron-right" size={9} color="#ce96ff" />
+          <FontAwesome name="shield" size={18} color="#ce96ff" />
+          <Text style={{ color: '#ce96ff', fontFamily: 'Epilogue-Bold', textTransform: 'uppercase' }} className="font-bold text-base">
+            VIEW WAR DETAILS
           </Text>
         </Pressable>
       )}
 
-      {/* Initiate Clan War — all members see this when no active war */}
       {!warLoading && !war && (
         <View className="mb-4">
           {(clan.my_role === 'leader' || clan.my_role === 'officer') ? (

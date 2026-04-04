@@ -128,7 +128,8 @@ export default function StrengthWorkoutScreen() {
   const [weightKg, setWeightKg] = useState('');
   const [showExercises, setShowExercises] = useState(false);
   const [isBodyweight, setIsBodyweight] = useState(false);
-  const [useImperial, setUseImperial] = useState(true);
+  // Weight is always entered in lbs (default) — converted to kg for scoring
+  // Unit preference is set in Settings > Biodata
 
   // Confirm modal state
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
@@ -191,7 +192,7 @@ export default function StrengthWorkoutScreen() {
     const s = 1;
     const r = parseInt(reps, 10);
     const rawWeight = parseFloat(weightKg);
-    const w = useImperial ? rawWeight * 0.453592 : rawWeight;
+    const w = rawWeight * 0.453592; // Always convert lbs to kg for scoring
 
     if (!r || r <= 0 || isNaN(rawWeight) || rawWeight < 0) {
       Alert.alert('Error', 'Enter valid reps and weight');
@@ -459,21 +460,12 @@ export default function StrengthWorkoutScreen() {
           )}
 
           {/* Unit Toggle */}
-          <Pressable
-            className="self-end mb-2 px-2 py-1 rounded-lg active:scale-[0.98]"
-            style={{ backgroundColor: '#23233f' }}
-            onPress={() => setUseImperial((v) => !v)}
-          >
-            <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>
-              {useImperial ? 'LBS' : 'KG'}
-            </Text>
-          </Pressable>
 
           {/* Sets / Reps / Weight */}
           <View className="flex-row gap-3 mb-4">
             <NumberInput label="Reps" value={reps} onChangeText={setReps} />
             <NumberInput
-              label={isBodyweight ? (useImperial ? 'BW (lbs)' : 'BW (kg)') : (useImperial ? 'Weight (lbs)' : 'Weight (kg)')}
+              label={isBodyweight ? 'BW (lbs)' : 'Weight (lbs)'}
               value={weightKg}
               onChangeText={setWeightKg}
               decimal
@@ -550,6 +542,26 @@ export default function StrengthWorkoutScreen() {
           reset();
           router.replace('/(app)/home');
         }}
+      />
+
+      <ConfirmModal
+        visible={showFinishConfirm}
+        title="Finish Workout?"
+        message="Are you sure you want to finish this session?"
+        confirmText="Finish"
+        cancelText="Keep Going"
+        onConfirm={() => { setShowFinishConfirm(false); handleFinishWorkout(); }}
+        onCancel={() => setShowFinishConfirm(false)}
+      />
+      <ConfirmModal
+        visible={showDiscardConfirm}
+        title="Discard Workout?"
+        message="This cannot be undone. All logged sets will be lost."
+        confirmText="Discard"
+        cancelText="Cancel"
+        destructive
+        onConfirm={() => { setShowDiscardConfirm(false); reset(); router.replace('/(app)/home'); }}
+        onCancel={() => setShowDiscardConfirm(false)}
       />
     </SafeAreaView>
   );
