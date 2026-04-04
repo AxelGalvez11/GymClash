@@ -115,21 +115,30 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <ScrollView className="flex-1 px-5 pt-4" contentContainerClassName="pb-8">
+        {/* Settings gear */}
+        <Pressable
+          className="absolute right-4 top-4 z-10"
+          onPress={() => router.push('/(app)/settings' as any)}
+          hitSlop={10}
+        >
+          <FontAwesome name="cog" size={18} color={VP.textMuted} />
+        </Pressable>
+
         {/* Profile Header */}
         <Animated.View style={fadeHeader.style} className="items-center mb-6">
           {/* Character avatar with glow ring */}
           <View
             className="mb-3"
             style={{
-              borderWidth: 2,
-              borderColor: VP.primary,
+              borderWidth: 2.5,
+              borderColor: '#a434ff',
               borderRadius: 999,
               padding: 4,
-              shadowColor: VP.primary,
+              shadowColor: '#a434ff',
               shadowOffset: { width: 0, height: 0 },
-              shadowRadius: 20,
-              shadowOpacity: 0.4,
-              elevation: 10,
+              shadowRadius: 25,
+              shadowOpacity: 0.6,
+              elevation: 15,
             }}
           >
             <CharacterDisplay
@@ -188,33 +197,29 @@ export default function ProfileScreen() {
 
         {/* XP Progress */}
         <Animated.View style={fadeStats.style}>
-        {nextRank && (
-          <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
-            <View className="flex-row justify-between mb-2">
-              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 13, color: VP.textSec }}>XP Progress</Text>
-              <Text className="text-sm font-bold" style={{ color: '#ffffff' }}>
-                {profile?.xp ?? 0} / {nextRank.minXp}
-              </Text>
-            </View>
-            <View className="h-3 bg-[#0c0c1f] rounded-full overflow-hidden">
-              <View
-                className="h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, ((profile?.xp ?? 0) / nextRank.minXp) * 100)}%`,
-                  backgroundColor: VP.primary,
-                }}
-              />
-            </View>
+        {/* XP Progress */}
+        <View className="w-full px-4 mt-4 mb-4">
+          <View className="flex-row justify-between mb-1">
+            <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>XP Progress</Text>
+            <Text style={{ color: VP.textPri, fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>
+              {profile?.xp ?? 0} / {nextRank?.minXp ?? 1000}
+            </Text>
           </View>
-        )}
+          <View className="h-3 rounded-full bg-[#23233f] overflow-hidden">
+            <View className="h-3 rounded-full" style={{
+              width: `${Math.min(((profile?.xp ?? 0) / (nextRank?.minXp ?? 1000)) * 100, 100)}%`,
+              backgroundColor: '#f97316',
+            }} />
+          </View>
+        </View>
 
         {/* Stats */}
         <View className="flex-row gap-3 mb-4">
-          <View className="bg-[#1d1d37] rounded-2xl p-4 flex-1 items-center" style={chromaticShadow}>
+          <View className="bg-[#1d1d37] rounded-2xl p-4 flex-1 items-center" style={{ borderWidth: 1, borderColor: 'rgba(164,52,255,0.3)' }}>
             <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 12, color: VP.textSec, textTransform: 'uppercase', marginBottom: 4 }}>Streak</Text>
             <Text className="text-2xl font-bold" style={{ color: '#ffffff' }}>{profile?.current_streak ?? 0}</Text>
           </View>
-          <View className="bg-[#1d1d37] rounded-2xl p-4 flex-1 items-center" style={chromaticShadow}>
+          <View className="bg-[#1d1d37] rounded-2xl p-4 flex-1 items-center" style={{ borderWidth: 1, borderColor: 'rgba(164,52,255,0.3)' }}>
             <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 12, color: VP.textSec, textTransform: 'uppercase', marginBottom: 4 }}>Best</Text>
             <Text className="text-2xl font-bold" style={{ color: '#ffffff' }}>{profile?.longest_streak ?? 0}</Text>
           </View>

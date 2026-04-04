@@ -19,22 +19,31 @@ export default function CratePreview() {
               style={[
                 styles.card,
                 {
+                  borderWidth: 1.5,
+                  borderColor: crate.color,
                   shadowColor: crate.color,
                   shadowOpacity: 0.4,
-                  shadowRadius: 10,
-                  shadowOffset: { width: 0, height: 2 },
-                  elevation: 6,
+                  shadowRadius: 15,
+                  shadowOffset: { width: 0, height: 0 },
+                  elevation: 8,
                 },
               ]}
             >
-              <FontAwesome name="cube" size={28} color={crate.color} />
+              <FontAwesome name="cube" size={38} color={crate.color} />
               <Text style={[styles.crateName, { color: crate.color }]}>
                 {crate.name}
               </Text>
-              <Text style={styles.cost}>{crate.cost}</Text>
+              <View style={styles.priceRow}>
+                <Text style={[styles.diamondIcon, { color: crate.color }]}>
+                  💎
+                </Text>
+                <Text style={[styles.cost, { color: '#e5e3ff' }]}>
+                  {crate.cost}
+                </Text>
+              </View>
 
-              <View style={styles.overlay}>
-                <Text style={styles.overlayText}>COMING SOON</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>SOON</Text>
               </View>
             </View>
           </View>
@@ -60,7 +69,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 14,
   },
   cardWrapper: {
     width: "47%",
@@ -80,26 +89,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 4,
   },
-  cost: {
-    fontFamily: "BeVietnamPro-Regular",
-    color: "#74738b",
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  diamondIcon: {
     fontSize: 11,
   },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(12,12,31,0.7)",
-    justifyContent: "center",
-    alignItems: "center",
+  cost: {
+    fontFamily: "BeVietnamPro-Regular",
+    color: "#e5e3ff",
+    fontSize: 11,
   },
-  overlayText: {
+  badge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    backgroundColor: "rgba(12,12,31,0.75)",
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  badgeText: {
     fontFamily: "Lexend-SemiBold",
     color: "#74738b",
-    fontSize: 9,
-    letterSpacing: 1,
+    fontSize: 8,
+    letterSpacing: 0.8,
   },
   infoContainer: {
     gap: 6,

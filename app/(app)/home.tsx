@@ -145,41 +145,33 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <ScrollView className="flex-1" contentContainerClassName="pb-8">
-        {/* Top bar: settings cog + currencies + milestones */}
+        {/* Top bar: currency pills + settings cog */}
         <View
           className="flex-row items-center justify-between px-4 pt-2 pb-3"
           style={{ backgroundColor: VP.raised }}
         >
-          <Pressable
-            className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            onPress={() => router.push('/(app)/settings' as any)}
-          >
-            <FontAwesome name="cog" size={16} color={VP.textSec} />
-          </Pressable>
-
-          {/* Compact currencies */}
-          <View className="flex-row items-center gap-3">
-            <View className="flex-row items-center gap-1">
-              <FontAwesome name="heartbeat" size={10} color={Colors.danger} />
-              <Text style={{ color: Colors.danger, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>{liftingPoints}</Text>
+          {/* Currency pills */}
+          <View className="flex-row items-center gap-2 flex-1">
+            <View className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(239,68,68,0.15)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' }}>
+              <FontAwesome name="heart" size={12} color="#ef4444" />
+              <Text style={{ color: '#ef4444', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>{liftingPoints}</Text>
             </View>
-            <View className="flex-row items-center gap-1">
-              <FontAwesome name="road" size={10} color={VP.cyan} />
-              <Text style={{ color: VP.cyan, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>{cardioPoints}</Text>
+            <View className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(129,236,255,0.15)', borderWidth: 1, borderColor: 'rgba(129,236,255,0.3)' }}>
+              <FontAwesome name="fire" size={12} color="#81ecff" />
+              <Text style={{ color: '#81ecff', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>{cardioPoints}</Text>
             </View>
-            <View className="flex-row items-center gap-1">
-              <FontAwesome name="diamond" size={10} color={VP.gold} />
-              <Text style={{ color: VP.gold, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>{diamondPoints}</Text>
+            <View className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(206,150,255,0.15)', borderWidth: 1, borderColor: 'rgba(206,150,255,0.3)' }}>
+              <FontAwesome name="diamond" size={12} color="#ce96ff" />
+              <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>{diamondPoints}</Text>
             </View>
           </View>
 
           <Pressable
             className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center active:scale-[0.98]"
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            onPress={() => setShowMilestones(true)}
+            onPress={() => router.push('/(app)/settings' as any)}
           >
-            <FontAwesome name="trophy" size={14} color="#ffd709" />
+            <FontAwesome name="cog" size={16} color={VP.textSec} />
           </Pressable>
         </View>
 
@@ -206,45 +198,36 @@ export default function HomeScreen() {
         )}
 
         {/* GYMCLASH logo — big + glowing */}
-        <Animated.View style={heroAnim.style} className="items-center px-5 pt-4 pb-2">
+        <Animated.View style={heroAnim.style} className="items-center px-5 pt-6 pb-1">
           <Animated.Text
             style={{
               fontFamily: 'Epilogue-Bold',
-              fontSize: 28,
-              letterSpacing: 6,
+              fontSize: 38,
+              letterSpacing: 8,
               color: '#ffd709',
               textShadowColor: glowAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: ['rgba(255,215,9,0.3)', 'rgba(255,215,9,0.8)'],
+                outputRange: ['rgba(255,215,9,0.4)', 'rgba(255,215,9,1)'],
               }),
               textShadowOffset: { width: 0, height: 0 },
               textShadowRadius: glowAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [8, 24],
+                outputRange: [12, 32],
               }),
             }}
           >
-            GYMCLASH
+            GYM CLASH
           </Animated.Text>
         </Animated.View>
 
         <View className="px-5">
-          {/* 1. Name */}
-          <Animated.View style={statsAnim.style} className="items-center mb-2">
+          {/* Username + Level */}
+          <Animated.View style={statsAnim.style} className="items-center mb-1 mt-2">
             <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 22, color: VP.textPri }}>
               {displayName}
             </Text>
           </Animated.View>
 
-          {/* 2. Trophy count with icon */}
-          <Animated.View style={statsAnim.style} className="flex-row items-center justify-center gap-2 mb-1">
-            <FontAwesome name="trophy" size={16} color={VP.gold} />
-            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 18, color: VP.gold }}>
-              {trophies}
-            </Text>
-          </Animated.View>
-
-          {/* 3. Player level */}
           <Animated.View style={statsAnim.style} className="items-center mb-5">
             <View className="flex-row items-center gap-1.5">
               <FontAwesome name="star" size={12} color={VP.primary} />
@@ -291,24 +274,50 @@ export default function HomeScreen() {
             );
           })()}
 
-          {/* 7. INITIATE WORKOUT — primary CTA */}
+          {/* Daily Challenges */}
+          <Animated.View style={ctaAnim.style}>
+            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 10, paddingHorizontal: 4 }}>
+              Daily Challenges
+            </Text>
+            <View className="flex-row gap-2 mb-5">
+              {[
+                { name: 'Push-Up Power', progress: 25, goal: 50, color: '#ef4444' },
+                { name: 'Squat Master', progress: 10, goal: 30, color: '#a434ff' },
+                { name: 'Plank Pro', progress: 90, goal: 300, color: '#81ecff' },
+              ].map((c) => (
+                <View key={c.name} className="flex-1 bg-[#1d1d37] rounded-xl p-3" style={{ borderWidth: 1, borderColor: 'rgba(206,150,255,0.1)' }}>
+                  <Text style={{ color: VP.textPri, fontFamily: 'Lexend-SemiBold', fontSize: 10, marginBottom: 4 }}>{c.name}</Text>
+                  <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 9, marginBottom: 6 }}>
+                    ({c.progress}/{c.goal})
+                  </Text>
+                  <View className="h-1.5 rounded-full bg-[#23233f] overflow-hidden">
+                    <View className="h-1.5 rounded-full" style={{ width: `${Math.min((c.progress / c.goal) * 100, 100)}%`, backgroundColor: c.color }} />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
+          {/* INITIATE WORKOUT — primary CTA */}
           <Animated.View style={ctaAnim.style}>
             <Pressable
               className="rounded-[2rem] py-5 mb-5 items-center active:scale-[0.98]"
               style={{
-                backgroundColor: VP.primary,
-                shadowColor: VP.primary,
+                backgroundColor: '#7c3aed',
+                shadowColor: '#81ecff',
                 shadowOffset: { width: 0, height: 0 },
-                shadowRadius: 40,
-                shadowOpacity: 0.4,
+                shadowRadius: 20,
+                shadowOpacity: 0.3,
                 elevation: 12,
+                borderWidth: 1,
+                borderColor: 'rgba(129,236,255,0.3)',
               }}
               onPress={() => setShowWorkoutModal(true)}
             >
               <View className="flex-row items-center gap-3">
-                <FontAwesome name="fire" size={24} color={VP.surface} />
-                <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 22, fontWeight: '900', color: VP.surface, letterSpacing: -0.5, textTransform: 'uppercase' }}>
-                  INITIATE WORKOUT
+                <FontAwesome name="fire" size={22} color="#81ecff" />
+                <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 20, color: '#ffffff', letterSpacing: 1, textTransform: 'uppercase' }}>
+                  Initiate Workout
                 </Text>
               </View>
             </Pressable>

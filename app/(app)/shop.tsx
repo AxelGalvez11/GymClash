@@ -158,6 +158,19 @@ export default function ShopScreen() {
                 <Pressable
                   key={tab.key}
                   className={`rounded-full px-4 py-1.5 ${isActive ? 'bg-[#a434ff]' : 'bg-[#23233f]'}`}
+                  style={isActive
+                    ? {
+                        shadowColor: '#a434ff',
+                        shadowOpacity: 0.35,
+                        shadowRadius: 8,
+                        shadowOffset: { width: 0, height: 0 },
+                        elevation: 6,
+                      }
+                    : {
+                        borderWidth: 1,
+                        borderColor: 'rgba(206,150,255,0.2)',
+                      }
+                  }
                   onPress={() => setActiveTab(tab.key)}
                 >
                   <Text

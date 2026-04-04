@@ -85,6 +85,7 @@ function MemberRow({
   return (
     <Pressable
       className="bg-[#1d1d37] rounded-xl p-3 flex-row items-center active:scale-[0.98]"
+      style={{ borderWidth: 1, borderColor: 'rgba(206,150,255,0.1)' }}
       onPress={onPress}
     >
       <View className="w-8 h-8 rounded-full bg-[#23233f] items-center justify-center">
@@ -407,7 +408,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       {!warLoading && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
         <Pressable
           className="mx-0 mb-4 w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 active:scale-[0.98]"
-          style={{ backgroundColor: '#a434ff', shadowColor: '#a434ff', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 10 }}
+          style={{ backgroundColor: '#a434ff', shadowColor: '#a434ff', shadowOpacity: 0.5, shadowRadius: 20, shadowOffset: { width: 0, height: 4 }, elevation: 12, borderWidth: 1, borderColor: 'rgba(206,150,255,0.4)' }}
           onPress={() => setShowWarModal(true)}
         >
           <FontAwesome name="fire" size={18} color="#ffffff" />
@@ -483,6 +484,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       <Animated.View style={fadeRoster.style}>
       <Pressable
         className="bg-[#1d1d37] rounded-xl p-4 mb-3 flex-row items-center active:scale-[0.98]"
+        style={{ borderWidth: 1, borderColor: 'rgba(206,150,255,0.2)' }}
         onPress={() => router.push(`/(app)/clan-chat/${clan.id}` as any)}
       >
         <FontAwesome name="comments" size={18} color="#ce96ff" />
@@ -493,6 +495,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       {/* Leaderboard Link */}
       <Pressable
         className="bg-[#1d1d37] rounded-xl p-4 mb-4 flex-row items-center active:scale-[0.98]"
+        style={{ borderWidth: 1, borderColor: 'rgba(206,150,255,0.2)' }}
         onPress={() => router.push('/(app)/leaderboard' as any)}
       >
         <FontAwesome name="trophy" size={18} color="#ffd709" />
