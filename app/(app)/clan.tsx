@@ -335,35 +335,34 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </View>
       )}
 
-      {/* War loading indicator */}
+      </Animated.View>
+
+      {/* INITIATE CLAN WAR — outside animation wrapper so always visible */}
       {warLoading && (
         <ActivityIndicator color="#ce96ff" size="small" className="my-4" />
       )}
 
-      {!warLoading && !war && (
-        <View className="mb-4">
-          {(clan.my_role === 'leader' || clan.my_role === 'officer') ? (
-            <Pressable
-              className="w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 active:scale-[0.98]"
-              style={{ backgroundColor: '#a434ff' }}
-              onPress={() => setShowWarModal(true)}
-            >
-              <FontAwesome name="fire" size={18} color="#ffffff" />
-              <Text style={{ color: '#ffffff', fontFamily: 'Epilogue-Bold', textTransform: 'uppercase' }} className="font-bold text-base">
-                INITIATE CLAN WAR
-              </Text>
-            </Pressable>
-          ) : (
-            <View className="bg-[#1d1d37] rounded-2xl p-4 items-center">
-              <FontAwesome name="shield" size={24} color="#74738b" />
-              <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13, textAlign: 'center', marginTop: 8 }}>
-                No active war. Ask your clan leader to initiate one!
-              </Text>
-            </View>
-          )}
+      {!warLoading && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
+        <Pressable
+          className="mx-0 mb-4 w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 active:scale-[0.98]"
+          style={{ backgroundColor: '#a434ff', shadowColor: '#a434ff', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 4 }, elevation: 10 }}
+          onPress={() => setShowWarModal(true)}
+        >
+          <FontAwesome name="fire" size={18} color="#ffffff" />
+          <Text style={{ color: '#ffffff', fontFamily: 'Epilogue-Bold', textTransform: 'uppercase', fontSize: 16, letterSpacing: 1 }}>
+            INITIATE CLAN WAR
+          </Text>
+        </Pressable>
+      )}
+
+      {!warLoading && !war && clan.my_role === 'member' && (
+        <View className="bg-[#1d1d37] rounded-2xl p-4 items-center mb-4">
+          <FontAwesome name="shield" size={24} color="#74738b" />
+          <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13, textAlign: 'center', marginTop: 8 }}>
+            No active war. Ask your clan leader to initiate one!
+          </Text>
         </View>
       )}
-      </Animated.View>
 
       {/* War History */}
       <Animated.View style={fadeHistory.style}>

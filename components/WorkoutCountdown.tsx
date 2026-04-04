@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, Animated, Modal } from 'react-native';
 
 interface WorkoutCountdownProps {
@@ -7,67 +7,64 @@ interface WorkoutCountdownProps {
 }
 
 export function WorkoutCountdown({ visible, onComplete }: WorkoutCountdownProps) {
-  const [count, setCount] = useState(3);
-  const scaleAnim = useRef(new Animated.Value(0.5)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const [display, setDisplay] = useState('3');
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (!visible) {
-      setCount(3);
-      return;
-    }
+    if (!visible) return;
 
-    let current = 3;
-    setCount(3);
+    const sequence = ['3', '2', '1', 'GO!'];
+    let step = 0;
 
-    function animateNumber() {
-      scaleAnim.setValue(0.5);
-      opacityAnim.setValue(0);
-      Animated.parallel([
-        Animated.timing(scaleAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-      ]).start(() => {
-        Animated.timing(opacityAnim, { toValue: 0, duration: 500, delay: 200, useNativeDriver: true }).start();
-      });
-    }
+    setDisplay(sequence[0]);
+    scaleAnim.setValue(1);
+    opacityAnim.setValue(1);
 
-    animateNumber();
-
-    const interval = setInterval(() => {
-      current--;
-      if (current > 0) {
-        setCount(current);
-        animateNumber();
-      } else if (current === 0) {
-        setCount(0); // "GO!"
-        animateNumber();
+    const timer = setInterval(() => {
+      step++;
+      if (step < sequence.length) {
+        setDisplay(sequence[step]);
+        // Quick pop animation
+        scaleAnim.setValue(0.5);
+        opacityAnim.setValue(1);
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 4,
+          tension: 80,
+          useNativeDriver: true,
+        }).start();
       } else {
-        clearInterval(interval);
-        onComplete();
+        clearInterval(timer);
+        onCompleteRef.current();
       }
-    }, 1000);
+    }, 800);
 
-    return () => clearInterval(interval);
-  }, [visible, onComplete, scaleAnim, opacityAnim]);
+    return () => clearInterval(timer);
+  }, [visible, scaleAnim, opacityAnim]);
 
   if (!visible) return null;
 
+  const isGo = display === 'GO!';
+
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="none">
       <View className="flex-1 items-center justify-center" style={{ backgroundColor: 'rgba(12,12,31,0.95)' }}>
         <Animated.Text
           style={{
             fontFamily: 'Epilogue-Bold',
-            fontSize: count === 0 ? 64 : 96,
-            color: count === 0 ? '#22c55e' : '#e5e3ff',
+            fontSize: isGo ? 72 : 100,
+            color: isGo ? '#22c55e' : '#e5e3ff',
             opacity: opacityAnim,
             transform: [{ scale: scaleAnim }],
-            textShadowColor: count === 0 ? 'rgba(34,197,94,0.5)' : 'rgba(206,150,255,0.5)',
+            textShadowColor: isGo ? 'rgba(34,197,94,0.6)' : 'rgba(206,150,255,0.6)',
             textShadowOffset: { width: 0, height: 0 },
-            textShadowRadius: 20,
+            textShadowRadius: 24,
           }}
         >
-          {count === 0 ? 'GO!' : count}
+          {display}
         </Animated.Text>
       </View>
     </Modal>
