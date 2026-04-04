@@ -16,6 +16,9 @@ from app.analysis.base import BaseExerciseAnalyzer
 from app.analysis.exercises.squat import SquatAnalyzer
 from app.analysis.exercises.push_up import PushUpAnalyzer
 from app.analysis.exercises.lunge import LungeAnalyzer
+from app.analysis.exercises.jumping_jack import JumpingJackAnalyzer
+from app.analysis.exercises.bicep_curl import BicepCurlAnalyzer
+from app.analysis.exercises.shoulder_press import ShoulderPressAnalyzer
 from app.analysis.exercises.future.stubs import get_future_analyzers
 
 
@@ -33,6 +36,9 @@ class AnalysisEngine:
             SquatAnalyzer(),
             PushUpAnalyzer(),
             LungeAnalyzer(),
+            JumpingJackAnalyzer(),
+            BicepCurlAnalyzer(),
+            ShoulderPressAnalyzer(),
         ]
         for a in implemented:
             self._analyzers[a.exercise_type] = a
