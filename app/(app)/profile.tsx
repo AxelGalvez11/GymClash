@@ -99,8 +99,9 @@ export default function ProfileScreen() {
   // Entrance animations
   const fadeHeader = useFadeSlide(0);
   const fadeStats = useFadeSlide(100);
-  const fadeRecords = useFadeSlide(200);
-  const fadeLinks = useFadeSlide(300);
+  const fadeDiagrams = useFadeSlide(200);
+  const fadeRecords = useFadeSlide(300);
+  const fadeLinks = useFadeSlide(400);
 
   if (isLoading) {
     return (
@@ -217,6 +218,178 @@ export default function ProfileScreen() {
             <Text className="text-2xl font-bold" style={{ color: '#ffffff' }}>{profile?.longest_streak ?? 0}</Text>
           </View>
         </View>
+        </Animated.View>
+
+        {/* Performance Radar + Muscle Heatmap */}
+        <Animated.View style={fadeDiagrams.style}>
+          {/* Performance Radar */}
+          <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
+            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Performance Profile</Text>
+            <View className="items-center">
+              {(() => {
+                const dims = [
+                  { label: 'Strength', value: Math.min((profile?.strength_workout_count ?? 0) / 50, 1) },
+                  { label: 'Cardio', value: Math.min((profile?.scout_workout_count ?? 0) / 50, 1) },
+                  { label: 'Consistency', value: Math.min((profile?.current_streak ?? 0) / 30, 1) },
+                  { label: 'Volume', value: Math.min((profile?.xp ?? 0) / 5000, 1) },
+                  { label: 'Trophy', value: Math.min((profile?.trophy_rating ?? 0) / 1200, 1) },
+                  { label: 'Level', value: Math.min((profile?.level ?? 1) / 50, 1) },
+                ];
+                const size = 140;
+                const center = size;
+                const levels = [0.25, 0.5, 0.75, 1.0];
+                const angleStep = (2 * Math.PI) / dims.length;
+
+                function polarToXY(angle: number, radius: number) {
+                  return {
+                    x: center + radius * Math.cos(angle - Math.PI / 2),
+                    y: center + radius * Math.sin(angle - Math.PI / 2),
+                  };
+                }
+
+                return (
+                  <View style={{ width: size * 2, height: size * 2 }}>
+                    {/* Background rings */}
+                    {levels.map((level) => (
+                      <View
+                        key={level}
+                        style={{
+                          position: 'absolute',
+                          left: center - size * level,
+                          top: center - size * level,
+                          width: size * level * 2,
+                          height: size * level * 2,
+                          borderRadius: size * level,
+                          borderWidth: 1,
+                          borderColor: 'rgba(206,150,255,0.1)',
+                        }}
+                      />
+                    ))}
+                    {/* Axis lines + labels */}
+                    {dims.map((dim, i) => {
+                      const angle = i * angleStep;
+                      const labelPos = polarToXY(angle, size + 20);
+                      return (
+                        <View key={dim.label}>
+                          <View
+                            style={{
+                              position: 'absolute',
+                              left: center,
+                              top: center,
+                              width: 1,
+                              height: size,
+                              backgroundColor: 'rgba(206,150,255,0.1)',
+                              transformOrigin: 'top',
+                              transform: [{ rotate: `${(angle * 180) / Math.PI}deg` }],
+                            }}
+                          />
+                          <Text
+                            style={{
+                              position: 'absolute',
+                              left: labelPos.x - 30,
+                              top: labelPos.y - 8,
+                              width: 60,
+                              textAlign: 'center',
+                              color: VP.textMuted,
+                              fontFamily: 'Lexend-SemiBold',
+                              fontSize: 8,
+                            }}
+                          >
+                            {dim.label}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                    {/* Data points */}
+                    {dims.map((dim, i) => {
+                      const angle = i * angleStep;
+                      const pos = polarToXY(angle, size * dim.value);
+                      return (
+                        <View
+                          key={`dot-${dim.label}`}
+                          style={{
+                            position: 'absolute',
+                            left: pos.x - 4,
+                            top: pos.y - 4,
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: '#ce96ff',
+                            shadowColor: '#ce96ff',
+                            shadowOpacity: 0.6,
+                            shadowRadius: 6,
+                            shadowOffset: { width: 0, height: 0 },
+                          }}
+                        />
+                      );
+                    })}
+                  </View>
+                );
+              })()}
+            </View>
+          </View>
+
+          {/* Muscle Heatmap */}
+          <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
+            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Muscle Heatmap</Text>
+            {(() => {
+              const muscleMap: Record<string, number> = {};
+              const exerciseToMuscle: Record<string, string> = {
+                'Squat': 'Legs', 'Leg Press': 'Legs', 'Lunges': 'Legs',
+                'Bench Press': 'Chest', 'Push-ups': 'Chest', 'Dips': 'Chest',
+                'Deadlift': 'Back', 'Barbell Row': 'Back', 'Pull-ups': 'Back', 'Lat Pulldown': 'Back',
+                'Overhead Press': 'Shoulders', 'Handstand Push-ups': 'Shoulders',
+                'Sit-ups': 'Core', 'Plank': 'Core', 'Crunches': 'Core', 'Leg Raises': 'Core', 'Burpees': 'Core',
+              };
+
+              (workouts ?? []).forEach((w: any) => {
+                if (w.sets) {
+                  (w.sets as any[]).forEach((s: any) => {
+                    const muscle = exerciseToMuscle[s.exercise] ?? 'Other';
+                    muscleMap[muscle] = (muscleMap[muscle] ?? 0) + (s.sets ?? 1);
+                  });
+                }
+              });
+
+              const muscles = ['Chest', 'Back', 'Shoulders', 'Legs', 'Core', 'Other'];
+              const maxSets = Math.max(...Object.values(muscleMap), 1);
+
+              return (
+                <View className="gap-2">
+                  {muscles.map((muscle) => {
+                    const sets = muscleMap[muscle] ?? 0;
+                    const intensity = sets / maxSets;
+                    const heatColor = intensity > 0.7 ? '#ef4444'
+                      : intensity > 0.4 ? '#f97316'
+                      : intensity > 0.1 ? '#eab308'
+                      : '#23233f';
+                    return (
+                      <View key={muscle} className="flex-row items-center gap-3">
+                        <Text style={{ color: VP.textSec, fontFamily: 'Lexend-SemiBold', fontSize: 11, width: 70 }}>{muscle}</Text>
+                        <View className="flex-1 h-6 rounded-full bg-[#23233f] overflow-hidden">
+                          <View
+                            className="h-6 rounded-full"
+                            style={{
+                              width: `${Math.max(intensity * 100, 2)}%`,
+                              backgroundColor: heatColor,
+                            }}
+                          />
+                        </View>
+                        <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10, width: 30, textAlign: 'right' }}>
+                          {sets}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                  {Object.keys(muscleMap).length === 0 && (
+                    <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 12, textAlign: 'center', paddingVertical: 8 }}>
+                      Complete workouts to see your muscle heatmap
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
+          </View>
         </Animated.View>
 
         {/* 1RM Records */}

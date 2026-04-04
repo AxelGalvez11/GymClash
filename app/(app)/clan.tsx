@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   FlatList,
   Animated,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -34,6 +35,7 @@ import WarInitiationModal from '@/components/WarInitiationModal';
 import MemberActionSheet from '@/components/MemberActionSheet';
 import { useFadeSlide } from '@/hooks/use-fade-slide';
 import { useAuthStore } from '@/stores/auth-store';
+import { supabase } from '@/services/supabase';
 import type { Rank as RankType, ClanRole } from '@/types';
 
 type ClanView = 'my-clan' | 'search' | 'create';
@@ -204,6 +206,8 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   const sendChallengeMutation = useSendChallenge();
   const [showWarModal, setShowWarModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{ userId: string; name: string; role: ClanRole } | null>(null);
+  const [showEditDesc, setShowEditDesc] = useState(false);
+  const [editDescText, setEditDescText] = useState(clan.description ?? '');
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   // Entrance animations
@@ -271,7 +275,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         {clan.my_role === 'leader' && (
           <Pressable
             className="mt-2 active:scale-[0.98]"
-            onPress={() => Alert.alert('Coming Soon', 'Clan description editing will be available in a future update.')}
+            onPress={() => setShowEditDesc(true)}
           >
             <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>
               <FontAwesome name="pencil" size={10} color="#ce96ff" /> Edit Description
@@ -285,6 +289,52 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           <FontAwesome name="trophy" size={12} color="#ffd709" /> {roster ? roster.reduce((sum: number, m: any) => sum + (m.trophy_rating ?? 0), 0) : 0} Total Trophies
         </Text>
       </Animated.View>
+
+      {/* Edit Description Modal */}
+      <Modal visible={showEditDesc} animationType="slide" transparent>
+        <View className="flex-1 bg-[rgba(12,12,31,0.9)] justify-end">
+          <View className="bg-[#1d1d37] rounded-t-2xl px-6 pt-6 pb-10">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text style={{ fontFamily: 'Epilogue-Bold', color: '#e5e3ff', fontSize: 18 }}>Edit Description</Text>
+              <Pressable onPress={() => setShowEditDesc(false)}>
+                <FontAwesome name="times" size={18} color="#74738b" />
+              </Pressable>
+            </View>
+            <TextInput
+              className="bg-[#000000] rounded-xl px-4 py-3 text-base mb-4"
+              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular', minHeight: 80, textAlignVertical: 'top' }}
+              placeholder="Describe your clan..."
+              placeholderTextColor="#74738b"
+              value={editDescText}
+              onChangeText={setEditDescText}
+              multiline
+              maxLength={200}
+            />
+            <Text className="text-xs text-right mb-3" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
+              {editDescText.length}/200
+            </Text>
+            <Pressable
+              className="py-3 rounded-xl items-center active:scale-[0.98]"
+              style={{ backgroundColor: '#a434ff' }}
+              onPress={async () => {
+                try {
+                  const { error } = await supabase
+                    .from('clans')
+                    .update({ description: editDescText.trim() })
+                    .eq('id', clan.id);
+                  if (error) throw error;
+                  setShowEditDesc(false);
+                  Alert.alert('Updated', 'Clan description has been updated.');
+                } catch (err: any) {
+                  Alert.alert('Error', err.message ?? 'Failed to update description');
+                }
+              }}
+            >
+              <Text style={{ color: '#fff', fontFamily: 'Epilogue-Bold', fontSize: 16 }}>Save</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* War Initiation Modal */}
       <WarInitiationModal
