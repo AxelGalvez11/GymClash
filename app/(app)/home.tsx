@@ -93,6 +93,7 @@ export default function HomeScreen() {
   const [showWorkoutModal, setShowWorkoutModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMilestones, setShowMilestones] = useState(false);
+  const [showArenaInfo, setShowArenaInfo] = useState(false);
   const prevMilestoneRef = useRef(false);
 
   const trophies = profile?.trophy_rating ?? 0;
@@ -255,17 +256,19 @@ export default function HomeScreen() {
 
           {/* 5. Arena Progression */}
           <Animated.View style={arenaAnim.style}>
-            <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
-              <View className="flex-row justify-between mb-2">
-                <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>
-                  {arenaConfig.badge} {arenaConfig.label}
-                </Text>
-                <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>
-                  {trophies} / {nextArenaThreshold} trophies
-                </Text>
+            <Pressable onPress={() => setShowArenaInfo(true)} className="active:scale-[0.98]">
+              <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
+                <View className="flex-row justify-between mb-2">
+                  <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>
+                    {arenaConfig.badge} {arenaConfig.label}
+                  </Text>
+                  <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>
+                    {trophies} / {nextArenaThreshold} trophies
+                  </Text>
+                </View>
+                <ProgressBar current={trophies} max={nextArenaThreshold} color={VP.primary} height="md" />
               </View>
-              <ProgressBar current={trophies} max={nextArenaThreshold} color={VP.primary} height="md" />
-            </View>
+            </Pressable>
           </Animated.View>
 
           {/* Flagged workout alert */}
@@ -351,6 +354,44 @@ export default function HomeScreen() {
         visible={showNotifications}
         onClose={() => setShowNotifications(false)}
       />
+
+      <Modal visible={showArenaInfo} animationType="slide" transparent>
+        <View className="flex-1 bg-[rgba(12,12,31,0.9)] justify-end">
+          <View className="bg-[#1d1d37] rounded-t-2xl px-6 pt-6 pb-10 max-h-[80%]">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text style={{ fontFamily: 'Epilogue-Bold', color: '#e5e3ff', fontSize: 18 }}>The Arena System</Text>
+              <Pressable onPress={() => setShowArenaInfo(false)}>
+                <FontAwesome name="times" size={18} color="#74738b" />
+              </Pressable>
+            </View>
+            <ScrollView>
+              <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13, marginBottom: 16 }}>
+                Climb through the arenas by earning trophies from workouts and clan wars. Your ultimate goal: reach The Colosseum and achieve Olympian rank!
+              </Text>
+              {[
+                { name: 'Rustyard', trophies: '0-299', color: '#74738b', desc: 'Where every warrior begins. Prove yourself.' },
+                { name: 'Iron Forge', trophies: '300-699', color: '#8b8b8b', desc: 'The grind starts here. Consistency is key.' },
+                { name: 'Titan Vault', trophies: '700-1199', color: '#ce96ff', desc: 'Elite territory. Only the dedicated reach this.' },
+                { name: 'The Colosseum', trophies: '1200+', color: '#ffd709', desc: 'The summit. Legends train here. Become Olympian.' },
+              ].map((a) => (
+                <View key={a.name} className="bg-[#23233f] rounded-xl p-4 mb-3">
+                  <View className="flex-row items-center justify-between mb-1">
+                    <Text style={{ color: a.color, fontFamily: 'Epilogue-Bold', fontSize: 16 }}>{a.name}</Text>
+                    <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>{a.trophies} 🏆</Text>
+                  </View>
+                  <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 12 }}>{a.desc}</Text>
+                </View>
+              ))}
+              <View className="bg-[#23233f] rounded-xl p-4 mt-2">
+                <Text style={{ color: '#ffd709', fontFamily: 'Epilogue-Bold', fontSize: 14, marginBottom: 4 }}>🏅 Become Olympian</Text>
+                <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 12 }}>
+                  Level up individually through consistent training. The highest rank — Olympian — is reserved for warriors who dominate both lifting and cardio.
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={showMilestones} animationType="slide" transparent>
         <View className="flex-1 bg-[rgba(12,12,31,0.9)] justify-end">

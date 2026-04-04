@@ -234,6 +234,20 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
 
   return (
     <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
+      {/* Top actions */}
+      <View className="flex-row items-center justify-between px-1 pt-2">
+        <View className="w-8" />
+        <View className="flex-1" />
+        {!warLoading && war && (
+          <Pressable
+            className="w-8 h-8 rounded-full bg-[#23233f] items-center justify-center active:scale-[0.98]"
+            onPress={() => router.push(`/(app)/war-details/${war.id}` as any)}
+          >
+            <FontAwesome name="question" size={14} color="#ce96ff" />
+          </Pressable>
+        )}
+      </View>
+
       {/* Clan Header */}
       <Animated.View style={fadeHeader.style} className="items-center py-6">
         <Text className="text-4xl mb-2">⚔️</Text>
@@ -324,20 +338,6 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
       {/* War loading indicator */}
       {warLoading && (
         <ActivityIndicator color="#ce96ff" size="small" className="my-4" />
-      )}
-
-      {/* Clan War Action — always visible after loading */}
-      {!warLoading && war && (
-        <Pressable
-          className="w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 mb-4 active:scale-[0.98]"
-          style={{ backgroundColor: '#1d1d37', borderWidth: 1, borderColor: '#ce96ff' }}
-          onPress={() => router.push(`/(app)/war-details/${war.id}` as any)}
-        >
-          <FontAwesome name="shield" size={18} color="#ce96ff" />
-          <Text style={{ color: '#ce96ff', fontFamily: 'Epilogue-Bold', textTransform: 'uppercase' }} className="font-bold text-base">
-            VIEW WAR DETAILS
-          </Text>
-        </Pressable>
       )}
 
       {!warLoading && !war && (

@@ -16,6 +16,7 @@ import { VictoryScreen } from '@/components/VictoryScreen';
 import { CardioModeSelector } from '@/components/CardioModeSelector';
 import { GpsDropOverlay } from '@/components/GpsDropOverlay';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { WorkoutCountdown } from '@/components/WorkoutCountdown';
 import DevicePrompt from '@/components/DevicePrompt';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -48,6 +49,8 @@ export default function ScoutWorkoutScreen() {
   const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false, currencyEarned: 0 });
   const [gpsDropped, setGpsDropped] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [showCountdown, setShowCountdown] = useState(true);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const timerStopped = useRef(false);
 
   // Start workout on mount if not active
@@ -60,12 +63,12 @@ export default function ScoutWorkoutScreen() {
 
   // Track elapsed time silently for duration_seconds on submission
   useEffect(() => {
-    if (mode !== 'territory' || timerStopped.current || isPaused) return;
+    if (mode !== 'territory' || timerStopped.current || isPaused || showCountdown) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [elapsedSeconds, updateElapsed, mode, isPaused]);
+  }, [elapsedSeconds, updateElapsed, mode, isPaused, showCountdown]);
 
   // Watch for GPS signal drops in territory mode
   useEffect(() => {
@@ -182,17 +185,7 @@ export default function ScoutWorkoutScreen() {
   }
 
   function handleDiscard() {
-    Alert.alert('Discard Run?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Discard',
-        style: 'destructive',
-        onPress: () => {
-          reset();
-          router.replace('/(app)/home');
-        },
-      },
-    ]);
+    setShowDiscardConfirm(true);
   }
 
   function formatPace(paceMinPerKm: number): string {
@@ -236,22 +229,8 @@ export default function ScoutWorkoutScreen() {
             <FontAwesome name="times" size={12} color="#ef4444" />
             <Text style={{ color: '#ef4444', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Cancel</Text>
           </Pressable>
-          <View className="flex-row items-center gap-2">
-            {mode === 'territory' && (
-              <Pressable
-                className="px-3 py-1.5 rounded-lg active:scale-[0.98]"
-                style={{ backgroundColor: isPaused ? '#22c55e' : '#23233f' }}
-                onPress={() => setIsPaused((v) => !v)}
-              >
-                <FontAwesome name={isPaused ? 'play' : 'pause'} size={14} color={isPaused ? '#fff' : '#aaa8c3'} />
-              </Pressable>
-            )}
-            <View className="items-center">
-              <Text style={{ color: '#e5e3ff', fontSize: 18, fontFamily: 'Epilogue-Bold' }}>Run</Text>
-              <Text style={{ color: '#74738b', fontSize: 12, fontFamily: 'Lexend-SemiBold' }}>
-                {`${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
-              </Text>
-            </View>
+          <View className="items-center">
+            <Text style={{ color: '#e5e3ff', fontSize: 18, fontFamily: 'Epilogue-Bold' }}>Run</Text>
           </View>
           <Pressable
             onPress={handleConcludePress}
@@ -264,6 +243,13 @@ export default function ScoutWorkoutScreen() {
               {submitWorkout.isPending ? 'Saving...' : 'Finish'}
             </Text>
           </Pressable>
+        </View>
+
+        {/* Large Timer Display */}
+        <View className="items-center mb-6">
+          <Text style={{ color: '#e5e3ff', fontSize: 48, fontFamily: 'Lexend-SemiBold' }}>
+            {`${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
+          </Text>
         </View>
 
         {/* Guest indicator */}
@@ -350,6 +336,20 @@ export default function ScoutWorkoutScreen() {
             </View>
           </Pressable>
         </View>
+
+        {/* Pause Button */}
+        <Pressable
+          className="w-full py-3 rounded-xl items-center mb-4 active:scale-[0.98]"
+          style={{ backgroundColor: isPaused ? '#22c55e' : '#23233f' }}
+          onPress={() => setIsPaused((v) => !v)}
+        >
+          <View className="flex-row items-center gap-2">
+            <FontAwesome name={isPaused ? 'play' : 'pause'} size={16} color={isPaused ? '#fff' : '#aaa8c3'} />
+            <Text style={{ color: isPaused ? '#fff' : '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 14 }}>
+              {isPaused ? 'RESUME' : 'PAUSE'}
+            </Text>
+          </View>
+        </Pressable>
 
         {/* Distance Input */}
         <View className="bg-[#23233f] rounded-xl p-4">
@@ -448,6 +448,19 @@ export default function ScoutWorkoutScreen() {
         }}
         onCancel={() => setShowFinishConfirm(false)}
       />
+
+      <ConfirmModal
+        visible={showDiscardConfirm}
+        title="Discard Run?"
+        message="This cannot be undone. All tracking data will be lost."
+        confirmText="Discard"
+        cancelText="Cancel"
+        destructive
+        onConfirm={() => { setShowDiscardConfirm(false); reset(); router.replace('/(app)/home'); }}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
+
+      <WorkoutCountdown visible={showCountdown && mode === 'territory'} onComplete={() => setShowCountdown(false)} />
     </SafeAreaView>
   );
 }

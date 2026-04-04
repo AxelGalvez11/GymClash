@@ -8,6 +8,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Colors, TrophyRewards } from '@/constants/theme';
 import { VictoryScreen } from '@/components/VictoryScreen';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { WorkoutCountdown } from '@/components/WorkoutCountdown';
 import { useAuthStore } from '@/stores/auth-store';
 import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
 import { useSubmitWorkout } from '@/hooks/use-workouts';
@@ -153,6 +154,9 @@ export default function StrengthWorkoutScreen() {
   // Timer stop guard
   const timerStopped = useRef(false);
 
+  // Countdown state
+  const [showCountdown, setShowCountdown] = useState(true);
+
   // Per-exercise score feedback
   const [lastAddedScore, setLastAddedScore] = useState(0);
   const [showScoreBadge, setShowScoreBadge] = useState(false);
@@ -166,12 +170,12 @@ export default function StrengthWorkoutScreen() {
 
   // Timer
   useEffect(() => {
-    if (timerStopped.current) return;
+    if (timerStopped.current || showCountdown) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [elapsedSeconds, updateElapsed]);
+  }, [elapsedSeconds, updateElapsed, showCountdown]);
 
   // Detect bodyweight exercise and auto-fill weight
   useEffect(() => {
@@ -563,6 +567,8 @@ export default function StrengthWorkoutScreen() {
         onConfirm={() => { setShowDiscardConfirm(false); reset(); router.replace('/(app)/home'); }}
         onCancel={() => setShowDiscardConfirm(false)}
       />
+
+      <WorkoutCountdown visible={showCountdown} onComplete={() => setShowCountdown(false)} />
     </SafeAreaView>
   );
 }

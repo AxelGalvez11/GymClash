@@ -11,6 +11,7 @@ import { useSubmitWorkout } from '@/hooks/use-workouts';
 import { useProfile } from '@/hooks/use-profile';
 import { VictoryScreen } from '@/components/VictoryScreen';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { WorkoutCountdown } from '@/components/WorkoutCountdown';
 import { TrophyRewards } from '@/constants/theme';
 
 export default function TreadmillWorkoutScreen() {
@@ -41,6 +42,8 @@ export default function TreadmillWorkoutScreen() {
   });
   const [photoTaken, setPhotoTaken] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [showCountdown, setShowCountdown] = useState(true);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const timerStopped = useRef(false);
 
   // Start workout on mount if not active
@@ -52,12 +55,12 @@ export default function TreadmillWorkoutScreen() {
 
   // Timer
   useEffect(() => {
-    if (timerStopped.current || isPaused) return;
+    if (timerStopped.current || isPaused || showCountdown) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [elapsedSeconds, updateElapsed, isPaused]);
+  }, [elapsedSeconds, updateElapsed, isPaused, showCountdown]);
 
   function formatTime(totalSeconds: number): string {
     const hrs = Math.floor(totalSeconds / 3600);
@@ -158,17 +161,7 @@ export default function TreadmillWorkoutScreen() {
   }
 
   function handleDiscard() {
-    Alert.alert('Discard Session?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Discard',
-        style: 'destructive',
-        onPress: () => {
-          reset();
-          router.replace('/(app)/home');
-        },
-      },
-    ]);
+    setShowDiscardConfirm(true);
   }
 
   return (
@@ -410,6 +403,19 @@ export default function TreadmillWorkoutScreen() {
         }}
         onCancel={() => setShowFinishConfirm(false)}
       />
+
+      <ConfirmModal
+        visible={showDiscardConfirm}
+        title="Discard Session?"
+        message="This cannot be undone. All session data will be lost."
+        confirmText="Discard"
+        cancelText="Cancel"
+        destructive
+        onConfirm={() => { setShowDiscardConfirm(false); reset(); router.replace('/(app)/home'); }}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
+
+      <WorkoutCountdown visible={showCountdown} onComplete={() => setShowCountdown(false)} />
     </SafeAreaView>
   );
 }
