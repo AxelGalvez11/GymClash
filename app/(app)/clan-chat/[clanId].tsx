@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, Pressable, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Pressable, FlatList, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -52,6 +52,7 @@ export default function ClanChatScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3" style={{ borderBottomWidth: 0.5, borderBottomColor: 'rgba(206,150,255,0.15)' }}>
         <Pressable onPress={() => router.replace('/(app)/clan' as any)} hitSlop={10}>
@@ -151,6 +152,7 @@ export default function ClanChatScreen() {
           <FontAwesome name="send" size={14} color="#fff" />
         </Pressable>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

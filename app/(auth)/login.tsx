@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -69,6 +69,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
       <View className="flex-1 px-8 justify-center">
         {/* Header */}
         <Pressable onPress={() => router.back()} className="mb-8 active:scale-[0.98]">
@@ -273,6 +274,7 @@ export default function LoginScreen() {
           </Text>
         </Pressable>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

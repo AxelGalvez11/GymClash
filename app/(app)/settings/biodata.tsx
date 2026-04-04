@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -303,7 +303,8 @@ export default function BiodataScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
-      <ScrollView className="flex-1 px-5" contentContainerClassName="pb-8">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+      <ScrollView className="flex-1 px-5" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
         <View className="flex-row items-center pt-3 pb-5">
           <Pressable onPress={() => router.replace('/(app)/settings' as any)} className="mr-4 active:scale-[0.98]">
             <FontAwesome name="arrow-left" size={18} color="#aaa8c3" />
@@ -524,6 +525,7 @@ export default function BiodataScreen() {
           for scoring and trajectory prediction.
         </Text>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

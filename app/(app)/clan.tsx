@@ -10,6 +10,8 @@ import {
   FlatList,
   Animated,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -292,6 +294,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
 
       {/* Edit Description Modal */}
       <Modal visible={showEditDesc} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1" keyboardVerticalOffset={60}>
         <View className="flex-1 bg-[rgba(12,12,31,0.9)] justify-end">
           <View className="bg-[#1d1d37] rounded-t-2xl px-6 pt-6 pb-10">
             <View className="flex-row items-center justify-between mb-4">
@@ -334,6 +337,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
             </Pressable>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* War Initiation Modal */}
@@ -581,6 +585,7 @@ function SearchView({ onJoined }: { onJoined: () => void }) {
   }
 
   return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
     <View className="flex-1 px-4">
       <TextInput
         className="bg-[#000000] rounded-xl px-4 py-3 text-base mb-4"
@@ -619,6 +624,7 @@ function SearchView({ onJoined }: { onJoined: () => void }) {
         />
       )}
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -670,7 +676,8 @@ function CreateView({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+    <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
       <View className="gap-4 mb-6">
         <View>
           <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }} className="text-xs uppercase mb-1">Clan Name</Text>
@@ -714,6 +721,7 @@ function CreateView({ onCreated }: { onCreated: () => void }) {
         </Text>
       </Pressable>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

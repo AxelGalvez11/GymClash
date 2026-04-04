@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
@@ -80,7 +80,8 @@ export default function ReportScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
-      <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+      <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
         <Pressable onPress={() => router.replace('/(app)/home' as any)} className="py-4 active:scale-[0.98]">
           <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
         </Pressable>
@@ -172,6 +173,7 @@ export default function ReportScreen() {
           reduced report privileges.
         </Text>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

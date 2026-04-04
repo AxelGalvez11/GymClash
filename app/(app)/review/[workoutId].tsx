@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, TextInput, Alert, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, ActivityIndicator, Animated, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -102,7 +102,8 @@ export default function WorkoutReviewScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
-      <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+      <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
         {/* Back button */}
         <Pressable onPress={() => router.replace('/(app)/home' as any)} className="py-4 active:scale-[0.98]">
           <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
@@ -226,6 +227,7 @@ export default function WorkoutReviewScreen() {
         )}
         </Animated.View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

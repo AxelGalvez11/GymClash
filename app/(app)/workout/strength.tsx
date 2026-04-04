@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert, Animated } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, Animated, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -331,7 +331,8 @@ export default function StrengthWorkoutScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
-      <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+      <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View className="flex-row items-center justify-between py-4">
           <Pressable
@@ -531,6 +532,7 @@ export default function StrengthWorkoutScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <VictoryScreen
         visible={showVictory}
