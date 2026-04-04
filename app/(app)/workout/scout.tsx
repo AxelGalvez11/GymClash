@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,11 +7,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
 import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
 import { useSubmitWorkout } from '@/hooks/use-workouts';
-import { NumberInput } from '@/components/ui/NumberInput';
 import { calculateScoutRawScore } from '@/lib/scoring/raw-score';
-import { Colors, TrophyRewards } from '@/constants/theme';
+import { TrophyRewards } from '@/constants/theme';
 import { useProfile } from '@/hooks/use-profile';
 import { useGpsTracking } from '@/hooks/use-gps-tracking';
+import { HeartRateZoneBox } from '@/components/workout/HeartRateZoneBox';
 import { VictoryScreen } from '@/components/VictoryScreen';
 import { CardioModeSelector } from '@/components/CardioModeSelector';
 import { GpsDropOverlay } from '@/components/GpsDropOverlay';
@@ -31,8 +31,6 @@ export default function ScoutWorkoutScreen() {
     idempotencyKey,
     elapsedSeconds,
     updateElapsed,
-    distanceKm,
-    updateDistance,
     reset,
   } = useWorkoutStore();
   const { addGuestWorkout, guestWorkouts } = useGuestWorkoutStore();
@@ -40,10 +38,9 @@ export default function ScoutWorkoutScreen() {
   const queryClient = useQueryClient();
   const submitWorkout = useSubmitWorkout();
   const { data: profile } = useProfile();
+  const maxHR = profile?.max_heart_rate ?? (profile?.birth_date ? 220 - Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null);
 
   const gps = useGpsTracking();
-  const [useGps, setUseGps] = useState(false);
-  const [distanceInput, setDistanceInput] = useState('');
   const [showVictory, setShowVictory] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false, currencyEarned: 0 });
@@ -53,13 +50,16 @@ export default function ScoutWorkoutScreen() {
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const timerStopped = useRef(false);
 
-  // Start workout on mount if not active
+  // Start workout and GPS on mount if not active
   useEffect(() => {
     if (mode !== 'territory') return;
     if (!isActive) {
       startWorkout('scout');
     }
-  }, [isActive, startWorkout, mode]);
+    if (gps.status === 'idle') {
+      gps.startTracking();
+    }
+  }, [isActive, startWorkout, mode, gps]);
 
   // Track elapsed time silently for duration_seconds on submission
   useEffect(() => {
@@ -72,22 +72,15 @@ export default function ScoutWorkoutScreen() {
 
   // Watch for GPS signal drops in territory mode
   useEffect(() => {
-    if (mode === 'territory' && useGps && gps.error) {
+    if (mode === 'territory' && gps.error) {
       setGpsDropped(true);
     } else if (!gps.error) {
       setGpsDropped(false);
     }
-  }, [gps.error, mode, useGps]);
+  }, [gps.error, mode]);
 
-  // Compute pace from elapsed time and distance
-  const computePace = useCallback(() => {
-    const km = parseFloat(distanceInput) || distanceKm;
-    if (km <= 0 || elapsedSeconds <= 0) return 0;
-    return elapsedSeconds / 60 / km; // min/km
-  }, [distanceInput, distanceKm, elapsedSeconds]);
-
-  const currentPace = useGps && gps.pace > 0 ? gps.pace : computePace();
-  const currentDistance = useGps ? gps.distance : (parseFloat(distanceInput) || distanceKm || 0);
+  const currentDistance = gps.distance;
+  const currentPace = gps.pace > 0 ? gps.pace : 0;
 
   const provisionalScore =
     currentDistance > 0 && currentPace > 0
@@ -100,9 +93,9 @@ export default function ScoutWorkoutScreen() {
 
   async function handleFinishWorkout() {
     timerStopped.current = true;
-    const km = parseFloat(distanceInput);
+    const km = gps.distance;
     if (!km || km <= 0) {
-      Alert.alert('Error', 'Enter the distance you ran');
+      Alert.alert('Error', 'No distance recorded. Make sure GPS is active.');
       return;
     }
 
@@ -301,42 +294,6 @@ export default function ScoutWorkoutScreen() {
           </View>
         </View>
 
-        {/* GPS / Manual Toggle */}
-        <View className="flex-row gap-2 mb-4">
-          <Pressable
-            className="flex-1 py-2 rounded-xl items-center active:scale-[0.98]"
-            style={{ backgroundColor: useGps ? '#ce96ff' : '#23233f' }}
-            onPress={() => {
-              setUseGps(true);
-              if (gps.status === 'idle') gps.startTracking();
-            }}
-          >
-            <View className="flex-row items-center gap-2">
-              <FontAwesome name="map-marker" size={14} color={useGps ? '#000' : '#aaa8c3'} />
-              <Text style={{
-                color: useGps ? '#000' : '#aaa8c3',
-                fontFamily: 'Lexend-SemiBold',
-              }}>GPS</Text>
-            </View>
-          </Pressable>
-          <Pressable
-            className="flex-1 py-2 rounded-xl items-center active:scale-[0.98]"
-            style={{ backgroundColor: !useGps ? '#ce96ff' : '#23233f' }}
-            onPress={() => {
-              setUseGps(false);
-              if (gps.status === 'tracking') gps.stopTracking();
-            }}
-          >
-            <View className="flex-row items-center gap-2">
-              <FontAwesome name="pencil" size={14} color={!useGps ? '#000' : '#aaa8c3'} />
-              <Text style={{
-                color: !useGps ? '#000' : '#aaa8c3',
-                fontFamily: 'Lexend-SemiBold',
-              }}>Manual</Text>
-            </View>
-          </Pressable>
-        </View>
-
         {/* Pause Button */}
         <Pressable
           className="w-full py-3 rounded-xl items-center mb-4 active:scale-[0.98]"
@@ -351,56 +308,34 @@ export default function ScoutWorkoutScreen() {
           </View>
         </Pressable>
 
-        {/* Distance Input */}
+        {/* Heart Rate Zone */}
+        <HeartRateZoneBox heartRate={null} maxHR={maxHR} />
+
+        {/* GPS Tracking */}
         <View className="bg-[#23233f] rounded-xl p-4">
-          {useGps ? (
-            <>
-              <Text className="text-lg mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>GPS Tracking</Text>
-              {gps.status === 'tracking' ? (
-                <View className="items-center py-4">
-                  <View className="flex-row items-center gap-2 mb-2">
-                    <View className="w-2 h-2 rounded-full bg-success" />
-                    <Text className="text-success text-xs uppercase" style={{ fontFamily: 'Lexend-SemiBold' }}>Live Tracking</Text>
-                  </View>
-                  <Text style={{ color: '#e5e3ff', fontSize: 36, fontFamily: 'Lexend-SemiBold' }}>
-                    {gps.distance.toFixed(2)} km
-                  </Text>
-                  <Text className="text-sm mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
-                    Pace: {formatPace(gps.pace)} min/km · {gps.points.length} points
-                  </Text>
-                </View>
-              ) : gps.status === 'error' ? (
-                <View className="items-center py-4">
-                  <Text className="text-danger text-sm mb-2" style={{ fontFamily: 'BeVietnamPro-Regular' }}>GPS unavailable</Text>
-                  <Pressable onPress={() => setUseGps(false)} className="active:scale-[0.98]">
-                    <Text className="text-sm underline" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Switch to manual</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <View className="items-center py-4">
-                  <Text className="text-sm" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Starting GPS...</Text>
-                </View>
-              )}
-            </>
-          ) : (
-            <>
-              <Text className="text-lg mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>Enter Distance</Text>
-              <Text className="text-sm mb-3" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
-                Enter the distance you ran, or switch to GPS mode.
+          <Text className="text-lg mb-2" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>GPS Tracking</Text>
+          {gps.status === 'tracking' ? (
+            <View className="items-center py-4">
+              <View className="flex-row items-center gap-2 mb-2">
+                <View className="w-2 h-2 rounded-full bg-success" />
+                <Text className="text-success text-xs uppercase" style={{ fontFamily: 'Lexend-SemiBold' }}>Live Tracking</Text>
+              </View>
+              <Text style={{ color: '#e5e3ff', fontSize: 36, fontFamily: 'Lexend-SemiBold' }}>
+                {gps.distance.toFixed(2)} km
               </Text>
-              <NumberInput
-                label="Distance (km)"
-                value={distanceInput}
-                onChangeText={(t) => {
-                  setDistanceInput(t);
-                  const km = parseFloat(t);
-                  if (!isNaN(km) && km >= 0) {
-                    updateDistance(km);
-                  }
-                }}
-                decimal
-              />
-            </>
+              <Text className="text-sm mt-1" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
+                Pace: {formatPace(gps.pace)} min/km · {gps.points.length} points
+              </Text>
+            </View>
+          ) : gps.status === 'error' ? (
+            <View className="items-center py-4">
+              <Text className="text-danger text-sm mb-2" style={{ fontFamily: 'BeVietnamPro-Regular' }}>GPS unavailable</Text>
+              <Text className="text-sm" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Check location permissions and try again</Text>
+            </View>
+          ) : (
+            <View className="items-center py-4">
+              <Text className="text-sm" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Starting GPS...</Text>
+            </View>
           )}
         </View>
 

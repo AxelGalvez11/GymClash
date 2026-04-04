@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
 import { useSubmitWorkout } from '@/hooks/use-workouts';
 import { useProfile } from '@/hooks/use-profile';
+import { HeartRateZoneBox } from '@/components/workout/HeartRateZoneBox';
 import { VictoryScreen } from '@/components/VictoryScreen';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { WorkoutCountdown } from '@/components/WorkoutCountdown';
@@ -31,6 +32,7 @@ export default function TreadmillWorkoutScreen() {
   const queryClient = useQueryClient();
   const submitWorkout = useSubmitWorkout();
   const { data: profile } = useProfile();
+  const maxHR = profile?.max_heart_rate ?? (profile?.birth_date ? 220 - Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null);
 
   const [showVictory, setShowVictory] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
@@ -328,42 +330,8 @@ export default function TreadmillWorkoutScreen() {
           </Text>
         </View>
 
-        {/* Heart Rate */}
-        <View className="bg-[#23233f] rounded-xl p-4 mb-4">
-          <Text
-            className="text-lg mb-2"
-            style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}
-          >
-            Heart Rate
-          </Text>
-          <View className="flex-row items-center gap-3">
-            <FontAwesome name="heartbeat" size={20} color="#74738b" />
-            <Text
-              style={{
-                color: '#e5e3ff',
-                fontSize: 24,
-                fontFamily: 'Lexend-SemiBold',
-              }}
-            >
-              --
-            </Text>
-            <Text
-              style={{
-                color: '#74738b',
-                fontSize: 13,
-                fontFamily: 'BeVietnamPro-Regular',
-              }}
-            >
-              bpm
-            </Text>
-          </View>
-          <Text
-            className="text-xs mt-2"
-            style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}
-          >
-            Connect a device for HR tracking
-          </Text>
-        </View>
+        {/* Heart Rate Zone */}
+        <HeartRateZoneBox heartRate={null} maxHR={maxHR} />
 
         {/* Provisional Note */}
         <View className="mt-2 px-2">
