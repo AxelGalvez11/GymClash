@@ -292,8 +292,8 @@ export default function LeaderboardScreen() {
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
-          <Pressable onPress={() => router.replace('/(app)/clan' as any)}>
-            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }} className="text-base">← Back</Text>
+          <Pressable onPress={() => router.replace('/(app)/clan' as any)} className="active:scale-[0.98]" hitSlop={10}>
+            <FontAwesome name="arrow-left" size={16} color="#aaa8c3" />
           </Pressable>
           <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="text-lg font-bold">Leaderboard</Text>
           <View className="w-12" />

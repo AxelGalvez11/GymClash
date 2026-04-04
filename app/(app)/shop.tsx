@@ -134,7 +134,7 @@ export default function ShopScreen() {
             <View className="flex-row items-center gap-1">
               <FontAwesome name="road" size={12} color="#81ecff" />
               <Text style={{ color: '#81ecff', fontFamily: 'Lexend-Bold', fontWeight: '700', fontSize: 12 }}>
-                {profile?.gym_coins ?? 0}
+                {profile?.scout_workout_count ?? 0}
               </Text>
             </View>
             {/* Diamonds */}

@@ -42,6 +42,7 @@ function ScrollPicker({
         <Pressable
           className="w-10 h-10 rounded-full bg-[#23233f] items-center justify-center active:scale-[0.95]"
           onPress={() => onChange(clamp(value - step))}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <FontAwesome name="minus" size={14} color="#aaa8c3" />
         </Pressable>
@@ -53,6 +54,7 @@ function ScrollPicker({
         <Pressable
           className="w-10 h-10 rounded-full bg-[#23233f] items-center justify-center active:scale-[0.95]"
           onPress={() => onChange(clamp(value + step))}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <FontAwesome name="plus" size={14} color="#aaa8c3" />
         </Pressable>

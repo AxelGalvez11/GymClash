@@ -35,6 +35,7 @@ import {
 } from '@/hooks/use-clan';
 import WarInitiationModal from '@/components/WarInitiationModal';
 import MemberActionSheet from '@/components/MemberActionSheet';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useFadeSlide } from '@/hooks/use-fade-slide';
 import { useAuthStore } from '@/stores/auth-store';
 import { supabase } from '@/services/supabase';
@@ -207,6 +208,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   const leaveMutation = useLeaveClan();
   const sendChallengeMutation = useSendChallenge();
   const [showWarModal, setShowWarModal] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{ userId: string; name: string; role: ClanRole } | null>(null);
   const [showEditDesc, setShowEditDesc] = useState(false);
   const [editDescText, setEditDescText] = useState(clan.description ?? '');
@@ -223,19 +225,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   );
 
   function handleLeave() {
-    Alert.alert('Leave Clan?', `Are you sure you want to leave ${clan.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Leave',
-        style: 'destructive',
-        onPress: () => {
-          leaveMutation.mutate(undefined, {
-            onSuccess: onLeave,
-            onError: (err: any) => Alert.alert('Error', err.message ?? 'Failed to leave clan'),
-          });
-        },
-      },
-    ]);
+    setShowLeaveConfirm(true);
   }
 
   return (
@@ -339,6 +329,24 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Leave Clan Confirm */}
+      <ConfirmModal
+        visible={showLeaveConfirm}
+        title="Leave Clan?"
+        message={`Are you sure you want to leave ${clan.name}? You'll lose your role and war contributions.`}
+        confirmText="Leave"
+        cancelText="Stay"
+        destructive
+        onConfirm={() => {
+          setShowLeaveConfirm(false);
+          leaveMutation.mutate(undefined, {
+            onSuccess: onLeave,
+            onError: (err: any) => Alert.alert('Error', err.message ?? 'Failed to leave clan'),
+          });
+        }}
+        onCancel={() => setShowLeaveConfirm(false)}
+      />
 
       {/* War Initiation Modal */}
       <WarInitiationModal

@@ -382,9 +382,15 @@ export default function ProfileScreen() {
                     );
                   })}
                   {Object.keys(muscleMap).length === 0 && (
-                    <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 12, textAlign: 'center', paddingVertical: 8 }}>
-                      Complete workouts to see your muscle heatmap
-                    </Text>
+                    <View className="items-center py-6">
+                      <FontAwesome name="fire" size={28} color="#74738b" />
+                      <Text style={{ color: '#74738b', fontFamily: 'Epilogue-Bold', fontSize: 14, marginTop: 8 }}>
+                        No Data Yet
+                      </Text>
+                      <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 12, textAlign: 'center', marginTop: 4 }}>
+                        Complete strength workouts to see which muscle groups you're training most
+                      </Text>
+                    </View>
                   )}
                 </View>
               );

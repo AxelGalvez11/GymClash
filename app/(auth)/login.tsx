@@ -112,9 +112,6 @@ export default function LoginScreen() {
             style={{
               color: '#e5e3ff',
               fontFamily: 'BeVietnamPro-Regular',
-              shadowColor: '#a434ff',
-              shadowOpacity: 0,
-              shadowRadius: 0,
             }}
             placeholder="Email"
             placeholderTextColor="#74738b"
