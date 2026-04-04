@@ -15,6 +15,7 @@ import { useAccent } from '@/stores/accent-store';
 import { useFadeSlide } from '@/hooks/use-fade-slide';
 import { usePlayerType } from '@/hooks/use-player-type';
 import { PlayerTypeBadge } from '@/components/PlayerTypeBadge';
+import { MuscleHeatmapCard } from '@/components/profile/MuscleHeatmapCard';
 import type { Rank as RankType, ArenaTier } from '@/types';
 
 // ─── Victory Peak palette ───────────────────────────────
@@ -332,69 +333,10 @@ export default function ProfileScreen() {
           {/* Muscle Heatmap */}
           <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
             <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Muscle Heatmap</Text>
-            {(() => {
-              const muscleMap: Record<string, number> = {};
-              const exerciseToMuscle: Record<string, string> = {
-                'Squat': 'Legs', 'Leg Press': 'Legs', 'Lunges': 'Legs',
-                'Bench Press': 'Chest', 'Push-ups': 'Chest', 'Dips': 'Chest',
-                'Deadlift': 'Back', 'Barbell Row': 'Back', 'Pull-ups': 'Back', 'Lat Pulldown': 'Back',
-                'Overhead Press': 'Shoulders', 'Handstand Push-ups': 'Shoulders',
-                'Sit-ups': 'Core', 'Plank': 'Core', 'Crunches': 'Core', 'Leg Raises': 'Core', 'Burpees': 'Core',
-              };
-
-              (workouts ?? []).forEach((w: any) => {
-                if (w.sets) {
-                  (w.sets as any[]).forEach((s: any) => {
-                    const muscle = exerciseToMuscle[s.exercise] ?? 'Other';
-                    muscleMap[muscle] = (muscleMap[muscle] ?? 0) + (s.sets ?? 1);
-                  });
-                }
-              });
-
-              const muscles = ['Chest', 'Back', 'Shoulders', 'Legs', 'Core', 'Other'];
-              const maxSets = Math.max(...Object.values(muscleMap), 1);
-
-              return (
-                <View className="gap-2">
-                  {muscles.map((muscle) => {
-                    const sets = muscleMap[muscle] ?? 0;
-                    const intensity = sets / maxSets;
-                    const heatColor = intensity > 0.7 ? '#ef4444'
-                      : intensity > 0.4 ? '#f97316'
-                      : intensity > 0.1 ? '#eab308'
-                      : '#23233f';
-                    return (
-                      <View key={muscle} className="flex-row items-center gap-3">
-                        <Text style={{ color: VP.textSec, fontFamily: 'Lexend-SemiBold', fontSize: 11, width: 70 }}>{muscle}</Text>
-                        <View className="flex-1 h-6 rounded-full bg-[#23233f] overflow-hidden">
-                          <View
-                            className="h-6 rounded-full"
-                            style={{
-                              width: `${Math.max(intensity * 100, 2)}%`,
-                              backgroundColor: heatColor,
-                            }}
-                          />
-                        </View>
-                        <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10, width: 30, textAlign: 'right' }}>
-                          {sets}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                  {Object.keys(muscleMap).length === 0 && (
-                    <View className="items-center py-6">
-                      <FontAwesome name="fire" size={28} color="#74738b" />
-                      <Text style={{ color: '#74738b', fontFamily: 'Epilogue-Bold', fontSize: 14, marginTop: 8 }}>
-                        No Data Yet
-                      </Text>
-                      <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 12, textAlign: 'center', marginTop: 4 }}>
-                        Complete strength workouts to see which muscle groups you're training most
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              );
-            })()}
+            <MuscleHeatmapCard
+              workouts={workouts ?? []}
+              bodyWeightKg={profile?.body_weight_kg ?? null}
+            />
           </View>
         </Animated.View>
 
