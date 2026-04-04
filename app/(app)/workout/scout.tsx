@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useAuthStore } from '@/stores/auth-store';
 import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
@@ -14,6 +15,7 @@ import { useGpsTracking } from '@/hooks/use-gps-tracking';
 import { VictoryScreen } from '@/components/VictoryScreen';
 import { CardioModeSelector } from '@/components/CardioModeSelector';
 import { GpsDropOverlay } from '@/components/GpsDropOverlay';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import DevicePrompt from '@/components/DevicePrompt';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -34,6 +36,7 @@ export default function ScoutWorkoutScreen() {
   } = useWorkoutStore();
   const { addGuestWorkout, guestWorkouts } = useGuestWorkoutStore();
 
+  const queryClient = useQueryClient();
   const submitWorkout = useSubmitWorkout();
   const { data: profile } = useProfile();
 
@@ -41,6 +44,7 @@ export default function ScoutWorkoutScreen() {
   const [useGps, setUseGps] = useState(false);
   const [distanceInput, setDistanceInput] = useState('');
   const [showVictory, setShowVictory] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false, currencyEarned: 0 });
   const [gpsDropped, setGpsDropped] = useState(false);
   const timerStopped = useRef(false);
@@ -157,6 +161,8 @@ export default function ScoutWorkoutScreen() {
         idempotency_key: idempotencyKey,
       });
 
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       setVictoryData({
         score: provisionalScore,
         trophies: TrophyRewards.ACCEPTED_WORKOUT,
@@ -172,14 +178,7 @@ export default function ScoutWorkoutScreen() {
 
   function handleConcludePress() {
     if (submitWorkout.isPending) return;
-    Alert.alert(
-      'Finish Workout?',
-      'Are you sure you want to finish this session?',
-      [
-        { text: 'Keep Going', style: 'cancel' },
-        { text: 'Finish', onPress: handleFinishWorkout },
-      ]
-    );
+    setShowFinishConfirm(true);
   }
 
   function handleDiscard() {
@@ -417,6 +416,19 @@ export default function ScoutWorkoutScreen() {
           setGpsDropped(false);
           handleConcludePress();
         }}
+      />
+
+      <ConfirmModal
+        visible={showFinishConfirm}
+        title="Finish Run?"
+        message="Are you sure you want to finish this session?"
+        confirmText="Finish"
+        cancelText="Keep Going"
+        onConfirm={() => {
+          setShowFinishConfirm(false);
+          handleFinishWorkout();
+        }}
+        onCancel={() => setShowFinishConfirm(false)}
       />
     </SafeAreaView>
   );

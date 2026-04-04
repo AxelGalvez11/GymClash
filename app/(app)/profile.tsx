@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -82,6 +83,7 @@ export default function ProfileScreen() {
   const { data: records } = useMy1RMRecords();
   const { data: workouts } = useMyWorkouts(100);
 
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const accent = useAccent();
   const { playerType } = usePlayerType();
   const accountTier = computeAccountTier(profile, workouts?.length ?? 0);
@@ -307,28 +309,91 @@ export default function ProfileScreen() {
                 for (let day = 1; day <= daysInMonth; day++) {
                   const hasWorkout = workoutDates.has(day);
                   const isToday = day === today;
-                  cells.push(
-                    <View key={day} className="items-center justify-center" style={{ width: '14.28%', paddingVertical: 3 }}>
-                      <View
-                        className="w-8 h-8 rounded-full items-center justify-center"
-                        style={isToday ? { borderWidth: 1.5, borderColor: VP.primary } : undefined}
-                      >
-                        <Text style={{
-                          color: hasWorkout ? '#fff' : VP.textMuted,
-                          fontFamily: 'Lexend-SemiBold',
-                          fontSize: 12,
-                        }}>{day}</Text>
-                        {hasWorkout && (
-                          <View className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: VP.primary }} />
-                        )}
-                      </View>
+                  const isSelected = day === selectedDay;
+                  const dayContent = (
+                    <View
+                      className="w-8 h-8 rounded-full items-center justify-center"
+                      style={[
+                        isToday ? { borderWidth: 1.5, borderColor: VP.primary } : undefined,
+                        isSelected ? { backgroundColor: VP.primary + '30' } : undefined,
+                      ].filter(Boolean).reduce((acc, s) => ({ ...acc, ...s }), {})}
+                    >
+                      <Text style={{
+                        color: hasWorkout ? '#fff' : VP.textMuted,
+                        fontFamily: 'Lexend-SemiBold',
+                        fontSize: 12,
+                      }}>{day}</Text>
+                      {hasWorkout && (
+                        <View className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: VP.primary }} />
+                      )}
                     </View>
+                  );
+                  cells.push(
+                    hasWorkout ? (
+                      <Pressable
+                        key={day}
+                        className="items-center justify-center"
+                        style={{ width: '14.28%', paddingVertical: 3 }}
+                        onPress={() => setSelectedDay(day)}
+                      >
+                        {dayContent}
+                      </Pressable>
+                    ) : (
+                      <View key={day} className="items-center justify-center" style={{ width: '14.28%', paddingVertical: 3 }}>
+                        {dayContent}
+                      </View>
+                    )
                   );
                 }
                 return cells;
               })()}
             </View>
           </View>
+          {selectedDay !== null && (
+            <View className="bg-[#23233f] rounded-xl p-4 mt-3 mb-2">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 14 }}>
+                  {new Date().toLocaleDateString('en-US', { month: 'short' })} {selectedDay}
+                </Text>
+                <Pressable onPress={() => setSelectedDay(null)}>
+                  <FontAwesome name="times" size={14} color="#74738b" />
+                </Pressable>
+              </View>
+              {(workouts ?? [])
+                .filter((w: any) => {
+                  const d = new Date(w.started_at);
+                  return d.getDate() === selectedDay && d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
+                })
+                .map((w: any) => (
+                  <Pressable
+                    key={w.id}
+                    className="bg-[#1d1d37] rounded-lg p-3 mb-1 flex-row items-center active:scale-[0.98]"
+                    onPress={() => {
+                      setSelectedDay(null);
+                      router.push(`/(app)/workout/${w.id}` as any);
+                    }}
+                  >
+                    <FontAwesome
+                      name={w.type === 'strength' ? 'heartbeat' : 'road'}
+                      size={14}
+                      color={w.type === 'strength' ? '#ef4444' : '#81ecff'}
+                    />
+                    <Text className="ml-2 flex-1" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>
+                      {w.type === 'strength' ? 'Strength' : 'Cardio'} — {Math.round(w.final_score ?? w.raw_score ?? 0)} pts
+                    </Text>
+                    <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 10 }}>
+                      {new Date(w.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </Pressable>
+                ))}
+              {(workouts ?? []).filter((w: any) => {
+                const d = new Date(w.started_at);
+                return d.getDate() === selectedDay && d.getMonth() === new Date().getMonth();
+              }).length === 0 && (
+                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 12 }}>No workouts found for this day</Text>
+              )}
+            </View>
+          )}
         </Animated.View>
 
         {/* Quick Links */}

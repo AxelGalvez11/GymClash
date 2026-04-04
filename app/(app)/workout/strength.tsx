@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, TextInput, Alert, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { Colors, TrophyRewards } from '@/constants/theme';
 import { VictoryScreen } from '@/components/VictoryScreen';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { useAuthStore } from '@/stores/auth-store';
 import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
 import { useSubmitWorkout } from '@/hooks/use-workouts';
@@ -118,6 +120,7 @@ export default function StrengthWorkoutScreen() {
   const { addGuestWorkout, guestWorkouts } = useGuestWorkoutStore();
 
   const submitWorkout = useSubmitWorkout();
+  const queryClient = useQueryClient();
 
   // Form state
   const [exercise, setExercise] = useState('');
@@ -125,6 +128,11 @@ export default function StrengthWorkoutScreen() {
   const [weightKg, setWeightKg] = useState('');
   const [showExercises, setShowExercises] = useState(false);
   const [isBodyweight, setIsBodyweight] = useState(false);
+  const [useImperial, setUseImperial] = useState(true);
+
+  // Confirm modal state
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Victory screen state
   const [showVictory, setShowVictory] = useState(false);
@@ -182,9 +190,10 @@ export default function StrengthWorkoutScreen() {
     }
     const s = 1;
     const r = parseInt(reps, 10);
-    const w = parseFloat(weightKg);
+    const rawWeight = parseFloat(weightKg);
+    const w = useImperial ? rawWeight * 0.453592 : rawWeight;
 
-    if (!r || r <= 0 || isNaN(w) || w < 0) {
+    if (!r || r <= 0 || isNaN(rawWeight) || rawWeight < 0) {
       Alert.alert('Error', 'Enter valid reps and weight');
       return;
     }
@@ -288,6 +297,9 @@ export default function StrengthWorkoutScreen() {
         rating: score > avgScore * 1.2 ? 'exceeded' as const : score < avgScore * 0.8 ? 'below' as const : 'met' as const,
       }));
 
+      // Refresh profile to update coin balance
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       setVictoryData({
         score: provisionalScore,
         trophies: TrophyRewards.ACCEPTED_WORKOUT,
@@ -303,28 +315,11 @@ export default function StrengthWorkoutScreen() {
   }
 
   function handleConcludePress() {
-    Alert.alert(
-      'Finish Workout?',
-      'Are you sure you want to finish this session?',
-      [
-        { text: 'Keep Going', style: 'cancel' },
-        { text: 'Finish', onPress: handleFinishWorkout },
-      ]
-    );
+    setShowFinishConfirm(true);
   }
 
   function handleDiscard() {
-    Alert.alert('Discard Workout?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Discard',
-        style: 'destructive',
-        onPress: () => {
-          reset();
-          router.replace('/(app)/home');
-        },
-      },
-    ]);
+    setShowDiscardConfirm(true);
   }
 
   const provisionalScore = calculateStrengthRawScore([...strengthSets]);
@@ -441,15 +436,6 @@ export default function StrengthWorkoutScreen() {
                     )}
                   </Pressable>
                 ))}
-                <TextInput
-                  className="px-3 py-2"
-                  style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}
-                  placeholder="Or type custom..."
-                  placeholderTextColor="#74738b"
-                  value={exercise}
-                  onChangeText={setExercise}
-                  onSubmitEditing={() => setShowExercises(false)}
-                />
               </ScrollView>
             </View>
           )}
@@ -465,11 +451,22 @@ export default function StrengthWorkoutScreen() {
             </View>
           )}
 
+          {/* Unit Toggle */}
+          <Pressable
+            className="self-end mb-2 px-2 py-1 rounded-lg active:scale-[0.98]"
+            style={{ backgroundColor: '#23233f' }}
+            onPress={() => setUseImperial((v) => !v)}
+          >
+            <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>
+              {useImperial ? 'LBS' : 'KG'}
+            </Text>
+          </Pressable>
+
           {/* Sets / Reps / Weight */}
           <View className="flex-row gap-3 mb-4">
             <NumberInput label="Reps" value={reps} onChangeText={setReps} />
             <NumberInput
-              label={isBodyweight ? 'BW (kg)' : 'Weight (kg)'}
+              label={isBodyweight ? (useImperial ? 'BW (lbs)' : 'BW (kg)') : (useImperial ? 'Weight (lbs)' : 'Weight (kg)')}
               value={weightKg}
               onChangeText={setWeightKg}
               decimal

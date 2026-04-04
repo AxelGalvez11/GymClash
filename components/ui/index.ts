@@ -12,3 +12,4 @@ export { NumberInput } from './NumberInput';
 export { SetRow } from './SetRow';
 export { StarField } from './StarField';
 export { CornerFrames } from './CornerFrames';
+export { ConfirmModal } from './ConfirmModal';

@@ -358,18 +358,29 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
         </Pressable>
       )}
 
-      {/* Initiate Clan War — leaders/officers only, when no active war */}
-      {!warLoading && !war && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
-        <Pressable
-          className="w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 mb-4 active:scale-[0.98]"
-          style={{ backgroundColor: '#a434ff' }}
-          onPress={() => setShowWarModal(true)}
-        >
-          <FontAwesome name="fire" size={18} color="#ffffff" />
-          <Text style={{ color: '#ffffff', fontFamily: 'Epilogue-Bold', textTransform: 'uppercase' }} className="font-bold text-base">
-            INITIATE CLAN WAR
-          </Text>
-        </Pressable>
+      {/* Initiate Clan War — all members see this when no active war */}
+      {!warLoading && !war && (
+        <View className="mb-4">
+          {(clan.my_role === 'leader' || clan.my_role === 'officer') ? (
+            <Pressable
+              className="w-full rounded-2xl py-4 flex-row items-center justify-center gap-2 active:scale-[0.98]"
+              style={{ backgroundColor: '#a434ff' }}
+              onPress={() => setShowWarModal(true)}
+            >
+              <FontAwesome name="fire" size={18} color="#ffffff" />
+              <Text style={{ color: '#ffffff', fontFamily: 'Epilogue-Bold', textTransform: 'uppercase' }} className="font-bold text-base">
+                INITIATE CLAN WAR
+              </Text>
+            </Pressable>
+          ) : (
+            <View className="bg-[#1d1d37] rounded-2xl p-4 items-center">
+              <FontAwesome name="shield" size={24} color="#74738b" />
+              <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13, textAlign: 'center', marginTop: 8 }}>
+                No active war. Ask your clan leader to initiate one!
+              </Text>
+            </View>
+          )}
+        </View>
       )}
       </Animated.View>
 

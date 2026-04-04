@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { useAuthStore } from '@/stores/auth-store';
@@ -9,6 +10,7 @@ import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
 import { useSubmitWorkout } from '@/hooks/use-workouts';
 import { useProfile } from '@/hooks/use-profile';
 import { VictoryScreen } from '@/components/VictoryScreen';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { TrophyRewards } from '@/constants/theme';
 
 export default function TreadmillWorkoutScreen() {
@@ -25,10 +27,12 @@ export default function TreadmillWorkoutScreen() {
   } = useWorkoutStore();
   const { addGuestWorkout, guestWorkouts } = useGuestWorkoutStore();
 
+  const queryClient = useQueryClient();
   const submitWorkout = useSubmitWorkout();
   const { data: profile } = useProfile();
 
   const [showVictory, setShowVictory] = useState(false);
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [victoryData, setVictoryData] = useState({
     score: 0,
     trophies: 12,
@@ -133,6 +137,8 @@ export default function TreadmillWorkoutScreen() {
         idempotency_key: idempotencyKey,
       });
 
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       setVictoryData({
         score: 0,
         trophies: TrophyRewards.ACCEPTED_WORKOUT,
@@ -146,14 +152,8 @@ export default function TreadmillWorkoutScreen() {
   }
 
   function handleConcludePress() {
-    Alert.alert(
-      'Finish Workout?',
-      'Are you sure you want to finish this treadmill session?',
-      [
-        { text: 'Keep Going', style: 'cancel' },
-        { text: 'Finish', onPress: handleFinishWorkout },
-      ]
-    );
+    if (submitWorkout.isPending) return;
+    setShowFinishConfirm(true);
   }
 
   function handleDiscard() {
@@ -389,6 +389,19 @@ export default function TreadmillWorkoutScreen() {
           reset();
           router.replace('/(app)/home');
         }}
+      />
+
+      <ConfirmModal
+        visible={showFinishConfirm}
+        title="Finish Treadmill?"
+        message="Are you sure you want to finish this treadmill session?"
+        confirmText="Finish"
+        cancelText="Keep Going"
+        onConfirm={() => {
+          setShowFinishConfirm(false);
+          handleFinishWorkout();
+        }}
+        onCancel={() => setShowFinishConfirm(false)}
       />
     </SafeAreaView>
   );

@@ -26,7 +26,7 @@ export async function updateProfile(updates: {
 }
 
 /**
- * Update biodata fields via dedicated server RPC.
+ * Update biodata fields via direct table update.
  * Restricted to biodata-only fields. Server-readable for scoring.
  */
 export async function updateBiodata(updates: {
@@ -38,15 +38,24 @@ export async function updateBiodata(updates: {
   running_experience?: string | null;
   resting_hr?: number | null;
 }) {
-  const { data, error } = await supabase.rpc('update_my_biodata', {
-    p_body_weight_kg: updates.body_weight_kg ?? null,
-    p_height_cm: updates.height_cm ?? null,
-    p_birth_date: updates.birth_date ?? null,
-    p_biological_sex: updates.biological_sex ?? null,
-    p_lifting_experience: updates.lifting_experience ?? null,
-    p_running_experience: updates.running_experience ?? null,
-    p_resting_hr: updates.resting_hr ?? null,
-  });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      body_weight_kg: updates.body_weight_kg ?? null,
+      height_cm: updates.height_cm ?? null,
+      birth_date: updates.birth_date ?? null,
+      biological_sex: updates.biological_sex ?? null,
+      lifting_experience: updates.lifting_experience ?? null,
+      running_experience: updates.running_experience ?? null,
+      resting_hr: updates.resting_hr ?? null,
+    })
+    .eq('id', user.id)
+    .select()
+    .single();
+
   if (error) throw error;
   return data;
 }
