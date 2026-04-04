@@ -489,3 +489,45 @@ export async function sendWarChatMessage(warId: string, clanId: string, content:
   if (error) throw error;
   return data;
 }
+
+// ─── Video Analysis ─────────────────────────────────────
+
+const VIDEO_ANALYSIS_API_URL = process.env.EXPO_PUBLIC_VIDEO_ANALYSIS_URL || 'http://localhost:8000';
+
+export async function fetchVideoAnalysis(workoutId: string) {
+  const { data, error } = await supabase
+    .from('workout_video_analyses')
+    .select('*')
+    .eq('workout_id', workoutId)
+    .single();
+  if (error) {
+    if (error.code === 'PGRST116') return null; // Not found
+    throw error;
+  }
+  return data;
+}
+
+export async function triggerVideoAnalysis(params: {
+  videoUrl: string;
+  exerciseType: string;
+  workoutId?: string;
+  userId?: string;
+  cameraAngle?: string;
+}) {
+  const response = await fetch(`${VIDEO_ANALYSIS_API_URL}/analyze-from-url`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      video_url: params.videoUrl,
+      exercise_type: params.exerciseType,
+      workout_id: params.workoutId,
+      user_id: params.userId,
+      camera_angle: params.cameraAngle || 'unknown',
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: 'Analysis failed' }));
+    throw new Error(err.detail || 'Video analysis failed');
+  }
+  return response.json();
+}

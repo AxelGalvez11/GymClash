@@ -335,3 +335,99 @@ export interface ConfettiConfig {
   readonly duration: number;
   readonly spread: number;
 }
+
+// ─── Video Analysis ─────────────────────────────────────
+
+export type VideoExerciseType =
+  | 'squat'
+  | 'push_up'
+  | 'lunge'
+  | 'jumping_jack'
+  | 'bicep_curl'
+  | 'shoulder_press'
+  | 'deadlift'
+  | 'bench_press'
+  | 'pull_up'
+  | 'row'
+  | 'burpee';
+
+export type VideoVerificationStatus = 'verified' | 'needs_review' | 'rejected';
+
+export type VideoRepQuality = 'good' | 'acceptable' | 'poor' | 'invalid';
+
+export interface VideoRepMetrics {
+  readonly primary_angle_min?: number;
+  readonly primary_angle_max?: number;
+  readonly range_of_motion?: number;
+  readonly depth_score?: number;
+  readonly lockout_score?: number;
+  readonly symmetry_left_right?: number;
+  readonly torso_lean?: number;
+  readonly tempo_seconds?: number;
+}
+
+export interface VideoRepResult {
+  readonly rep_index: number;
+  readonly start_time_ms: number;
+  readonly end_time_ms: number;
+  readonly duration_ms: number;
+  readonly quality: VideoRepQuality;
+  readonly confidence: number;
+  readonly range_of_motion_score: number;
+  readonly tempo_score: number;
+  readonly symmetry_score: number;
+  readonly form_flags: readonly string[];
+  readonly metrics: VideoRepMetrics;
+}
+
+export interface VideoAggregateMetrics {
+  readonly avg_range_of_motion?: number;
+  readonly avg_tempo_seconds?: number;
+  readonly avg_symmetry?: number;
+  readonly avg_depth?: number;
+  readonly tempo_consistency?: number;
+  readonly best_rep_index?: number;
+  readonly worst_rep_index?: number;
+}
+
+export interface VideoSummary {
+  readonly duration_ms: number;
+  readonly total_frames: number;
+  readonly sampled_frames: number;
+  readonly fps: number;
+  readonly resolution_width: number;
+  readonly resolution_height: number;
+}
+
+export interface VideoAnalysisResult {
+  readonly exercise_type: VideoExerciseType;
+  readonly video_summary: VideoSummary;
+  readonly rep_count: number;
+  readonly valid_rep_count: number;
+  readonly form_score: number;
+  readonly analysis_confidence: number;
+  readonly verification_status: VideoVerificationStatus;
+  readonly camera_angle: string;
+  readonly cheat_flags: readonly string[];
+  readonly warnings: readonly string[];
+  readonly aggregate_metrics: VideoAggregateMetrics;
+  readonly reps: readonly VideoRepResult[];
+}
+
+export interface WorkoutVideoAnalysis {
+  readonly id: string;
+  readonly workout_id: string;
+  readonly user_id: string;
+  readonly exercise_type: VideoExerciseType;
+  readonly rep_count: number;
+  readonly valid_rep_count: number;
+  readonly form_score: number;
+  readonly analysis_confidence: number;
+  readonly verification_status: VideoVerificationStatus;
+  readonly camera_angle: string;
+  readonly cheat_flags: readonly string[];
+  readonly warnings: readonly string[];
+  readonly aggregate_metrics: VideoAggregateMetrics;
+  readonly reps: readonly VideoRepResult[];
+  readonly created_at: string;
+}
