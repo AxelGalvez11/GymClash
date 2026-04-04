@@ -78,11 +78,11 @@ export default function AppLayout() {
       {/* ─── Hidden routes — every file must be listed explicitly ─── */}
       <Tabs.Screen name="leaderboard" options={{ href: null }} />
       <Tabs.Screen name="history/index" options={{ href: null }} />
-      <Tabs.Screen name="workout/strength" options={{ href: null }} />
-      <Tabs.Screen name="workout/scout" options={{ href: null }} />
-      <Tabs.Screen name="workout/treadmill" options={{ href: null }} />
-      <Tabs.Screen name="workout/recovery" options={{ href: null }} />
-      <Tabs.Screen name="workout/[workoutId]" options={{ href: null }} />
+      <Tabs.Screen name="workout/strength" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="workout/scout" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="workout/treadmill" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="workout/recovery" options={{ href: null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="workout/[workoutId]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="review/[workoutId]" options={{ href: null }} />
       <Tabs.Screen name="report/[userId]" options={{ href: null }} />
       <Tabs.Screen name="settings/index" options={{ href: null }} />

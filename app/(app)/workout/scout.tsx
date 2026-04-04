@@ -47,6 +47,7 @@ export default function ScoutWorkoutScreen() {
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false, currencyEarned: 0 });
   const [gpsDropped, setGpsDropped] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const timerStopped = useRef(false);
 
   // Start workout on mount if not active
@@ -59,13 +60,12 @@ export default function ScoutWorkoutScreen() {
 
   // Track elapsed time silently for duration_seconds on submission
   useEffect(() => {
-    if (mode !== 'territory') return;
-    if (timerStopped.current) return;
+    if (mode !== 'territory' || timerStopped.current || isPaused) return;
     const interval = setInterval(() => {
       updateElapsed(elapsedSeconds + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [elapsedSeconds, updateElapsed, mode]);
+  }, [elapsedSeconds, updateElapsed, mode, isPaused]);
 
   // Watch for GPS signal drops in territory mode
   useEffect(() => {
@@ -228,21 +228,39 @@ export default function ScoutWorkoutScreen() {
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center justify-between py-4">
-          <Pressable onPress={handleDiscard} className="active:scale-[0.98]">
-            <Text className="text-danger text-base" style={{ fontFamily: 'BeVietnamPro-Regular' }}>Cancel</Text>
+          <Pressable
+            onPress={handleDiscard}
+            className="flex-row items-center gap-1.5 bg-[#23233f] rounded-full px-4 py-2 active:scale-[0.98]"
+            style={{ borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' }}
+          >
+            <FontAwesome name="times" size={12} color="#ef4444" />
+            <Text style={{ color: '#ef4444', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Cancel</Text>
           </Pressable>
-          <View className="items-center">
-            <Text style={{ color: '#e5e3ff', fontSize: 18, fontFamily: 'Epilogue-Bold' }}>Run</Text>
-            <Text style={{ color: '#74738b', fontSize: 12, fontFamily: 'Lexend-SemiBold' }}>
-              {`${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
-            </Text>
+          <View className="flex-row items-center gap-2">
+            {mode === 'territory' && (
+              <Pressable
+                className="px-3 py-1.5 rounded-lg active:scale-[0.98]"
+                style={{ backgroundColor: isPaused ? '#22c55e' : '#23233f' }}
+                onPress={() => setIsPaused((v) => !v)}
+              >
+                <FontAwesome name={isPaused ? 'play' : 'pause'} size={14} color={isPaused ? '#fff' : '#aaa8c3'} />
+              </Pressable>
+            )}
+            <View className="items-center">
+              <Text style={{ color: '#e5e3ff', fontSize: 18, fontFamily: 'Epilogue-Bold' }}>Run</Text>
+              <Text style={{ color: '#74738b', fontSize: 12, fontFamily: 'Lexend-SemiBold' }}>
+                {`${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
+              </Text>
+            </View>
           </View>
           <Pressable
             onPress={handleConcludePress}
             disabled={submitWorkout.isPending}
-            className="active:scale-[0.98]"
+            className="flex-row items-center gap-1.5 bg-[#a434ff] rounded-full px-4 py-2 active:scale-[0.98]"
+            style={{ opacity: submitWorkout.isPending ? 0.6 : 1 }}
           >
-            <Text className="text-success text-base" style={{ fontFamily: 'Epilogue-Bold' }}>
+            <FontAwesome name="check" size={12} color="#fff" />
+            <Text style={{ color: '#fff', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>
               {submitWorkout.isPending ? 'Saving...' : 'Finish'}
             </Text>
           </Pressable>

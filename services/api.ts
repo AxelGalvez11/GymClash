@@ -225,6 +225,8 @@ export async function fetchMyClan() {
 export async function fetchActiveWar() {
   const { data, error } = await supabase.rpc('get_my_active_war');
   if (error) throw error;
+  // Guard against RPC returning a completed/non-active war
+  if (data && data.status && data.status !== 'active') return null;
   return data;
 }
 
@@ -355,9 +357,11 @@ export async function fetchPersonalLeaderboard(limit = 100) {
 }
 
 export async function fetchPublicProfile(userId: string) {
-  const { data, error } = await supabase.rpc('get_public_profile', {
-    p_user_id: userId,
-  });
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, display_name, avatar_url, rank, xp, level, current_streak, longest_streak, trophy_rating, arena_tier, strength_workout_count, scout_workout_count, country_code, region_code')
+    .eq('id', userId)
+    .single();
   if (error) throw error;
   return data;
 }

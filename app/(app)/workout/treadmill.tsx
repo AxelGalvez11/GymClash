@@ -175,13 +175,13 @@ export default function TreadmillWorkoutScreen() {
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
         {/* Header */}
         <View className="flex-row items-center justify-between py-4">
-          <Pressable onPress={handleDiscard} className="active:scale-[0.98]">
-            <Text
-              className="text-danger text-base"
-              style={{ fontFamily: 'BeVietnamPro-Regular' }}
-            >
-              Cancel
-            </Text>
+          <Pressable
+            onPress={handleDiscard}
+            className="flex-row items-center gap-1.5 bg-[#23233f] rounded-full px-4 py-2 active:scale-[0.98]"
+            style={{ borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' }}
+          >
+            <FontAwesome name="times" size={12} color="#ef4444" />
+            <Text style={{ color: '#ef4444', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Cancel</Text>
           </Pressable>
           <View className="items-center">
             <Text
@@ -206,12 +206,11 @@ export default function TreadmillWorkoutScreen() {
           <Pressable
             onPress={handleConcludePress}
             disabled={submitWorkout.isPending}
-            className="active:scale-[0.98]"
+            className="flex-row items-center gap-1.5 bg-[#a434ff] rounded-full px-4 py-2 active:scale-[0.98]"
+            style={{ opacity: submitWorkout.isPending ? 0.6 : 1 }}
           >
-            <Text
-              className="text-success text-base"
-              style={{ fontFamily: 'Epilogue-Bold' }}
-            >
+            <FontAwesome name="check" size={12} color="#fff" />
+            <Text style={{ color: '#fff', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>
               {submitWorkout.isPending ? 'Saving...' : 'Finish'}
             </Text>
           </Pressable>

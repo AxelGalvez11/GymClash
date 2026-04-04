@@ -13,16 +13,28 @@ export default function PublicProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const router = useRouter();
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, isError } = useQuery({
     queryKey: ['public-profile', userId],
     queryFn: () => fetchPublicProfile(userId!),
     enabled: !!userId,
   });
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
         <ActivityIndicator color="#ce96ff" size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !profile) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
+        <FontAwesome name="user-times" size={32} color="#74738b" />
+        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', marginTop: 12 }}>Profile not available</Text>
+        <Pressable className="mt-4" onPress={() => router.replace('/(app)/home' as any)}>
+          <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }}>Go Back</Text>
+        </Pressable>
       </SafeAreaView>
     );
   }
