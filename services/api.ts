@@ -26,8 +26,8 @@ export async function updateProfile(updates: {
 }
 
 /**
- * Update biodata fields via direct table update.
- * Restricted to biodata-only fields. Server-readable for scoring.
+ * Update biodata fields via server RPC.
+ * Uses update_my_biodata RPC which respects RLS and auto-calculates max HR / VO2max.
  */
 export async function updateBiodata(updates: {
   body_weight_kg?: number | null;
@@ -38,25 +38,30 @@ export async function updateBiodata(updates: {
   running_experience?: string | null;
   resting_hr?: number | null;
 }) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  const params = {
+    p_body_weight_kg: updates.body_weight_kg ?? null,
+    p_height_cm: updates.height_cm ?? null,
+    p_birth_date: updates.birth_date ?? null,
+    p_biological_sex: updates.biological_sex ?? null,
+    p_lifting_experience: updates.lifting_experience ?? null,
+    p_running_experience: updates.running_experience ?? null,
+    p_resting_hr: updates.resting_hr ?? null,
+  };
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .update({
-      body_weight_kg: updates.body_weight_kg ?? null,
-      height_cm: updates.height_cm ?? null,
-      birth_date: updates.birth_date ?? null,
-      biological_sex: updates.biological_sex ?? null,
-      lifting_experience: updates.lifting_experience ?? null,
-      running_experience: updates.running_experience ?? null,
-      resting_hr: updates.resting_hr ?? null,
-    })
-    .eq('id', user.id)
-    .select()
-    .single();
+  // Try RPC first (correct approach — respects RLS + auto-calculates max HR / VO2max)
+  const { data, error } = await supabase.rpc('update_my_biodata', params);
 
-  if (error) throw error;
+  if (error) {
+    // If schema cache error, reload and retry once
+    if (error.message?.includes('schema') || error.message?.includes('cache')) {
+      // Force schema reload by making a simple query
+      await supabase.from('profiles').select('id').limit(1);
+      const retry = await supabase.rpc('update_my_biodata', params);
+      if (retry.error) throw retry.error;
+      return retry.data;
+    }
+    throw error;
+  }
   return data;
 }
 
@@ -357,12 +362,20 @@ export async function fetchPersonalLeaderboard(limit = 100) {
 }
 
 export async function fetchPublicProfile(userId: string) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, display_name, avatar_url, rank, xp, level, current_streak, longest_streak, trophy_rating, arena_tier, strength_workout_count, scout_workout_count, country_code, region_code')
-    .eq('id', userId)
-    .single();
-  if (error) throw error;
+  const { data, error } = await supabase.rpc('get_public_profile', {
+    p_user_id: userId,
+  });
+
+  if (error) {
+    // If schema cache error, retry once
+    if (error.message?.includes('schema') || error.message?.includes('cache')) {
+      await supabase.from('profiles').select('id').limit(1);
+      const retry = await supabase.rpc('get_public_profile', { p_user_id: userId });
+      if (retry.error) throw retry.error;
+      return retry.data;
+    }
+    throw error;
+  }
   return data;
 }
 
@@ -419,4 +432,60 @@ export async function fetchMyReports() {
     .limit(20);
   if (error) throw error;
   return data ?? [];
+}
+
+// ─── Cosmetics ───────────────────────────────────────────
+
+export async function equipCosmetic(cosmeticId: string) {
+  const { data, error } = await supabase.rpc('equip_cosmetic', {
+    p_cosmetic_id: cosmeticId,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function unequipCosmetic(cosmeticId: string) {
+  const { data, error } = await supabase.rpc('unequip_cosmetic', {
+    p_cosmetic_id: cosmeticId,
+  });
+  if (error) throw error;
+  return data;
+}
+
+// ─── War Roles ───────────────────────────────────────────
+
+export async function setWarRole(warId: string, role: 'strength_specialist' | 'cardio_specialist' | 'flex') {
+  const { data, error } = await supabase.rpc('set_war_role', {
+    p_war_id: warId,
+    p_role: role,
+  });
+  if (error) throw error;
+  return data;
+}
+
+// ─── War Chat Messages ──────────────────────────────────
+
+export async function fetchWarChatMessages(warId: string, limit = 50) {
+  const { data, error } = await supabase
+    .from('war_chat_messages')
+    .select('id, war_id, user_id, clan_id, content, created_at')
+    .eq('war_id', warId)
+    .order('created_at', { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function sendWarChatMessage(warId: string, clanId: string, content: string) {
+  const { data, error } = await supabase
+    .from('war_chat_messages')
+    .insert({
+      war_id: warId,
+      clan_id: clanId,
+      content: content.trim(),
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 }
