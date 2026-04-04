@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert, Animated, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, Animated, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+
+import * as ImagePicker from 'expo-image-picker';
 
 import { Colors, TrophyRewards } from '@/constants/theme';
 import { VictoryScreen } from '@/components/VictoryScreen';
@@ -11,6 +13,8 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { WorkoutCountdown } from '@/components/WorkoutCountdown';
 import { useAuthStore } from '@/stores/auth-store';
 import { useWorkoutStore, useGuestWorkoutStore } from '@/stores/workout-store';
+import { supabase } from '@/services/supabase';
+import { triggerVideoAnalysis } from '@/services/api';
 import { useSubmitWorkout } from '@/hooks/use-workouts';
 import { useProfile } from '@/hooks/use-profile';
 import { SetRow } from '@/components/ui/SetRow';
@@ -104,7 +108,7 @@ function ScoreBadge({ score, visible }: { readonly score: number; readonly visib
 
 export default function StrengthWorkoutScreen() {
   const router = useRouter();
-  const { isGuest } = useAuthStore();
+  const { isGuest, session } = useAuthStore();
   const { data: profile } = useProfile();
   const {
     isActive,
@@ -160,6 +164,11 @@ export default function StrengthWorkoutScreen() {
   // Per-exercise score feedback
   const [lastAddedScore, setLastAddedScore] = useState(0);
   const [showScoreBadge, setShowScoreBadge] = useState(false);
+
+  // Video form check state
+  const [videoStatus, setVideoStatus] = useState<'idle' | 'recording' | 'uploading' | 'analyzing' | 'done' | 'error'>('idle');
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   // Start workout on mount if not active
   useEffect(() => {
@@ -325,6 +334,85 @@ export default function StrengthWorkoutScreen() {
 
   function handleDiscard() {
     setShowDiscardConfirm(true);
+  }
+
+  async function handleRecordVideo() {
+    try {
+      // Request camera permission
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera access is needed to record workout videos.');
+        return;
+      }
+
+      setVideoStatus('recording');
+      setVideoError(null);
+
+      // Launch camera in video mode
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['videos'],
+        videoMaxDuration: 120, // 2 minute max
+        videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium,
+      });
+
+      if (result.canceled) {
+        setVideoStatus('idle');
+        return;
+      }
+
+      const videoUri = result.assets[0].uri;
+      setVideoStatus('uploading');
+
+      // Upload to Supabase Storage
+      const fileName = `workouts/${idempotencyKey || Date.now()}_form.mp4`;
+      const response = await fetch(videoUri);
+      const blob = await response.blob();
+
+      const { error: uploadError } = await supabase.storage
+        .from('workout-videos')
+        .upload(fileName, blob, { contentType: 'video/mp4' });
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('workout-videos')
+        .getPublicUrl(fileName);
+
+      setVideoStatus('analyzing');
+
+      // Determine exercise type from logged sets
+      const primaryExercise = strengthSets.length > 0
+        ? strengthSets[0].exercise.toLowerCase().replace(/\s+/g, '_')
+        : 'squat';
+
+      // Map common exercise names to supported types
+      const exerciseMap: Record<string, string> = {
+        'squat': 'squat', 'back_squat': 'squat', 'front_squat': 'squat',
+        'push-ups': 'push_up', 'push_ups': 'push_up', 'pushups': 'push_up',
+        'lunge': 'lunge', 'lunges': 'lunge', 'walking_lunges': 'lunge',
+        'bicep_curl': 'bicep_curl', 'curls': 'bicep_curl', 'dumbbell_curl': 'bicep_curl',
+        'shoulder_press': 'shoulder_press', 'overhead_press': 'shoulder_press', 'ohp': 'shoulder_press',
+        'jumping_jack': 'jumping_jack', 'jumping_jacks': 'jumping_jack',
+      };
+      const exerciseType = exerciseMap[primaryExercise] || 'squat';
+
+      // Trigger analysis
+      const analysisData = await triggerVideoAnalysis({
+        videoUrl: urlData.publicUrl,
+        exerciseType,
+        workoutId: idempotencyKey || undefined,
+        userId: session?.user?.id,
+      });
+
+      setAnalysisResult(analysisData);
+      setVideoStatus('done');
+    } catch (err: any) {
+      setVideoError(err.message || 'Video analysis failed');
+      setVideoStatus('error');
+    }
   }
 
   const provisionalScore = calculateStrengthRawScore([...strengthSets]);
@@ -494,42 +582,104 @@ export default function StrengthWorkoutScreen() {
           </Pressable>
         </View>
 
-        {/* Camera — Future Implementation */}
+        {/* Video Form Check */}
         <View className="bg-[#23233f] rounded-xl p-4 mt-4">
-          <Pressable
-            className="flex-row items-center gap-3 active:scale-[0.98]"
-            onPress={() => Alert.alert('Coming Soon', 'Camera integration for photo evidence will be available in a future update.')}
-          >
-            <View className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center">
-              <FontAwesome name="camera" size={16} color="#ce96ff" />
-            </View>
-            <View className="flex-1">
-              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Take Photo</Text>
-              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>Photo evidence for verified workouts</Text>
-            </View>
-            <View className="bg-[#1d1d37] rounded-full px-2 py-0.5">
-              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 8 }}>SOON</Text>
-            </View>
-          </Pressable>
-        </View>
+          {videoStatus === 'idle' && (
+            <Pressable
+              className="flex-row items-center gap-3 active:scale-[0.98]"
+              onPress={handleRecordVideo}
+            >
+              <View className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center">
+                <FontAwesome name="video-camera" size={16} color="#81ecff" />
+              </View>
+              <View className="flex-1">
+                <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Record Form Check</Text>
+                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>
+                  AI rep counting, form scoring, and verification
+                </Text>
+              </View>
+              <FontAwesome name="chevron-right" size={12} color="#74738b" />
+            </Pressable>
+          )}
 
-        {/* Video Form Check — Future Implementation */}
-        <View className="bg-[#23233f] rounded-xl p-4 mt-3">
-          <Pressable
-            className="flex-row items-center gap-3 active:scale-[0.98]"
-            onPress={() => Alert.alert('Coming Soon', 'AI form analysis for rep counting and range-of-motion verification will be available in a future update.')}
-          >
-            <View className="w-10 h-10 rounded-full bg-[#1d1d37] items-center justify-center">
-              <FontAwesome name="video-camera" size={16} color="#81ecff" />
+          {videoStatus === 'recording' && (
+            <View className="flex-row items-center gap-3">
+              <ActivityIndicator color="#81ecff" />
+              <Text style={{ color: '#81ecff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Recording...</Text>
             </View>
-            <View className="flex-1">
-              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Form Check</Text>
-              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>AI-powered rep counting and ROM analysis</Text>
+          )}
+
+          {videoStatus === 'uploading' && (
+            <View className="flex-row items-center gap-3">
+              <ActivityIndicator color="#ce96ff" />
+              <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Uploading video...</Text>
             </View>
-            <View className="bg-[#1d1d37] rounded-full px-2 py-0.5">
-              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 8 }}>SOON</Text>
+          )}
+
+          {videoStatus === 'analyzing' && (
+            <View className="flex-row items-center gap-3">
+              <ActivityIndicator color="#ffd709" />
+              <View>
+                <Text style={{ color: '#ffd709', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analyzing form...</Text>
+                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>
+                  Counting reps, scoring form, checking technique
+                </Text>
+              </View>
             </View>
-          </Pressable>
+          )}
+
+          {videoStatus === 'done' && analysisResult && (
+            <View>
+              <View className="flex-row items-center justify-between mb-3">
+                <View className="flex-row items-center gap-2">
+                  <FontAwesome name="check-circle" size={16} color={Colors.success} />
+                  <Text style={{ color: Colors.success, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analysis Complete</Text>
+                </View>
+                <Pressable onPress={() => { setVideoStatus('idle'); setAnalysisResult(null); }}>
+                  <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>Record Again</Text>
+                </Pressable>
+              </View>
+              <View className="flex-row gap-3">
+                <View className="flex-1 bg-[#0c0c1f] rounded-lg p-2.5 items-center">
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>
+                    {analysisResult.form_score != null ? Math.round(analysisResult.form_score) : '\u2014'}
+                  </Text>
+                  <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 9 }}>Form</Text>
+                </View>
+                <View className="flex-1 bg-[#0c0c1f] rounded-lg p-2.5 items-center">
+                  <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>
+                    {analysisResult.valid_rep_count ?? analysisResult.rep_count ?? '\u2014'}
+                  </Text>
+                  <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 9 }}>Reps</Text>
+                </View>
+                <View className="flex-1 bg-[#0c0c1f] rounded-lg p-2.5 items-center">
+                  <Text style={{
+                    color: analysisResult.verification_status === 'verified' ? Colors.success : Colors.warning,
+                    fontFamily: 'Epilogue-Bold',
+                    fontSize: 11,
+                  }}>
+                    {analysisResult.verification_status === 'verified' ? 'Verified' : 'Review'}
+                  </Text>
+                  <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 9 }}>Status</Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {videoStatus === 'error' && (
+            <View>
+              <View className="flex-row items-center gap-2 mb-2">
+                <FontAwesome name="exclamation-circle" size={14} color={Colors.danger} />
+                <Text style={{ color: Colors.danger, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analysis Failed</Text>
+              </View>
+              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }} className="mb-2">
+                {videoError}
+              </Text>
+              <Pressable onPress={() => { setVideoStatus('idle'); setVideoError(null); }}>
+                <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Try Again</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
