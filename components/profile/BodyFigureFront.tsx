@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Path, G } from 'react-native-svg';
+import Svg, { Path, G, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import type { MuscleGroup } from '@/lib/analytics/muscle-mapping';
 
 interface BodyFigureFrontProps {
@@ -9,45 +9,112 @@ interface BodyFigureFrontProps {
   readonly height?: number;
 }
 
-export function BodyFigureFront({ muscleColors, width = 160, height = 280 }: BodyFigureFrontProps) {
-  const outline = '#74738b33'; // Dim outline
-  const defaultFill = '#23233f'; // Surface dark (cold)
+export function BodyFigureFront({ muscleColors, width = 180, height = 324 }: BodyFigureFrontProps) {
+  const outline = '#74738b26'; // Very dim outline
+  const contour = '#74738b1a'; // Even subtler contour lines
+  const defaultFill = '#23233f';
+
+  const chest = muscleColors.chest || defaultFill;
+  const shoulders = muscleColors.shoulders || defaultFill;
+  const biceps = muscleColors.biceps || defaultFill;
+  const abs = muscleColors.abs || defaultFill;
+  const quads = muscleColors.quads || defaultFill;
+  const calves = muscleColors.calves || defaultFill;
 
   return (
     <View style={{ width, height }}>
-      <Svg width={width} height={height} viewBox="0 0 160 280">
-        {/* Body outline */}
+      <Svg width={width} height={height} viewBox="0 0 200 360">
+        <Defs>
+          {/* Subtle gradient for depth on each muscle */}
+          <LinearGradient id="chestGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={chest} stopOpacity="1" />
+            <Stop offset="1" stopColor={chest} stopOpacity="0.7" />
+          </LinearGradient>
+          <LinearGradient id="absGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={abs} stopOpacity="0.85" />
+            <Stop offset="1" stopColor={abs} stopOpacity="1" />
+          </LinearGradient>
+        </Defs>
+
         <G>
-          {/* Head */}
-          <Path d="M70 10 Q80 0 90 10 Q95 20 95 30 Q95 40 80 45 Q65 40 65 30 Q65 20 70 10Z" fill={outline} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Head ─── */}
+          <Path d="M88 8 Q100 0 112 8 Q118 18 118 30 Q118 44 100 50 Q82 44 82 30 Q82 18 88 8Z"
+            fill={outline} stroke={outline} strokeWidth={0.8} />
           {/* Neck */}
-          <Path d="M73 45 L87 45 L87 55 L73 55Z" fill={outline} stroke={outline} strokeWidth={0.5} />
+          <Path d="M92 50 L108 50 L108 62 L92 62Z" fill={outline} stroke={outline} strokeWidth={0.5} />
 
-          {/* Shoulders */}
-          <Path d="M45 60 Q55 55 73 58 L73 78 Q55 75 45 70Z" fill={muscleColors.shoulders || defaultFill} stroke={outline} strokeWidth={0.5} />
-          <Path d="M115 60 Q105 55 87 58 L87 78 Q105 75 115 70Z" fill={muscleColors.shoulders || defaultFill} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Front Delts (shoulders) ─── */}
+          <Path d="M52 68 Q65 60 92 65 L92 88 Q70 85 52 78Z"
+            fill={shoulders} stroke={contour} strokeWidth={0.5} />
+          <Path d="M148 68 Q135 60 108 65 L108 88 Q130 85 148 78Z"
+            fill={shoulders} stroke={contour} strokeWidth={0.5} />
 
-          {/* Chest */}
-          <Path d="M73 58 L87 58 L87 95 Q80 100 73 95Z" fill={muscleColors.chest || defaultFill} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Upper Chest ─── */}
+          <Path d="M92 65 L108 65 L110 85 Q100 88 90 85Z"
+            fill="url(#chestGrad)" stroke={contour} strokeWidth={0.5} />
 
-          {/* Biceps */}
-          <Path d="M45 70 Q42 80 40 100 Q42 110 48 105 Q52 95 50 78Z" fill={muscleColors.biceps || defaultFill} stroke={outline} strokeWidth={0.5} />
-          <Path d="M115 70 Q118 80 120 100 Q118 110 112 105 Q108 95 110 78Z" fill={muscleColors.biceps || defaultFill} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Lower/Mid Chest ─── */}
+          <Path d="M90 85 Q100 88 110 85 L112 118 Q100 124 88 118Z"
+            fill={chest} stroke={contour} strokeWidth={0.5} />
 
-          {/* Forearms */}
-          <Path d="M40 105 Q38 120 35 140 Q40 142 43 138 Q46 120 48 105Z" fill={outline} stroke={outline} strokeWidth={0.5} />
-          <Path d="M120 105 Q122 120 125 140 Q120 142 117 138 Q114 120 112 105Z" fill={outline} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Biceps ─── */}
+          <Path d="M52 78 Q48 90 46 112 Q48 124 55 118 Q60 105 58 88Z"
+            fill={biceps} stroke={contour} strokeWidth={0.5} />
+          <Path d="M148 78 Q152 90 154 112 Q152 124 145 118 Q140 105 142 88Z"
+            fill={biceps} stroke={contour} strokeWidth={0.5} />
 
-          {/* Abs */}
-          <Path d="M73 95 Q80 100 87 95 L87 150 Q80 155 73 150Z" fill={muscleColors.abs || defaultFill} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Forearms ─── */}
+          <Path d="M46 118 Q43 135 40 160 Q45 163 49 158 Q53 138 55 118Z"
+            fill={outline} stroke={outline} strokeWidth={0.5} />
+          <Path d="M154 118 Q157 135 160 160 Q155 163 151 158 Q147 138 145 118Z"
+            fill={outline} stroke={outline} strokeWidth={0.5} />
 
-          {/* Quads */}
-          <Path d="M63 155 L77 155 L75 220 Q70 225 63 218Z" fill={muscleColors.quads || defaultFill} stroke={outline} strokeWidth={0.5} />
-          <Path d="M97 155 L83 155 L85 220 Q90 225 97 218Z" fill={muscleColors.quads || defaultFill} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Hands ─── */}
+          <Path d="M38 160 Q36 168 38 175 Q42 178 46 172 Q48 165 47 158Z"
+            fill={outline} stroke={outline} strokeWidth={0.3} />
+          <Path d="M162 160 Q164 168 162 175 Q158 178 154 172 Q152 165 153 158Z"
+            fill={outline} stroke={outline} strokeWidth={0.3} />
 
-          {/* Calves */}
-          <Path d="M63 222 Q67 230 68 250 Q65 260 62 255 Q60 240 62 225Z" fill={muscleColors.calves || defaultFill} stroke={outline} strokeWidth={0.5} />
-          <Path d="M97 222 Q93 230 92 250 Q95 260 98 255 Q100 240 98 225Z" fill={muscleColors.calves || defaultFill} stroke={outline} strokeWidth={0.5} />
+          {/* ─── Upper Abs ─── */}
+          <Path d="M88 118 Q100 124 112 118 L112 148 Q100 150 88 148Z"
+            fill="url(#absGrad)" stroke={contour} strokeWidth={0.5} />
+
+          {/* ─── Ab line details (contour) ─── */}
+          <Path d="M100 120 L100 148" stroke={contour} strokeWidth={0.8} />
+          <Path d="M88 128 L112 128" stroke={contour} strokeWidth={0.5} />
+          <Path d="M89 138 L111 138" stroke={contour} strokeWidth={0.5} />
+
+          {/* ─── Lower Abs ─── */}
+          <Path d="M88 148 Q100 150 112 148 L112 170 Q100 175 88 170Z"
+            fill={abs} stroke={contour} strokeWidth={0.5} />
+
+          {/* ─── Obliques ─── */}
+          <Path d="M78 118 L88 118 L88 170 L78 165Z"
+            fill={abs} stroke={contour} strokeWidth={0.5} opacity={0.6} />
+          <Path d="M122 118 L112 118 L112 170 L122 165Z"
+            fill={abs} stroke={contour} strokeWidth={0.5} opacity={0.6} />
+
+          {/* ─── Quads ─── */}
+          <Path d="M78 175 L96 175 L94 278 Q88 284 78 275Z"
+            fill={quads} stroke={contour} strokeWidth={0.5} />
+          <Path d="M122 175 L104 175 L106 278 Q112 284 122 275Z"
+            fill={quads} stroke={contour} strokeWidth={0.5} />
+
+          {/* ─── Knees (neutral) ─── */}
+          <Circle cx="86" cy="282" r="6" fill={outline} stroke={outline} strokeWidth={0.3} />
+          <Circle cx="114" cy="282" r="6" fill={outline} stroke={outline} strokeWidth={0.3} />
+
+          {/* ─── Calves ─── */}
+          <Path d="M78 288 Q84 298 85 320 Q82 332 78 326 Q75 310 77 292Z"
+            fill={calves} stroke={contour} strokeWidth={0.5} />
+          <Path d="M122 288 Q116 298 115 320 Q118 332 122 326 Q125 310 123 292Z"
+            fill={calves} stroke={contour} strokeWidth={0.5} />
+
+          {/* ─── Feet ─── */}
+          <Path d="M76 328 Q78 336 82 340 Q86 342 90 338 Q88 332 85 326Z"
+            fill={outline} stroke={outline} strokeWidth={0.3} />
+          <Path d="M124 328 Q122 336 118 340 Q114 342 110 338 Q112 332 115 326Z"
+            fill={outline} stroke={outline} strokeWidth={0.3} />
         </G>
       </Svg>
     </View>

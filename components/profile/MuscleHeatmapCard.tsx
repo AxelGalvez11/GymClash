@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { BodyFigureFront } from './BodyFigureFront';
 import { BodyFigureBack } from './BodyFigureBack';
+import { MuscleParticleOverlay } from './MuscleParticleOverlay';
 import {
   calculateMuscleHeatmap,
   getMuscleColor,
@@ -127,11 +128,17 @@ export function MuscleHeatmapCard({ workouts, bodyWeightKg }: MuscleHeatmapCardP
 
       {/* Body figure */}
       <View className="items-center mb-4">
-        {view === 'front' ? (
-          <BodyFigureFront muscleColors={muscleColors} />
-        ) : (
-          <BodyFigureBack muscleColors={muscleColors} />
-        )}
+        <View style={{ position: 'relative' }}>
+          {view === 'front' ? (
+            <BodyFigureFront muscleColors={muscleColors} />
+          ) : (
+            <BodyFigureBack muscleColors={muscleColors} />
+          )}
+          <MuscleParticleOverlay
+            heatmapData={heatmapData}
+            view={view}
+          />
+        </View>
       </View>
 
       {/* Muscle list for current view */}
