@@ -1,4 +1,10 @@
+import { useEffect, useRef } from 'react';
 import { Platform, View, Text } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { Colors, Rank } from '@/constants/theme';
 import type { Rank as RankType, CosmeticRarity } from '@/types';
 
@@ -23,6 +29,8 @@ const RARITY_COLORS: Record<CosmeticRarity, string> = {
 interface BadgeBaseProps {
   readonly label: string;
   readonly color?: string;
+  /** Changing this value triggers the scale bounce. Pass any numeric counter or version. */
+  readonly value?: string | number;
 }
 
 interface StatusBadgeProps extends BadgeBaseProps {
@@ -68,18 +76,37 @@ const chromaticShadow = (color: string) =>
 
 export function Badge(props: BadgeProps) {
   const color = resolveColor(props);
+  const scale = useSharedValue(1);
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    // Skip bounce on initial mount — only react to value changes
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    scale.value = withSpring(1.15, { damping: 6, stiffness: 280, mass: 0.6 }, () => {
+      scale.value = withSpring(1, { damping: 10, stiffness: 200, mass: 0.6 });
+    });
+  }, [props.value]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
-    <View
-      className="rounded-full px-2.5 py-0.5"
-      style={[{ backgroundColor: color + '20' }, chromaticShadow(color)]}
-    >
-      <Text
-        style={{ color, fontFamily: 'Lexend-Bold', fontSize: 10, letterSpacing: 1.5 }}
+    <Animated.View style={animatedStyle}>
+      <View
+        className="rounded-full px-2.5 py-0.5"
+        style={[{ backgroundColor: color + '20' }, chromaticShadow(color)]}
       >
-        {props.label.toUpperCase()}
-      </Text>
-    </View>
+        <Text
+          style={{ color, fontFamily: 'Lexend-Bold', fontSize: 10, letterSpacing: 1.5 }}
+        >
+          {props.label.toUpperCase()}
+        </Text>
+      </View>
+    </Animated.View>
   );
 }
 

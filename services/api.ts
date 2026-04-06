@@ -37,6 +37,8 @@ export async function updateBiodata(updates: {
   lifting_experience?: string | null;
   running_experience?: string | null;
   resting_hr?: number | null;
+  estimated_vo2max?: number | null;
+  max_heart_rate?: number | null;
 }) {
   const params = {
     p_body_weight_kg: updates.body_weight_kg ?? null,
@@ -51,18 +53,84 @@ export async function updateBiodata(updates: {
   // Try RPC first (correct approach — respects RLS + auto-calculates max HR / VO2max)
   const { data, error } = await supabase.rpc('update_my_biodata', params);
 
-  if (error) {
-    // If schema cache error, reload and retry once
-    if (error.message?.includes('schema') || error.message?.includes('cache')) {
-      // Force schema reload by making a simple query
-      await supabase.from('profiles').select('id').limit(1);
-      const retry = await supabase.rpc('update_my_biodata', params);
-      if (retry.error) throw retry.error;
-      return retry.data;
-    }
+  // If RPC succeeded with data, we're done
+  if (!error && data != null) {
+    return data;
+  }
+
+  // RPC failed or returned null — fall back to direct upsert.
+  // Handles: RPC not deployed (PGRST202), RPC returned null (no profile row),
+  // or RPC raised "Profile not found" (migration 015 guard).
+  const isRpcMissing = error && (
+    error.message?.toLowerCase().includes('could not find') ||
+    error.message?.toLowerCase().includes('does not exist') ||
+    error.code === 'PGRST202'
+  );
+  const isProfileNotFound = error?.message?.toLowerCase().includes('profile not found');
+  const isNullReturn = !error && (data === null || data === undefined);
+
+  if (!isRpcMissing && !isProfileNotFound && !isNullReturn) {
+    // Some other unexpected RPC error — rethrow
     throw error;
   }
-  return data;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  // Build updates with all columns (migration 009+)
+  const allUpdates: Record<string, any> = {};
+  if (updates.body_weight_kg !== undefined) allUpdates.body_weight_kg = updates.body_weight_kg;
+  if (updates.height_cm !== undefined) allUpdates.height_cm = updates.height_cm;
+  if (updates.birth_date !== undefined) allUpdates.birth_date = updates.birth_date;
+  if (updates.biological_sex !== undefined) allUpdates.biological_sex = updates.biological_sex;
+  if (updates.lifting_experience !== undefined) allUpdates.lifting_experience = updates.lifting_experience;
+  if (updates.running_experience !== undefined) allUpdates.running_experience = updates.running_experience;
+  if (updates.resting_hr !== undefined) allUpdates.resting_hr = updates.resting_hr;
+  if (updates.estimated_vo2max !== undefined) allUpdates.estimated_vo2max = updates.estimated_vo2max;
+  if (updates.max_heart_rate !== undefined) allUpdates.max_heart_rate = updates.max_heart_rate;
+
+  // Base columns only (migration 006) — fallback if newer columns don't exist yet
+  const baseUpdates: Record<string, any> = {};
+  if (updates.body_weight_kg !== undefined) baseUpdates.body_weight_kg = updates.body_weight_kg;
+  if (updates.height_cm !== undefined) baseUpdates.height_cm = updates.height_cm;
+  if (updates.birth_date !== undefined) baseUpdates.birth_date = updates.birth_date;
+  if (updates.biological_sex !== undefined) baseUpdates.biological_sex = updates.biological_sex;
+
+  // Try with all columns first, fall back to base-only if columns are missing
+  const userId = user.id;
+  async function tryDirectSave(fields: Record<string, any>): Promise<boolean> {
+    const { data: updated, error: updateErr } = await supabase
+      .from('profiles')
+      .update(fields)
+      .eq('id', userId)
+      .select('id');
+    if (updateErr) throw updateErr;
+
+    if (!updated || updated.length === 0) {
+      // Profile row doesn't exist — create via upsert
+      const { error: upsertErr } = await supabase
+        .from('profiles')
+        .upsert({ id: userId, ...fields }, { onConflict: 'id' })
+        .select('id');
+      if (upsertErr) throw upsertErr;
+    }
+    return true;
+  }
+
+  try {
+    await tryDirectSave(allUpdates);
+  } catch (fullErr: any) {
+    // If the error is about missing columns (schema cache), retry with base columns only
+    const msg = fullErr?.message?.toLowerCase() ?? '';
+    if (msg.includes('could not find') || msg.includes('schema cache') || msg.includes('column') || msg.includes('does not exist')) {
+      console.warn('[biodata] Newer columns not found in schema, falling back to base columns:', fullErr.message);
+      await tryDirectSave(baseUpdates);
+    } else {
+      throw fullErr;
+    }
+  }
+
+  return null;
 }
 
 // ─── Daily Goals ─────────────────────────────────────────
@@ -209,12 +277,16 @@ export async function fetchMyClan() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
-  const { data: membership } = await supabase
+  const { data: membership, error: membershipError } = await supabase
     .from('clan_memberships')
     .select('clan_id, role')
     .eq('user_id', user.id)
     .single();
 
+  if (membershipError) {
+    if (membershipError.code === 'PGRST116') return null; // No record found
+    throw membershipError;
+  }
   if (!membership) return null;
 
   const { data: clan, error } = await supabase

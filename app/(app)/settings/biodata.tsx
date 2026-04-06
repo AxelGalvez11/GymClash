@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -14,6 +14,116 @@ type SexOption = 'male' | 'female';
 function SectionLabel({ text }: { readonly text: string }) {
   return (
     <Text className="text-xs uppercase mb-1" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>{text}</Text>
+  );
+}
+
+// ─── Drum roll wheel picker (iOS Clock style) ───────────
+const ITEM_H = 56;         // height of each row
+const VISIBLE = 5;         // rows shown (must be odd)
+const CENTRE = Math.floor(VISIBLE / 2); // = 2, the selected row
+const PICKER_H = ITEM_H * VISIBLE;      // = 280 — explicit pixel height
+
+function WheelColumn({
+  values,
+  selectedIndex,
+  onIndexChange,
+  suffix,
+}: {
+  readonly values: number[];
+  readonly selectedIndex: number;
+  readonly onIndexChange: (i: number) => void;
+  readonly suffix?: string;
+}) {
+  const ref = useRef<ScrollView>(null);
+  const liveIndexRef = useRef(selectedIndex);
+  const [liveIndex, setLiveIndex] = useState(selectedIndex);
+  // Guard so we only do the initial auto-scroll once per mount, not on every
+  // subsequent content-size change (e.g. from a unit toggle while open).
+  const initialScrollDone = useRef(false);
+
+  // onContentSizeChange fires AFTER all items have been measured and the
+  // ScrollView knows its full scrollable height — the only reliable moment to
+  // call scrollTo for large lists. onLayout fires on the container before the
+  // content height is known, which is why it failed for 600+ item lists.
+  const handleContentSizeChange = useCallback(() => {
+    if (!initialScrollDone.current) {
+      initialScrollDone.current = true;
+      ref.current?.scrollTo({ y: selectedIndex * ITEM_H, animated: false });
+    }
+  }, [selectedIndex]);
+
+  // Real-time scroll tracking — updates highlight at 60fps without excess re-renders
+  const handleScroll = useCallback((e: any) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const idx = Math.max(0, Math.min(values.length - 1, Math.round(y / ITEM_H)));
+    if (idx !== liveIndexRef.current) {
+      liveIndexRef.current = idx;
+      setLiveIndex(idx);
+    }
+  }, [values.length]);
+
+  const handleScrollEnd = useCallback((e: any) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const idx = Math.max(0, Math.min(values.length - 1, Math.round(y / ITEM_H)));
+    liveIndexRef.current = idx;
+    setLiveIndex(idx);
+    onIndexChange(idx);
+  }, [values.length, onIndexChange]);
+
+  return (
+    // Hard pixel height — never flex so it doesn't collapse
+    <View style={{ height: PICKER_H, overflow: 'hidden', position: 'relative' }}>
+      {/* ── Selection highlight band (absolute, non-interactive) ── */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: CENTRE * ITEM_H,
+          left: 0,
+          right: 0,
+          height: ITEM_H,
+          backgroundColor: 'rgba(255,255,255,0.06)',
+          borderTopWidth: 0.5,
+          borderBottomWidth: 0.5,
+          borderColor: 'rgba(206,150,255,0.45)',
+          zIndex: 10,
+        }}
+      />
+
+      <ScrollView
+        ref={ref}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_H}
+        decelerationRate="fast"
+        onContentSizeChange={handleContentSizeChange}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
+        // contentOffset is a best-effort first-pass; onContentSizeChange is the guarantee
+        contentOffset={{ x: 0, y: selectedIndex * ITEM_H }}
+        // padding lets the first/last items reach the centre slot
+        contentContainerStyle={{ paddingVertical: CENTRE * ITEM_H }}
+      >
+        {values.map((v, i) => {
+          const dist = Math.abs(i - liveIndex);
+          return (
+            <View key={v} style={{ height: ITEM_H, alignItems: 'center', justifyContent: 'center' }}>
+              <Text
+                style={{
+                  color: dist === 0 ? '#ffffff' : '#aaa8c3',
+                  fontFamily: dist === 0 ? 'Epilogue-Bold' : 'Lexend-SemiBold',
+                  fontSize: dist === 0 ? 30 : dist === 1 ? 21 : 16,
+                  opacity: dist === 0 ? 1 : dist === 1 ? 0.55 : dist === 2 ? 0.28 : 0.1,
+                }}
+              >
+                {v}{suffix ? ` ${suffix}` : ''}
+              </Text>
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -34,31 +144,122 @@ function ScrollPicker({
   readonly suffix?: string;
   readonly label: string;
 }) {
-  const clamp = (v: number) => Math.min(max, Math.max(min, v));
+  const [open, setOpen] = useState(false);
+
+  // Build value array once
+  const values: number[] = [];
+  for (let v = min; v <= max; v += step) values.push(v);
+  const currentIndex = Math.max(0, values.indexOf(value));
+
+  const progress = (max - min) > 0 ? (value - min) / (max - min) : 0;
+
   return (
-    <View className="mb-4">
-      <Text className="text-xs uppercase mb-2" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>{label}</Text>
-      <View className="flex-row items-center justify-center gap-4">
-        <Pressable
-          className="w-10 h-10 rounded-full bg-[#23233f] items-center justify-center active:scale-[0.95]"
-          onPress={() => onChange(clamp(value - step))}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <FontAwesome name="minus" size={14} color="#aaa8c3" />
-        </Pressable>
-        <View className="bg-[#000000] rounded-xl px-6 py-3 min-w-[120px] items-center">
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 24 }}>
-            {value}{suffix ? ` ${suffix}` : ''}
-          </Text>
+    <View style={{ marginBottom: 16 }}>
+      <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+        {label}
+      </Text>
+
+      {/* Tap row */}
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: '#17172f',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: 'rgba(206,150,255,0.2)',
+          paddingHorizontal: 20,
+          paddingVertical: 14,
+          shadowColor: '#ce96ff',
+          shadowOpacity: 0.12,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 4,
+        }}
+      >
+        <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 22 }}>
+          {value}{suffix ? ` ${suffix}` : ''}
+        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>tap to adjust</Text>
+          <FontAwesome name="pencil" size={12} color="#ce96ff" />
         </View>
-        <Pressable
-          className="w-10 h-10 rounded-full bg-[#23233f] items-center justify-center active:scale-[0.95]"
-          onPress={() => onChange(clamp(value + step))}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <FontAwesome name="plus" size={14} color="#aaa8c3" />
-        </Pressable>
+      </Pressable>
+
+      {/* Progress bar */}
+      <View style={{ height: 3, backgroundColor: '#23233f', borderRadius: 2, marginTop: 8, overflow: 'hidden' }}>
+        <View style={{ height: 3, borderRadius: 2, backgroundColor: '#ce96ff', width: `${progress * 100}%` as any }} />
       </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 3 }}>
+        <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 9 }}>{min}{suffix ? ` ${suffix}` : ''}</Text>
+        <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 9 }}>{max}{suffix ? ` ${suffix}` : ''}</Text>
+      </View>
+
+      {/* Wheel picker modal */}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          {/* Absolute backdrop — tap outside card to close */}
+          <Pressable
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            onPress={() => setOpen(false)}
+          />
+          {/* Card — plain View so scroll gestures reach WheelColumn freely */}
+          <View
+            style={{
+              backgroundColor: '#17172f',
+              borderRadius: 28,
+              borderWidth: 1,
+              borderColor: 'rgba(206,150,255,0.2)',
+              width: 300,
+              paddingTop: 24,
+              paddingBottom: 28,
+              paddingHorizontal: 20,
+              alignItems: 'center',
+              shadowColor: '#ce96ff',
+              shadowOpacity: 0.4,
+              shadowRadius: 28,
+              shadowOffset: { width: 0, height: 10 },
+              elevation: 24,
+            }}
+          >
+            {/* Label */}
+            <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 16 }}>
+              {label}
+            </Text>
+
+            {/* Drum roll — explicit height matches WheelColumn */}
+            <View style={{ width: '100%', height: PICKER_H }}>
+              <WheelColumn
+                values={values}
+                selectedIndex={currentIndex}
+                onIndexChange={(i) => onChange(values[i])}
+                suffix={suffix}
+              />
+            </View>
+
+            {/* Done */}
+            <Pressable
+              onPress={() => setOpen(false)}
+              style={{
+                marginTop: 20,
+                backgroundColor: '#a434ff',
+                borderRadius: 22,
+                paddingVertical: 13,
+                paddingHorizontal: 48,
+                shadowColor: '#a434ff',
+                shadowOpacity: 0.45,
+                shadowRadius: 14,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 10,
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontFamily: 'Epilogue-Bold', fontSize: 16 }}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -234,7 +435,7 @@ export default function BiodataScreen() {
 
   function handleSave() {
     let bwKg: number | null = bodyWeight;
-    let htCm: number | null;
+    let htCm: number | null = null;
 
     if (unitSystem === 'imperial') {
       if (bwKg < 44 || bwKg > 660) {
@@ -268,10 +469,25 @@ export default function BiodataScreen() {
 
     // Convert MM/DD/YYYY to YYYY-MM-DD for API
     let birthDateISO: string | null = null;
-    if (birthDate && birthDate.length === 10) {
-      const parts = birthDate.split('/');
-      if (parts.length === 3) {
-        birthDateISO = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+    if (birthDate && birthDate.length > 0) {
+      if (birthDate.length === 10) {
+        const parts = birthDate.split('/');
+        if (parts.length === 3) {
+          const month = parseInt(parts[0], 10);
+          const day = parseInt(parts[1], 10);
+          const year = parseInt(parts[2], 10);
+          // Validate date properly accounting for days per month
+          const daysInMonth = new Date(year, month, 0).getDate();
+          if (month < 1 || month > 12 || day < 1 || day > daysInMonth || year < 1900 || year > new Date().getFullYear()) {
+            Alert.alert('Invalid Date', 'Please check the date you entered.');
+            return;
+          }
+          birthDateISO = `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+        }
+      }
+      if (!birthDateISO) {
+        Alert.alert('Invalid Date', 'Please enter your birth date as MM/DD/YYYY');
+        return;
       }
     }
 
@@ -283,7 +499,9 @@ export default function BiodataScreen() {
         biological_sex: sex || null,
         lifting_experience: liftingExp || null,
         running_experience: runningExp || null,
-        resting_hr: profile?.resting_hr !== undefined ? restingHR : null,
+        resting_hr: restingHR,
+        estimated_vo2max: vo2max ?? null,
+        max_heart_rate: maxHR ?? null,
       },
       {
         onSuccess: () => {
@@ -292,12 +510,9 @@ export default function BiodataScreen() {
           ]);
         },
         onError: (err: any) => {
-          const msg = err.message ?? 'Failed to save';
-          if (msg.includes('could not find')) {
-            Alert.alert('Setup Required', 'The biodata service needs to be configured. Please contact support or run database migrations.');
-          } else {
-            Alert.alert('Error', msg);
-          }
+          console.error('[biodata] save failed:', err);
+          const msg: string = err?.message ?? err?.details ?? 'Unknown error — check your connection and try again.';
+          Alert.alert('Could not save', msg);
         },
       }
     );

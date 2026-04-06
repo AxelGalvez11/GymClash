@@ -3,6 +3,7 @@ import { View, Text, Pressable, Alert, Animated, ScrollView, Modal } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Colors } from '@/constants/theme';
 import { supabase } from '@/services/supabase';
@@ -174,9 +175,49 @@ export default function SettingsScreen() {
         </View>
 
         <View className="px-5">
+          {/* Profile Summary Card */}
+          {profile && (
+            <View
+              style={{
+                backgroundColor: '#17172f',
+                borderRadius: 20,
+                padding: 16,
+                marginHorizontal: -20,
+                marginBottom: 16,
+                marginTop: 0,
+                paddingHorizontal: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                shadowColor: '#ce96ff',
+                shadowOffset: { width: 0, height: 4 },
+                shadowRadius: 16,
+                shadowOpacity: 0.18,
+                elevation: 8,
+                borderWidth: 1,
+                borderColor: 'rgba(206,150,255,0.12)',
+              }}
+            >
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#23233f', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ce96ff' }}>
+                <FontAwesome name="user" size={22} color="#ce96ff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 16 }}>{profile.display_name ?? 'Warrior'}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <FontAwesome name="star" size={10} color="#ce96ff" />
+                  <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Level {profile.level ?? 1}</Text>
+                </View>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ color: '#ffd709', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>{profile.trophy_rating ?? 0}</Text>
+                <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 9, letterSpacing: 1 }}>TROPHIES</Text>
+              </View>
+            </View>
+          )}
+
           {/* Account Section */}
           <SectionLabel text="Account" />
-          <View className="gap-2 mb-6">
+          <View className="gap-2 mb-6" style={{ backgroundColor: '#17172f', borderRadius: 16, marginHorizontal: -20, paddingHorizontal: 20, paddingVertical: 8, overflow: 'hidden', shadowColor: '#ce96ff', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
             <SettingsRow
               icon="user"
               label={profile?.display_name || 'Warrior'}
@@ -188,13 +229,13 @@ export default function SettingsScreen() {
 
           {/* Appearance Section */}
           <SectionLabel text="Appearance" />
-          <View className="gap-2 mb-6">
+          <View className="gap-2 mb-6" style={{ backgroundColor: '#17172f', borderRadius: 16, marginHorizontal: -20, paddingHorizontal: 20, paddingVertical: 8, overflow: 'hidden', shadowColor: '#ce96ff', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
             <AccentColorPicker />
           </View>
 
           {/* Body Data Section */}
           <SectionLabel text="Body Data" />
-          <View className="gap-2 mb-6">
+          <View className="gap-2 mb-6" style={{ backgroundColor: '#17172f', borderRadius: 16, marginHorizontal: -20, paddingHorizontal: 20, paddingVertical: 8, overflow: 'hidden', shadowColor: '#ce96ff', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
             <SettingsRow
               icon="sliders"
               label="Body Data"
@@ -207,7 +248,7 @@ export default function SettingsScreen() {
 
           {/* Notifications Section */}
           <SectionLabel text="Notifications" />
-          <View className="gap-2 mb-6">
+          <View className="gap-2 mb-6" style={{ backgroundColor: '#17172f', borderRadius: 16, marginHorizontal: -20, paddingHorizontal: 20, paddingVertical: 8, overflow: 'hidden', shadowColor: '#ce96ff', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
             <SettingsRow
               icon="bell"
               label="Notifications"
@@ -219,7 +260,7 @@ export default function SettingsScreen() {
 
           {/* About Section */}
           <SectionLabel text="About" />
-          <View className="gap-2 mb-8">
+          <View className="gap-2 mb-8" style={{ backgroundColor: '#17172f', borderRadius: 16, marginHorizontal: -20, paddingHorizontal: 20, paddingVertical: 8, overflow: 'hidden', shadowColor: '#ce96ff', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
             <SettingsRow
               icon="info-circle"
               label="Version"
@@ -232,7 +273,7 @@ export default function SettingsScreen() {
           {/* Sign Out */}
           <Pressable
             className="rounded-xl py-3 items-center active:scale-[0.98]"
-            style={{ borderWidth: 0.5, borderColor: Colors.danger + '40' }}
+            style={{ borderWidth: 0.5, borderColor: Colors.danger + '40', shadowColor: '#ef4444', shadowOpacity: 0.25, shadowRadius: 14, elevation: 8 }}
             onPress={handleSignOut}
           >
             <Text className="text-danger text-sm" style={{ fontFamily: 'Lexend-SemiBold', fontWeight: '700', letterSpacing: 1 }}>
@@ -241,7 +282,7 @@ export default function SettingsScreen() {
           </Pressable>
 
           {/* Privacy Section */}
-          <View className="gap-3 mt-6">
+          <View className="gap-3 mt-6 mb-6" style={{ backgroundColor: '#17172f', borderRadius: 16, marginHorizontal: -20, paddingHorizontal: 20, paddingVertical: 12, overflow: 'hidden', shadowColor: '#ce96ff', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 }}>
             <Text className="text-xs uppercase px-1" style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', letterSpacing: 1 }}>
               Privacy
             </Text>
@@ -274,6 +315,11 @@ export default function SettingsScreen() {
               delay={450}
             />
           </View>
+
+          {/* Version Footer */}
+          <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 10, textAlign: 'center', marginTop: 8, marginBottom: 24, letterSpacing: 1 }}>
+            GYMCLASH v1.0 · VICTORY PEAK
+          </Text>
         </View>
       </ScrollView>
 

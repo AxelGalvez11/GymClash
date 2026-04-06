@@ -1,0 +1,1 @@
+export { GlowingTabBar } from './GlowingTabBar';

@@ -19,6 +19,10 @@ export default function PublicProfileScreen() {
     enabled: !!userId,
   });
 
+  // ── Hooks must ALWAYS be called before any early returns ──
+  const fadeCharacter = useFadeSlide(0);
+  const fadeStats = useFadeSlide(100);
+
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
@@ -32,27 +36,23 @@ export default function PublicProfileScreen() {
       <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
         <FontAwesome name="user-times" size={32} color="#74738b" />
         <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', marginTop: 12 }}>Profile not available</Text>
-        <Pressable className="mt-4" onPress={() => router.replace('/(app)/home' as any)}>
+        <Pressable className="mt-4" onPress={() => router.back()}>
           <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold' }}>Go Back</Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
-  // Entrance animations
-  const fadeCharacter = useFadeSlide(0);
-  const fadeStats = useFadeSlide(100);
-
   const rankKey = (profile.rank ?? 'rookie') as RankType;
   const rankConfig = Rank[rankKey] ?? Rank.rookie;
   const trophies = profile.trophy_rating ?? 0;
-  const arenaTier: ArenaTier = (profile.arena_tier as ArenaTier) ?? getArenaTier(trophies);
-  const arenaConfig = Arena[arenaTier];
+  const arenaTier: ArenaTier = (profile.arena_tier as ArenaTier) || getArenaTier(trophies);
+  const arenaConfig = Arena[arenaTier] ?? Arena.sweat_zone;
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8">
-        <Pressable onPress={() => router.replace('/(app)/home' as any)} className="py-4 active:scale-[0.98]" hitSlop={10}>
+        <Pressable onPress={() => router.back()} className="py-4 active:scale-[0.98]" hitSlop={10}>
           <FontAwesome name="arrow-left" size={16} color="#aaa8c3" />
         </Pressable>
 

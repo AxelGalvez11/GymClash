@@ -1,6 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import Animated from "react-native-reanimated";
 import { FontAwesome } from "@expo/vector-icons";
+import { useEntrance } from "@/hooks/use-entrance";
+import { useStaggerEntrance } from "@/hooks/use-stagger-entrance";
+import { usePressScale } from "@/hooks/use-press-scale";
 
 const POWER_UPS = [
   {
@@ -17,41 +21,88 @@ const POWER_UPS = [
     description: "1.5x XP earned for 3 sessions",
     cost: "150",
   },
+  {
+    name: "Score Shield",
+    icon: "shield" as const,
+    color: "#81ecff",
+    description: "Block score reduction for your next flagged workout",
+    cost: "200",
+  },
 ] as const;
 
-export default function PowerUpPreview() {
+function PowerUpCard({
+  powerUp,
+  index,
+}: {
+  powerUp: typeof POWER_UPS[number];
+  index: number;
+}) {
+  const { animatedStyle: staggerStyle } = useStaggerEntrance(index, 80, 280);
+  const { animatedStyle: pressStyle, onPressIn, onPressOut } = usePressScale(0.97);
+
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.card,
+        {
+          shadowColor: powerUp.color,
+          shadowOpacity: 0.25,
+          shadowRadius: 14,
+          borderColor: `${powerUp.color}25`,
+        },
+        staggerStyle,
+        pressStyle,
+      ]}
+      onTouchStart={onPressIn}
+      onTouchEnd={onPressOut}
+    >
+      <View
+        style={[
+          styles.iconCircle,
+          { backgroundColor: `${powerUp.color}26` },
+        ]}
+      >
+        <FontAwesome
+          name={powerUp.icon}
+          size={20}
+          color={powerUp.color}
+        />
+      </View>
+
+      <View style={styles.middle}>
+        <Text style={styles.name}>{powerUp.name}</Text>
+        <Text style={styles.description}>{powerUp.description}</Text>
+      </View>
+
+      <View style={styles.costPill}>
+        <FontAwesome name="diamond" size={10} color="#ce96ff" />
+        <Text style={styles.costText}>{powerUp.cost}</Text>
+      </View>
+
+      <View
+        style={[
+          styles.badge,
+          { backgroundColor: `${powerUp.color}18` },
+        ]}
+      >
+        <Text style={[styles.badgeText, { color: powerUp.color }]}>
+          SOON
+        </Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+export default function PowerUpPreview() {
+  const { animatedStyle: headerStyle } = useEntrance(0, 'fade-slide', 280);
+
+  return (
+    <Animated.View style={[styles.container, headerStyle]}>
+      <Text style={styles.sectionHeader}>Power-Ups</Text>
+      <Text style={styles.sectionSubtitle}>Boost your performance with temporary enhancements</Text>
       <View style={styles.list}>
-        {POWER_UPS.map((powerUp) => (
-          <View key={powerUp.name} style={styles.card}>
-            <View
-              style={[
-                styles.iconCircle,
-                { backgroundColor: `${powerUp.color}26` },
-              ]}
-            >
-              <FontAwesome
-                name={powerUp.icon}
-                size={20}
-                color={powerUp.color}
-              />
-            </View>
-
-            <View style={styles.middle}>
-              <Text style={styles.name}>{powerUp.name}</Text>
-              <Text style={styles.description}>{powerUp.description}</Text>
-            </View>
-
-            <View style={styles.costPill}>
-              <FontAwesome name="diamond" size={10} color="#ce96ff" />
-              <Text style={styles.costText}>{powerUp.cost}</Text>
-            </View>
-
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>SOON</Text>
-            </View>
-          </View>
+        {POWER_UPS.map((powerUp, index) => (
+          <PowerUpCard key={powerUp.name} powerUp={powerUp} index={index} />
         ))}
       </View>
 
@@ -59,7 +110,7 @@ export default function PowerUpPreview() {
         Power-Ups are purchased with Diamonds and do not affect leaderboard
         trophy counts.
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -67,16 +118,30 @@ const styles = StyleSheet.create({
   container: {
     gap: 16,
   },
+  sectionHeader: {
+    color: "#e5e3ff",
+    fontFamily: "Epilogue-Bold",
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    color: "#74738b",
+    fontFamily: "BeVietnamPro-Regular",
+    fontSize: 12,
+    marginBottom: 12,
+  },
   list: {
     gap: 12,
   },
   card: {
-    backgroundColor: "#1d1d37",
+    backgroundColor: "#1a1a32",
     borderRadius: 16,
+    borderWidth: 1,
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
     position: "relative",
+    elevation: 8,
   },
   iconCircle: {
     width: 48,

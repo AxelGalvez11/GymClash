@@ -31,12 +31,10 @@ export const useGpsStore = create<GpsStore>()((set) => ({
   setStatus: (status) => set({ status }),
 
   addPoint: (point) =>
-    set((state) => {
-      // Mutable push to avoid O(n^2) copying on long runs
-      const next = (state.points as GpsRoutePoint[]);
-      next.push(point);
-      return { points: next };
-    }),
+    set((state) => ({
+      // Use immutable spread to ensure Zustand state updates trigger re-renders correctly
+      points: [...state.points, point],
+    })),
 
   setRoute: (route) => set({ currentRoute: route }),
 

@@ -1,14 +1,17 @@
-import { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, Animated } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useQuery } from '@tanstack/react-query';
 
-import { Colors, Rank, Arena, getArenaTier, LeaderboardZoneColors } from '@/constants/theme';
+import { Rank, Arena, getArenaTier, LeaderboardZoneColors } from '@/constants/theme';
 import { useAccent } from '@/stores/accent-store';
 import { fetchClanLeaderboard, fetchPersonalLeaderboard } from '@/services/api';
-import { useFadeSlide } from '@/hooks/use-fade-slide';
+import { useEntrance } from '@/hooks/use-entrance';
+import { usePressScale } from '@/hooks/use-press-scale';
+import { useGlowPulse } from '@/hooks/use-glow-pulse';
 import { useProfile } from '@/hooks/use-profile';
 import type { Rank as RankType, ArenaTier, LeaderboardZone } from '@/types';
 
@@ -57,6 +60,8 @@ function ClanRow({
   readonly zone: LeaderboardZone;
   readonly onPress: () => void;
 }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
+
   const zoneBg =
     zone === 'promote'
       ? { backgroundColor: LeaderboardZoneColors.promote + '15' }
@@ -72,27 +77,31 @@ function ClanRow({
         : undefined;
 
   return (
-    <Pressable
-      className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center active:scale-[0.98]"
-      style={[zoneBg, zoneBorder]}
-      onPress={onPress}
-    >
-      <ZoneIndicator zone={zone} />
-      <MedalIcon position={index} />
-      <View className="flex-1 ml-3">
-        <View className="flex-row items-center gap-2">
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.name}</Text>
-          <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }} className="text-sm">[{item.tag}]</Text>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center"
+        style={[zoneBg, zoneBorder]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <ZoneIndicator zone={zone} />
+        <MedalIcon position={index} />
+        <View className="flex-1 ml-3">
+          <View className="flex-row items-center gap-2">
+            <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.name}</Text>
+            <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }} className="text-sm">[{item.tag}]</Text>
+          </View>
+          <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
+            {item.member_count} members · {item.war_wins ?? 0}W / {item.wars_played ?? 0} wars
+          </Text>
         </View>
-        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
-          {item.member_count} members · {item.war_wins ?? 0}W / {item.wars_played ?? 0} wars
-        </Text>
-      </View>
-      <View className="items-end">
-        <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{item.total_trophies ?? 0}</Text>
-        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">🏆</Text>
-      </View>
-    </Pressable>
+        <View className="items-end">
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{item.total_trophies ?? 0}</Text>
+          <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">🏆</Text>
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -107,6 +116,8 @@ function PlayerRow({
   readonly zone: LeaderboardZone;
   readonly onPress: () => void;
 }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
+
   const rankKey = (item.rank ?? 'rookie') as RankType;
   const rankConfig = Rank[rankKey] ?? Rank.rookie;
   const trophies = item.trophy_rating ?? 0;
@@ -128,27 +139,31 @@ function PlayerRow({
         : undefined;
 
   return (
-    <Pressable
-      onPress={onPress}
-      className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center active:scale-[0.98]"
-      style={[zoneBg, zoneBorder]}
-    >
-      <ZoneIndicator zone={zone} />
-      <MedalIcon position={index} />
-      <View className="flex-1 ml-3">
-        <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.display_name || 'Warrior'}</Text>
-        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
-          <Text style={{ color: rankConfig.color }}>{rankConfig.label}</Text> · Lv.{item.level ?? 1} · {item.current_streak ?? 0}d streak
-        </Text>
-      </View>
-      <View className="flex-row items-center gap-2">
-        <View className="items-end">
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{trophies}</Text>
-          <Text className="text-xs" style={{ color: arenaConfig.accent }}>{arenaConfig.badge}</Text>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        className="bg-[#1d1d37] rounded-xl p-4 mb-2 flex-row items-center"
+        style={[zoneBg, zoneBorder]}
+      >
+        <ZoneIndicator zone={zone} />
+        <MedalIcon position={index} />
+        <View className="flex-1 ml-3">
+          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.display_name || 'Warrior'}</Text>
+          <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
+            <Text style={{ color: rankConfig.color }}>{rankConfig.label}</Text> · Lv.{item.level ?? 1} · {item.current_streak ?? 0}d streak
+          </Text>
         </View>
-        <FontAwesome name="chevron-right" size={12} color="#74738b" />
-      </View>
-    </Pressable>
+        <View className="flex-row items-center gap-2">
+          <View className="items-end">
+            <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }} className="font-bold">{trophies}</Text>
+            <Text className="text-xs" style={{ color: arenaConfig.accent }}>{arenaConfig.badge}</Text>
+          </View>
+          <FontAwesome name="chevron-right" size={12} color="#74738b" />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -161,25 +176,30 @@ function StickyYouRow({
   readonly players: readonly any[] | undefined;
   readonly accentColor: string;
 }) {
-  const userEntry = players?.find((p: any) => p.id === profile.id);
-  const userIndex = players?.findIndex((p: any) => p.id === profile.id) ?? -1;
+  const userEntry = players?.find((p: any) => p.id === profile?.id);
+  const userIndex = players?.findIndex((p: any) => p.id === profile?.id) ?? -1;
   const isRanked = userIndex >= 0;
 
   const rankKey = (profile.rank ?? 'rookie') as RankType;
   const rankConfig = Rank[rankKey] ?? Rank.rookie;
 
+  const { glowStyle } = useGlowPulse(accentColor, 0.25, 0.7, 2200);
+
   return (
-    <View
+    <Animated.View
+      style={[
+        {
+          borderLeftColor: accentColor,
+          borderLeftWidth: 3,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+        },
+        glowStyle,
+      ]}
       className="bg-[#23233f] rounded-t-xl px-4 py-3 flex-row items-center"
-      style={{
-        borderLeftColor: accentColor,
-        borderLeftWidth: 3,
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      }}
     >
       {isRanked ? (
         <>
@@ -211,8 +231,14 @@ function StickyYouRow({
           </View>
         </>
       )}
-    </View>
+    </Animated.View>
   );
+}
+
+function MedalEntrance({ index, children }: { readonly index: number; readonly children: React.ReactNode }) {
+  const delay = index === 0 ? 60 : index === 1 ? 140 : 220;
+  const { animatedStyle } = useEntrance(delay, 'spring-up');
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 }
 
 export default function LeaderboardScreen() {
@@ -223,9 +249,8 @@ export default function LeaderboardScreen() {
 
   const { data: profile } = useProfile();
 
-  // Entrance animations
-  const fadeHeader = useFadeSlide(0);
-  const fadeList = useFadeSlide(100);
+  const { animatedStyle: headerStyle } = useEntrance(0, 'fade-slide');
+  const { animatedStyle: listStyle } = useEntrance(100, 'fade-slide');
 
   const {
     data: clans,
@@ -273,10 +298,21 @@ export default function LeaderboardScreen() {
   const renderItem = useCallback(
     ({ item, index }: { item: any; index: number }) => {
       const zone = getZoneForIndex(index);
+      const isMedal = index < 3;
+
       if (tab === 'clans') {
-        return <ClanRow item={item} index={index} zone={zone} onPress={() => router.push(`/(app)/clan-view/${item.id}` as any)} />;
+        const row = (
+          <ClanRow
+            item={item}
+            index={index}
+            zone={zone}
+            onPress={() => router.push(`/(app)/clan-view/${item.id}` as any)}
+          />
+        );
+        return isMedal ? <MedalEntrance index={index}>{row}</MedalEntrance> : row;
       }
-      return (
+
+      const row = (
         <PlayerRow
           item={item}
           index={index}
@@ -284,13 +320,14 @@ export default function LeaderboardScreen() {
           onPress={() => router.push(`/(app)/player/${item.id}`)}
         />
       );
+      return isMedal ? <MedalEntrance index={index}>{row}</MedalEntrance> : row;
     },
     [tab, getZoneForIndex, router],
   );
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
-      <Animated.View style={fadeHeader.style} className="px-4 pt-4 pb-2">
+      <Animated.View style={headerStyle} className="px-4 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <Pressable onPress={() => router.replace('/(app)/clan' as any)} className="active:scale-[0.98]" hitSlop={10}>
             <FontAwesome name="arrow-left" size={16} color="#aaa8c3" />
@@ -324,32 +361,32 @@ export default function LeaderboardScreen() {
         </View>
       </Animated.View>
 
-      <Animated.View style={fadeList.style} className="flex-1">
-      {isLoading ? (
-        <ActivityIndicator color="#ce96ff" className="mt-8" />
-      ) : (
-        <FlatList
-          data={data ?? []}
-          keyExtractor={(item: any) => item.id}
-          contentContainerClassName="px-4 pb-8"
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          renderItem={renderItem}
-          ListEmptyComponent={
-            <View className="items-center py-12">
-              <FontAwesome name="trophy" size={32} color="#74738b" />
-              <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-lg mt-3">
-                {tab === 'clans' ? 'No clans yet' : 'No ranked players yet'}
-              </Text>
-              {tab === 'players' && (
-                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-sm mt-1 text-center px-8">
-                  Complete your biodata and log 10 workouts to appear here
+      <Animated.View style={listStyle} className="flex-1">
+        {isLoading ? (
+          <ActivityIndicator color="#ce96ff" className="mt-8" />
+        ) : (
+          <FlatList
+            data={data ?? []}
+            keyExtractor={(item: any) => item.id}
+            contentContainerClassName="px-4 pb-8"
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            renderItem={renderItem}
+            ListEmptyComponent={
+              <View className="items-center py-12">
+                <FontAwesome name="trophy" size={32} color="#74738b" />
+                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-lg mt-3">
+                  {tab === 'clans' ? 'No clans yet' : 'No ranked players yet'}
                 </Text>
-              )}
-            </View>
-          }
-        />
-      )}
+                {tab === 'players' && (
+                  <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-sm mt-1 text-center px-8">
+                    Complete your biodata and log 10 workouts to appear here
+                  </Text>
+                )}
+              </View>
+            }
+          />
+        )}
       </Animated.View>
 
       {/* Sticky "You" row — players tab only */}

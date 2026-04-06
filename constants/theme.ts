@@ -93,43 +93,178 @@ export const Rank = {
 
 // ─── Arena System ────────────────────────────────────────
 
-export type ArenaTier = 'rustyard' | 'iron_forge' | 'titan_vault' | 'apex_colosseum';
+export type ArenaTier =
+  | 'sweat_zone'
+  | 'pump_room'
+  | 'grindhouse'
+  | 'rack_arena'
+  | 'the_iron_yard'
+  | 'barbell_pit'
+  | 'plate_factory'
+  | 'pr_chamber'
+  | 'strength_circuit'
+  | 'deadlift_den'
+  | 'titan_training_grounds'
+  | 'forge_of_strength'
+  | 'arena_of_reps'
+  | 'champions_floor'
+  | 'iron_pantheon'
+  | 'valhalla_barbell'
+  | 'hall_of_ascension'
+  | 'mount_olympus'
+  | 'the_colosseum';
 
 export const Arena: Record<
   ArenaTier,
-  { label: string; accent: string; badge: string; minTrophies: number }
+  { label: string; accent: string; badge: string; minTrophies: number; description: string }
 > = {
-  rustyard: {
-    label: 'Rustyard',
+  sweat_zone: {
+    label: 'Sweat Zone',
     accent: '#8B7355',
-    badge: '🔩',
+    badge: '💧',
     minTrophies: 0,
+    description: 'Every legend starts somewhere. Welcome to the grind.',
   },
-  iron_forge: {
-    label: 'Iron Forge',
+  pump_room: {
+    label: 'Pump Room',
+    accent: '#A0896C',
+    badge: '💪',
+    minTrophies: 100,
+    description: 'You found the pump. Now keep it flowing.',
+  },
+  grindhouse: {
+    label: 'Grindhouse',
+    accent: '#B0B0B0',
+    badge: '⚙️',
+    minTrophies: 200,
+    description: 'Day in, day out. The grind never lies.',
+  },
+  rack_arena: {
+    label: 'Rack Arena',
     accent: '#C0C0C0',
+    badge: '🏋️',
+    minTrophies: 350,
+    description: 'Step up to the rack. Prove you belong.',
+  },
+  the_iron_yard: {
+    label: 'The Iron Yard',
+    accent: '#A8A8A8',
     badge: '⚒️',
-    minTrophies: 300,
+    minTrophies: 500,
+    description: 'Where iron meets willpower.',
   },
-  titan_vault: {
-    label: 'Titan Vault',
+  barbell_pit: {
+    label: 'Barbell Pit',
+    accent: '#D4A84B',
+    badge: '🔥',
+    minTrophies: 650,
+    description: 'Descend into the pit. Only the strong rise.',
+  },
+  plate_factory: {
+    label: 'Plate Factory',
+    accent: '#E0C068',
+    badge: '🏭',
+    minTrophies: 800,
+    description: 'Stacking plates is your profession now.',
+  },
+  pr_chamber: {
+    label: 'PR Chamber',
     accent: '#FFD700',
-    badge: '🏛️',
-    minTrophies: 700,
+    badge: '📈',
+    minTrophies: 1000,
+    description: 'Personal records are forged in this chamber.',
   },
-  apex_colosseum: {
-    label: 'Apex Colosseum',
-    accent: '#FF6B6B',
-    badge: '🏆',
+  strength_circuit: {
+    label: 'Strength Circuit',
+    accent: '#FFC107',
+    badge: '⚡',
     minTrophies: 1200,
+    description: 'Power surges through every rep.',
+  },
+  deadlift_den: {
+    label: 'Deadlift Den',
+    accent: '#FF9800',
+    badge: '🐻',
+    minTrophies: 1400,
+    description: 'Heavy pulls and heavier resolve.',
+  },
+  titan_training_grounds: {
+    label: 'Titan Training Grounds',
+    accent: '#FF6D00',
+    badge: '🏛️',
+    minTrophies: 1600,
+    description: 'Train where titans once walked.',
+  },
+  forge_of_strength: {
+    label: 'Forge of Strength',
+    accent: '#FF5722',
+    badge: '🔨',
+    minTrophies: 1850,
+    description: 'Raw power hammered into perfection.',
+  },
+  arena_of_reps: {
+    label: 'Arena of Reps',
+    accent: '#E91E63',
+    badge: '⚔️',
+    minTrophies: 2100,
+    description: 'Every rep is a battle won.',
+  },
+  champions_floor: {
+    label: "Champion's Floor",
+    accent: '#9C27B0',
+    badge: '👑',
+    minTrophies: 2400,
+    description: 'Only champions set foot here.',
+  },
+  iron_pantheon: {
+    label: 'Iron Pantheon',
+    accent: '#7B1FA2',
+    badge: '🏆',
+    minTrophies: 2700,
+    description: 'Ascend among the iron gods.',
+  },
+  valhalla_barbell: {
+    label: 'Valhalla Barbell',
+    accent: '#4A148C',
+    badge: '⚡',
+    minTrophies: 3000,
+    description: 'The worthy are called to lift eternal.',
+  },
+  hall_of_ascension: {
+    label: 'Hall of Ascension',
+    accent: '#311B92',
+    badge: '✨',
+    minTrophies: 3400,
+    description: 'Transcend your limits. Ascend beyond.',
+  },
+  mount_olympus: {
+    label: 'Mount Olympus',
+    accent: '#1A237E',
+    badge: '🌩️',
+    minTrophies: 3800,
+    description: 'Where mortals become legends.',
+  },
+  the_colosseum: {
+    label: 'The Colosseum',
+    accent: '#FF6B6B',
+    badge: '🏟️',
+    minTrophies: 4200,
+    description: 'The pinnacle. The crowd roars for you.',
   },
 } as const;
 
+/** Ordered list of arena tiers by descending trophy threshold for lookup. */
+const ARENA_TIERS_DESC: readonly ArenaTier[] = (
+  Object.entries(Arena) as [ArenaTier, (typeof Arena)[ArenaTier]][]
+)
+  .sort((a, b) => b[1].minTrophies - a[1].minTrophies)
+  .map(([tier]) => tier);
+
 export function getArenaTier(trophyRating: number): ArenaTier {
-  if (trophyRating >= 1200) return 'apex_colosseum';
-  if (trophyRating >= 700) return 'titan_vault';
-  if (trophyRating >= 300) return 'iron_forge';
-  return 'rustyard';
+  for (const tier of ARENA_TIERS_DESC) {
+    if (trophyRating >= Arena[tier].minTrophies) return tier;
+  }
+  return 'sweat_zone';
 }
 
 // ─── Trophy Rewards ──────────────────────────────────────

@@ -89,7 +89,7 @@ export function useCreateClan() {
     mutationFn: ({ name, tag, description }: { name: string; tag: string; description: string }) =>
       createClan(name, tag, description),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clan'] });
+      queryClient.invalidateQueries({ queryKey: ['clan'], exact: false });
     },
   });
 }
@@ -100,7 +100,7 @@ export function useJoinClan() {
   return useMutation({
     mutationFn: (clanId: string) => joinClan(clanId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clan'] });
+      queryClient.invalidateQueries({ queryKey: ['clan'], exact: false });
     },
   });
 }
@@ -123,7 +123,8 @@ export function useSendChallenge() {
     mutationFn: ({ targetClanId, warType }: { targetClanId: string; warType?: 'strength_only' | 'cardio_only' | 'mixed' }) =>
       sendWarChallenge(targetClanId, warType),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clan-challenges'] });
+      queryClient.invalidateQueries({ queryKey: ['clan-challenges'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['active-war'], exact: false });
     },
   });
 }
@@ -135,8 +136,8 @@ export function useRespondToChallenge() {
     mutationFn: ({ challengeId, accept }: { challengeId: string; accept: boolean }) =>
       respondToChallenge(challengeId, accept),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clan-challenges'] });
-      queryClient.invalidateQueries({ queryKey: ['active-war'] });
+      queryClient.invalidateQueries({ queryKey: ['clan-challenges'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['active-war'], exact: false });
     },
   });
 }
@@ -147,8 +148,8 @@ export function useLeaveClan() {
   return useMutation({
     mutationFn: () => leaveClan(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clan'] });
-      queryClient.invalidateQueries({ queryKey: ['active-war'] });
+      queryClient.invalidateQueries({ queryKey: ['clan'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['active-war'], exact: false });
     },
   });
 }

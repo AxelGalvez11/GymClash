@@ -44,6 +44,8 @@ export default function OnboardingScreen() {
   }
 
   async function handleFinish() {
+    if (saving) return;
+
     if (!form.displayName.trim()) {
       Alert.alert('Error', 'Display name is required');
       return;
@@ -51,38 +53,45 @@ export default function OnboardingScreen() {
 
     setSaving(true);
     try {
-      // Save display name
+      // Critical: save display name + mark onboarding complete
       await updateProfile({ display_name: form.displayName.trim() });
 
-      // Save biodata if any fields were filled
-      const hasBiodata =
-        form.bodyWeight || form.height || form.birthDate || form.sex;
+      // Non-critical: save biodata — failure here should NOT block entry
+      // (user can update physical data later in Settings)
+      try {
+        const hasBiodata =
+          form.bodyWeight || form.height || form.birthDate || form.sex;
 
-      if (hasBiodata) {
-        const isImperial = form.unitSystem === 'imperial';
-        const bw = form.bodyWeight ? parseFloat(form.bodyWeight) : null;
-        const ht = form.height ? parseFloat(form.height) : null;
-
-        await updateBiodata({
-          body_weight_kg:
-            bw !== null ? (isImperial ? bw * LB_TO_KG : bw) : null,
-          height_cm:
-            ht !== null ? (isImperial ? ht * 2.54 : ht) : null,
-          birth_date: form.birthDate || null,
-          biological_sex: form.sex || null,
-          lifting_experience: form.liftingExperience || null,
-          running_experience: form.runningExperience || null,
-          resting_hr: form.restingHR
+        if (hasBiodata) {
+          const isImperial = form.unitSystem === 'imperial';
+          const bwRaw = form.bodyWeight ? parseFloat(form.bodyWeight) : null;
+          const htRaw = form.height ? parseFloat(form.height) : null;
+          const bw = bwRaw !== null && bwRaw > 0 ? bwRaw : null;
+          const ht = htRaw !== null && htRaw > 0 ? htRaw : null;
+          const restingHRInt = form.restingHR
             ? parseInt(form.restingHR, 10)
-            : null,
-        });
+            : null;
+
+          await updateBiodata({
+            body_weight_kg: bw !== null ? (isImperial ? bw * LB_TO_KG : bw) : null,
+            height_cm: ht !== null ? (isImperial ? ht * 2.54 : ht) : null,
+            birth_date: form.birthDate || null,
+            biological_sex: form.sex || null,
+            lifting_experience: form.liftingExperience || null,
+            running_experience: form.runningExperience || null,
+            resting_hr: restingHRInt !== null && !isNaN(restingHRInt) ? restingHRInt : null,
+          });
+        }
+      } catch (biodataErr) {
+        // Biodata save failed — not fatal, user can fill in Settings later
+        console.warn('[onboarding] biodata save failed (non-fatal):', biodataErr);
       }
 
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['needs-onboarding'] });
       router.replace('/(app)/home');
-    } catch {
-      Alert.alert('Error', 'Failed to save. Please try again.');
+    } catch (err) {
+      Alert.alert('Error', 'Could not save your profile. Check your connection and try again.');
     } finally {
       setSaving(false);
     }
@@ -93,8 +102,8 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
-      {/* Progress indicator */}
-      <StepIndicator currentStep={step} />
+      {/* Progress indicator — hidden on steps that own their own HUD header */}
+      {step !== 1 && <StepIndicator currentStep={step} />}
 
       {/* Back button */}
       {showBack && (

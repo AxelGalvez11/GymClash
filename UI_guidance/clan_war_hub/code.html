@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@700;800;900&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Lexend:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#0c0c1f",
+              "on-secondary": "#5b4b00",
+              "secondary-dim": "#efc900",
+              "inverse-surface": "#fcf8ff",
+              "on-primary-container": "#370060",
+              "on-tertiary-fixed": "#003840",
+              "surface-container": "#17172f",
+              "surface-tint": "#ce96ff",
+              "on-background": "#e5e3ff",
+              "primary-fixed": "#c583ff",
+              "tertiary-fixed-dim": "#00d4ec",
+              "on-error-container": "#ffb2b9",
+              "outline": "#74738b",
+              "on-primary": "#48007a",
+              "on-primary-fixed": "#000000",
+              "secondary-fixed": "#ffd709",
+              "primary-dim": "#a434ff",
+              "on-secondary-container": "#fff7e6",
+              "on-secondary-fixed": "#453900",
+              "on-tertiary-fixed-variant": "#005762",
+              "secondary": "#ffd709",
+              "tertiary-dim": "#00d4ec",
+              "error-container": "#a70138",
+              "background": "#0c0c1f",
+              "error": "#ff6e84",
+              "on-primary-fixed-variant": "#440075",
+              "tertiary-fixed": "#00e3fd",
+              "secondary-fixed-dim": "#efc900",
+              "inverse-on-surface": "#53536a",
+              "secondary-container": "#705d00",
+              "surface-dim": "#0c0c1f",
+              "primary-fixed-dim": "#bb6fff",
+              "primary": "#ce96ff",
+              "tertiary": "#81ecff",
+              "on-surface": "#e5e3ff",
+              "on-tertiary-container": "#004d57",
+              "surface-bright": "#292948",
+              "on-secondary-fixed-variant": "#665500",
+              "primary-container": "#c583ff",
+              "tertiary-container": "#00e3fd",
+              "surface-container-lowest": "#000000",
+              "surface-variant": "#23233f",
+              "on-error": "#490013",
+              "error-dim": "#d73357",
+              "on-surface-variant": "#aaa8c3",
+              "on-tertiary": "#005762",
+              "surface-container-low": "#111127",
+              "outline-variant": "#46465c",
+              "surface-container-high": "#1d1d37",
+              "inverse-primary": "#8d00e7",
+              "surface-container-highest": "#23233f"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Lexend"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .shimmer-progress {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite;
+      }
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      body::-webkit-scrollbar { display: none; }
+      body { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-background font-body min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 z-50 flex justify-between items-center w-full px-6 py-4 max-w-none bg-[#0c0c1f] gap-y-3.5 bg-gradient-to-b from-[#17172f] to-transparent shadow-[0_4px_20px_rgba(206,150,255,0.1)] fixed">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border-2 border-primary overflow-hidden hover:scale-105 transition-transform active:scale-95 duration-100">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="close up of a heroic digital avatar wearing futuristic purple tactical fitness gear and a glowing headset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJRSyEnLRH7aXOgKdYIcMZC2o3r_MzzMBnBt9Kl_XustoWl8EMquJudVsFyvu8ZaVGQnl-pEy8_F8TThsYfvOvpA0QiQuCJPRMRnw2a06zINXvB2XPNN-VjTlZXNj-LtzYHAbhs5-AMx-nCBiBKCmPunD-sX0Mdh6KO6OW634vVHm0m1oDIlJiSDEqsUWjbb_cuA0bmEd1u4BZrL4L2m6OPUnQP_tO81DPT7-mZxuVTSxnDou9ARSIrOqhBTtrx0jsx0h4pKCsFSDs"/>
+</div>
+<h1 class="font-['Epilogue'] tracking-tighter uppercase font-black text-2xl text-[#ffd709] drop-shadow-[0_0_8px_rgba(255,215,9,0.4)]">DEMON SLAYER</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-label font-bold text-secondary text-lg">4,250 🏆</span>
+<button class="material-symbols-outlined text-primary hover:scale-105 transition-transform active:scale-95 duration-100">notifications</button>
+</div>
+</header>
+<main class="pt-24 px-4 max-w-7xl mx-auto space-y-8">
+<!-- Clan War: Tug of War -->
+<section class="space-y-4">
+<div class="flex justify-between items-end px-2">
+<div class="text-left">
+<span class="font-label text-xs text-tertiary uppercase tracking-widest">Your Clan</span>
+<h2 class="font-headline text-2xl font-black text-on-background italic">SHADOW SYNDICATE</h2>
+</div>
+<div class="text-right">
+<span class="font-label text-xs text-error uppercase tracking-widest">Enemy Clan</span>
+<h2 class="font-headline text-2xl font-black text-on-background italic">IRON PHALANX</h2>
+</div>
+</div>
+<!-- Tug of War Bar -->
+<div class="relative h-14 bg-surface-container-highest rounded-xl overflow-hidden border border-outline-variant/20 shadow-2xl">
+<div class="absolute inset-0 flex">
+<!-- Clan A Progress -->
+<div class="h-full bg-gradient-to-r from-primary-dim to-primary relative" style="width: 58%">
+<div class="shimmer-progress absolute inset-0"></div>
+<div class="absolute right-4 top-1/2 -translate-y-1/2 font-label font-black text-on-primary-container text-xl">24,850</div>
+</div>
+<!-- Clan B Progress -->
+<div class="h-full bg-gradient-to-l from-error-dim to-error grow relative">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 font-label font-black text-on-error-container text-xl">18,200</div>
+</div>
+</div>
+<!-- Center Divider Flare -->
+<div class="absolute top-1/2 left-[58%] -translate-x-1/2 -translate-y-1/2 w-1 h-full bg-secondary shadow-[0_0_15px_#ffd709] z-10"></div>
+<div class="absolute top-1/2 left-[58%] -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-surface-container-highest rounded-full border-2 border-secondary flex items-center justify-center z-20">
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">swords</span>
+</div>
+</div>
+<div class="flex justify-center">
+<div class="bg-surface-container-high px-4 py-1 rounded-full border border-secondary/20">
+<span class="font-label text-[10px] text-secondary uppercase font-bold tracking-widest">Time Remaining: 14h 22m</span>
+</div>
+</div>
+</section>
+<!-- Bento Grid: Members & Chat -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Clan Members List (Left Column) -->
+<div class="lg:col-span-4 space-y-6">
+<div class="bg-surface-container rounded-xl p-6 border-l-4 border-primary">
+<h3 class="font-headline text-xl font-extrabold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">groups</span>
+                        CLAN ROSTER
+                    </h3>
+<div class="space-y-4">
+<!-- Member 1 -->
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-lg hover:bg-surface-container-highest transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img alt="Member Avatar" class="w-12 h-12 rounded-full border-2 border-secondary" data-alt="profile picture of a muscular fitness enthusiast in tactical gear" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5FiOVlXGzEbovRseSVsdNdBSBH6i6XMKnQxsGXvqlBuNMC026p01hc-wZhFfZogs7g9VmwmzKB6MsACuF2GDJpD2tehOfN98s0AVc7-Wbp6ZsxsKVjdAY6lNNBnwgV9m50SVZhmtZYWD-A13Z8DLG1a0R5wzenfiKTrV3TUpeQqE0iFXhRHbnHLV6ziS9O6Ai-h7vSNPtYj8E0RDLV0vgewFuVMtDLj-k-VcLY9ntXMSqe1Hje_CrlYD73Tk5g3F4ryEYOcK0kb4J"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-surface-container shadow-sm"></div>
+</div>
+<div>
+<p class="font-bold text-on-background group-hover:text-secondary transition-colors">SweatyGains</p>
+<p class="text-[10px] text-tertiary font-label uppercase">Cardio Specialist</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label font-bold text-secondary text-xs">1,240 pts</p>
+<span class="text-[9px] px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full uppercase font-black">Live</span>
+</div>
+</div>
+<!-- Member 2 -->
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-lg hover:bg-surface-container-highest transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img alt="Member Avatar" class="w-12 h-12 rounded-full border-2 border-outline-variant/30" data-alt="profile picture of a woman wearing high-tech gym apparel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqfQuQASupfFKLuRXHoDf7pE6Npv-uDMZ_77SkCmJ9PsYjGlSJaJfZrMK4S-3NHzPU5MiRHfoy5EmQLTu007IYT2jcrAdM_mrrwd7T2vddyMXWAeTyF3b3-_bmhYDHDsKGd8wlREe4SRJPe9kJGAJYj25GCidS6enGmoT7N-5DQZSdLQEwdadMCsNo3dba0YZfGqhWWh_jkkY_AJVjFkAM4FfqRNFEdtUZ7oWHXM6zUhWCciZ-1dTKrcVcE4xXedjQ2MqrFijJMjNj"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-outline rounded-full border-2 border-surface-container shadow-sm"></div>
+</div>
+<div>
+<p class="font-bold text-on-background">LiftingLegend</p>
+<p class="text-[10px] text-tertiary font-label uppercase">Lifting Specialist</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label font-bold text-on-surface-variant text-xs">980 pts</p>
+<span class="text-[9px] px-2 py-0.5 bg-surface-variant text-on-surface-variant rounded-full uppercase font-black tracking-tighter">Resting</span>
+</div>
+</div>
+<!-- Member 3 -->
+<div class="flex items-center justify-between p-3 bg-surface-container-high rounded-lg hover:bg-surface-container-highest transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="relative">
+<img alt="Member Avatar" class="w-12 h-12 rounded-full border-2 border-outline-variant/30" data-alt="profile picture of a tactical gamer athlete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtA5-XjFyVFXHGMTg51hE4uGyWTXZrA3oBZZUu5igV6bWm3jzVO_yD7kTv7jHE25Btct9dbMg2j6Xu8h4YxbhG_8hFUwVGEUTie3uygHfCjvouWzloZ-WqF2-FX61Xn6xaoJgAIjDYjlj4hHqdeibgI3pYOQs6rYQmJy0aicqloUId7gEAzVoprYvGe3sEzE11Bmzm6EC4eTeKGlsXGuC6vEX3ClIhdL8czx0t9_8H-aR3RV-y0Y2Av1bNQmhcKFz_NHWgMuoPXfNr"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-surface-container shadow-sm"></div>
+</div>
+<div>
+<p class="font-bold text-on-background">ShadowSlayer</p>
+<p class="text-[10px] text-tertiary font-label uppercase">Elite Vanguard</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label font-bold text-on-surface-variant text-xs">750 pts</p>
+<span class="text-[9px] px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full uppercase font-black">Live</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-3 bg-surface-container-highest border border-outline-variant/20 rounded-lg font-label text-xs font-bold text-on-surface-variant hover:text-error hover:border-error/40 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">report</span>
+                        Report for Unfair Play
+                    </button>
+</div>
+<!-- Leaderboards Section -->
+<div class="bg-surface-container rounded-xl p-6 border-b-4 border-tertiary">
+<h3 class="font-headline text-xl font-extrabold mb-4">GLOBAL RANKINGS</h3>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low">
+<span class="font-label text-secondary font-bold">#12 National</span>
+<span class="text-xs text-on-surface-variant">Top 0.5%</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-low">
+<span class="font-label text-tertiary font-bold">#3 Local</span>
+<span class="text-xs text-on-surface-variant">City: Neo-Tokyo</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Cross-Clan Chat (Right Column) -->
+<div class="lg:col-span-8 bg-surface-container rounded-xl flex flex-col h-[600px] border border-outline-variant/10 relative overflow-hidden shadow-2xl">
+<!-- Chat Header -->
+<div class="p-4 bg-surface-container-high border-b border-outline-variant/20 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-primary border-2 border-surface-container"></div>
+<div class="w-6 h-6 rounded-full bg-error border-2 border-surface-container"></div>
+</div>
+<span class="font-headline font-bold text-sm tracking-tight">WAR CHAT: CHANNEL #001</span>
+</div>
+<span class="text-[10px] font-label text-on-surface-variant uppercase flex items-center gap-1">
+<span class="w-2 h-2 bg-green-500 rounded-full"></span> 243 Online
+                    </span>
+</div>
+<!-- Chat Messages -->
+<div class="flex-1 p-6 overflow-y-auto space-y-6">
+<!-- Message Enemy -->
+<div class="flex gap-4 items-start">
+<img alt="Enemy Avatar" class="w-10 h-10 rounded-full border-2 border-error" data-alt="menacing digital avatar with red glowing eyes and dark armor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBD5mXL6ZYx8Tmci24oi2xGZzTgdL4O9SeeLqNvFOh-PlicivBRFR9gB9oKZNiEZdgywddamGUC9bIkZZ3BGnux9LU83Tmq0m16EKmLWSj14VS1oK563p50Bs6-1soJt8-8wd_Z33G2GojdTEDybv1WNGoOwkrUemL9dGhf00LcomwB9T92XXo_dCVwUITFGPIRAVlb6FFHrm0FuD08Kc7-zrUSDFVARIwt7fWBZkggHCEqSkvUmLUOZcHdlkZFULBYk3WgVneYT9rM"/>
+<div class="space-y-1 max-w-[80%]">
+<p class="text-[10px] font-label font-bold text-error uppercase">IronPhalanx_Boss <span class="text-on-surface-variant font-normal normal-case opacity-60 ml-2">12:04 PM</span></p>
+<div class="bg-surface-container-highest p-4 rounded-xl rounded-tl-none border border-error/10">
+<p class="text-sm">Enjoy your lead while it lasts, Syndicate. My legion hits the gym in 10 minutes. 🥊</p>
+</div>
+</div>
+</div>
+<!-- Message Ally -->
+<div class="flex gap-4 items-start flex-row-reverse">
+<img alt="Ally Avatar" class="w-10 h-10 rounded-full border-2 border-primary" data-alt="heroic muscular avatar with blue armor highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD50sJkDbpRrFbDQAPtj8fzRPojZoumaRLmpPwjeTVXarKgbKyKy8ZTsdnLTPnyLawpZvx39lk1_ndnoa7E3z6M8WpVq7mbs5CA2xYGN2L4P31lLJAMFRHHqjt-cYl_v62ZZ4o-ma4LlBwvDfrCEqVP2ynMbWr7xJJXnhrwW6pw2hFXQrZMFCkeO9sla-g88ZVZEJnopqwPIlhxz5w7tKv_A74tCkqM1EuyaoqiVFEiLG-cvd9Dr5Zp3UAB4GovIMBkTQ54G4CbmKoc"/>
+<div class="space-y-1 max-w-[80%] text-right">
+<p class="text-[10px] font-label font-bold text-primary uppercase">SweatyGains <span class="text-on-surface-variant font-normal normal-case opacity-60 mr-2">12:06 PM</span></p>
+<div class="bg-primary/10 p-4 rounded-xl rounded-tr-none border border-primary/20">
+<p class="text-sm">Let's crush them in cardio today! Double xp starts in an hour, don't miss the grind session.</p>
+</div>
+</div>
+</div>
+<!-- Message System -->
+<div class="flex justify-center">
+<div class="bg-secondary/10 border border-secondary/20 px-4 py-1 rounded-full">
+<p class="text-[10px] font-label text-secondary font-black uppercase tracking-tighter">Event Alert: Triple Point Surge in 05:00</p>
+</div>
+</div>
+<!-- Message Ally -->
+<div class="flex gap-4 items-start flex-row-reverse">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center border-2 border-tertiary">
+<span class="material-symbols-outlined text-tertiary text-xl">person</span>
+</div>
+<div class="space-y-1 max-w-[80%] text-right">
+<p class="text-[10px] font-label font-bold text-tertiary uppercase">Shadow_Runner <span class="text-on-surface-variant font-normal normal-case opacity-60 mr-2">12:09 PM</span></p>
+<div class="bg-tertiary/10 p-4 rounded-xl rounded-tr-none border border-tertiary/20">
+<p class="text-sm">I'm hitting the treadmill now. Who's with me? 🏃‍♂️💨</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Chat Input -->
+<div class="p-4 bg-surface-container-high border-t border-outline-variant/20">
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-lowest border-none rounded-full py-3 px-6 text-sm focus:ring-2 focus:ring-primary-dim placeholder:text-on-surface-variant/40" placeholder="Type a message to the battleground..." type="text"/>
+<button class="absolute right-2 p-2 bg-primary rounded-full hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-[#17172f]/80 backdrop-blur-xl rounded-t-[3rem] border-t-2 border-[#ce96ff]/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined">sports_kabaddi</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Arena</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined">fitness_center</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Workout</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#ffd709] bg-[#23233f] rounded-[2rem] px-5 py-2 shadow-[inset_0_-2px_0_rgba(255,215,9,0.5)] active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Clans</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined">local_mall</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Shop</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Profile</span>
+</a>
+</nav>
+</body></html>

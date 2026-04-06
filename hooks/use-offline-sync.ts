@@ -24,17 +24,21 @@ export function useOfflineSync() {
   const removeFromQueue = useOfflineQueueStore((s) => s.removeFromQueue);
   const updateSyncAttempt = useOfflineQueueStore((s) => s.updateSyncAttempt);
   const setLastSyncAt = useOfflineQueueStore((s) => s.setLastSyncAt);
+  const clearSynced = useOfflineQueueStore((s) => s.clearSynced);
 
   const syncQueue = useCallback(async () => {
-    if (!session || queue.length === 0) return;
+    // Get fresh queue state directly from store to avoid stale closure
+    const currentQueue = useOfflineQueueStore.getState().queue;
     const currentStatus = useOfflineQueueStore.getState().syncStatus;
+
+    if (!session || currentQueue.length === 0) return;
     if (currentStatus === 'syncing') return;
 
     setSyncStatus('syncing');
 
     let hadErrors = false;
 
-    for (const workout of queue) {
+    for (const workout of currentQueue) {
       // Skip stale workouts — they need manual review
       if (isStaleWorkout(workout)) continue;
       // Skip workouts that have failed too many times
@@ -59,9 +63,11 @@ export function useOfflineSync() {
       }
     }
 
+    // Clean up stale and failed workouts
+    clearSynced();
     setLastSyncAt(new Date().toISOString());
     setSyncStatus(hadErrors ? 'error' : 'idle');
-  }, [session, queue, setSyncStatus, removeFromQueue, updateSyncAttempt, setLastSyncAt]);
+  }, [session, setSyncStatus, removeFromQueue, updateSyncAttempt, setLastSyncAt, clearSynced]);
 
   // Attempt sync on mount and when session changes
   useEffect(() => {

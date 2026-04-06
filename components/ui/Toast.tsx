@@ -1,5 +1,12 @@
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Platform, View, Text, Animated } from 'react-native';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { Platform, View, Text } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 
@@ -26,23 +33,34 @@ const TYPE_COLORS: Record<ToastType, string> = {
 
 let nextId = 0;
 
+const EASE_IN = Easing.out(Easing.cubic);
+const EASE_OUT = Easing.in(Easing.cubic);
+
 function ToastItem({ toast, onDone }: { readonly toast: ToastMessage; readonly onDone: () => void }) {
-  const translateY = useRef(new Animated.Value(-60)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useSharedValue(-60);
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(translateY, { toValue: 0, duration: 250, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-    ]).start(() => {
-      setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(translateY, { toValue: -60, duration: 200, useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-        ]).start(onDone);
-      }, 2500);
-    });
-  }, [translateY, opacity, onDone]);
+    // Slide-in from top + fade
+    translateY.value = withTiming(0, { duration: 250, easing: EASE_IN });
+    opacity.value = withTiming(1, { duration: 250, easing: EASE_IN });
+
+    const dismissTimer = setTimeout(() => {
+      // Slide-out to top + fade — call onDone when out-animation completes
+      opacity.value = withTiming(0, { duration: 200, easing: EASE_OUT });
+      translateY.value = withTiming(-60, { duration: 200, easing: EASE_OUT }, (finished) => {
+        if (finished) runOnJS(onDone)();
+      });
+    }, 2500);
+
+    return () => clearTimeout(dismissTimer);
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+    marginBottom: 8,
+  }));
 
   const color = TYPE_COLORS[toast.type];
 
@@ -51,13 +69,7 @@ function ToastItem({ toast, onDone }: { readonly toast: ToastMessage; readonly o
     : { elevation: 6 };
 
   return (
-    <Animated.View
-      style={{
-        transform: [{ translateY }],
-        opacity,
-        marginBottom: 8,
-      }}
-    >
+    <Animated.View style={animatedStyle}>
       <View
         className="rounded-xl px-4 py-3 flex-row items-center"
         style={[

@@ -1,108 +1,186 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useActiveWar, useWarContributions, useMyClan } from '@/hooks/use-clan';
+import { BiColorBar } from '@/components/BiColorBar';
+
+// ── Victory Peak palette ────────────────────────────────
+const VP = {
+  surface:    '#0c0c1f',
+  raised:     '#17172f',
+  active:     '#1d1d37',
+  highest:    '#23233f',
+  textPri:    '#e5e3ff',
+  textSec:    '#aaa8c3',
+  textMuted:  '#74738b',
+  primary:    '#ce96ff',
+  primaryDim: '#a434ff',
+  gold:       '#ffd709',
+  cyan:       '#81ecff',
+} as const;
+
+interface WarContribution {
+  user_id: string;
+  display_name: string;
+  score?: number;
+  contribution?: number;
+}
+
+function StatBox({ label, value, color = VP.textPri }: { label: string; value: string | number; color?: string }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: VP.highest, borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(206,150,255,0.1)' }}>
+      <Text style={{ color, fontFamily: 'Epilogue-Bold', fontSize: 22 }}>{value}</Text>
+      <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginTop: 2 }}>{label}</Text>
+    </View>
+  );
+}
 
 export default function WarDetailsScreen() {
   const router = useRouter();
+  const { data: war, isLoading: warLoading } = useActiveWar();
+  const { data: myClan } = useMyClan();
+  const { data: contributions } = useWarContributions(war?.id, myClan?.id);
+
+  if (warLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: VP.surface, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={VP.primary} size="large" />
+      </SafeAreaView>
+    );
+  }
+
+  // Determine which clan is "my clan" and get their score
+  const isMyClanA = war && myClan ? war.clan_a_id === myClan.id : false;
+  const myClanScore = war ? (isMyClanA ? war.clan_a_score?.total : war.clan_b_score?.total) : 0;
+  const enemyScore = war ? (isMyClanA ? war.clan_b_score?.total : war.clan_a_score?.total) : 0;
+  const totalScore = (myClanScore ?? 0) + (enemyScore ?? 0);
+  const myPct = totalScore > 0 ? (myClanScore ?? 0) / totalScore : 0.5;
+
+  const endTime = war?.ended_at ? new Date(war.ended_at) : null;
+  const timeLeft = endTime ? Math.max(0, endTime.getTime() - Date.now()) : null;
+  const hoursLeft = timeLeft !== null ? Math.floor(timeLeft / 3600000) : null;
+  const minsLeft = timeLeft !== null ? Math.floor((timeLeft % 3600000) / 60000) : null;
+
+  const myClanName = myClan?.name ?? 'My Clan';
+  const enemyName = war?.opponent_clan?.name ?? 'Opponent';
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
-      <ScrollView className="flex-1" contentContainerClassName="pb-8">
-        {/* Header */}
-        <View
-          className="flex-row items-center px-4 py-3"
-          style={{ borderBottomWidth: 0.5, borderBottomColor: 'rgba(206,150,255,0.15)' }}
-        >
-          <Pressable onPress={() => router.replace('/(app)/clan' as any)} hitSlop={10}>
-            <FontAwesome name="arrow-left" size={16} color="#aaa8c3" />
-          </Pressable>
-          <Text className="ml-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 16 }}>
-            Clan Wars
-          </Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: VP.surface }} edges={['top']}>
+      {/* Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, backgroundColor: VP.raised, borderBottomWidth: 1, borderBottomColor: 'rgba(206,150,255,0.12)' }}>
+        <Pressable onPress={() => router.back()} style={{ marginRight: 12 }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <FontAwesome name="arrow-left" size={18} color={VP.textSec} />
+        </Pressable>
+        <Text style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold', fontSize: 18, flex: 1 }}>⚔️ War Details</Text>
+        {war && (
+          <View style={{ backgroundColor: '#22c55e20', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)' }}>
+            <Text style={{ color: '#22c55e', fontFamily: 'Lexend-SemiBold', fontSize: 10, letterSpacing: 1 }}>ACTIVE</Text>
+          </View>
+        )}
+      </View>
 
-        {/* Hero */}
-        <View className="items-center py-8 px-6">
-          <Text className="text-5xl mb-3">⚔️</Text>
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 28, textAlign: 'center', letterSpacing: 1 }}>
-            CLAN WARS
-          </Text>
-          <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 22 }}>
-            Compete against rival clans in head-to-head battles. Every workout your clan logs during a war counts toward victory.
-          </Text>
-        </View>
-
-        <View className="px-4">
-          {/* How It Works */}
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, marginBottom: 12 }}>How It Works</Text>
-
-          {[
-            { icon: 'fire' as const, color: '#ef4444', title: '1. Initiate a War', desc: 'Clan leaders and officers can challenge rival clans. Choose between Lifting Only, Cardio Only, or Mixed wars.' },
-            { icon: 'users' as const, color: '#ce96ff', title: '2. Rally Your Clan', desc: 'Every member contributes by completing workouts during the war period. More workouts = more points for your clan.' },
-            { icon: 'trophy' as const, color: '#ffd709', title: '3. Win Trophies', desc: 'The clan with the highest combined score wins. Winners earn +30 trophies per member. Losers lose -15.' },
-          ].map((step) => (
-            <View key={step.title} className="bg-[#1d1d37] rounded-xl p-4 mb-3 flex-row">
-              <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: step.color + '20' }}>
-                <FontAwesome name={step.icon} size={16} color={step.color} />
-              </View>
-              <View className="flex-1">
-                <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 14, marginBottom: 4 }}>{step.title}</Text>
-                <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 12, lineHeight: 18 }}>{step.desc}</Text>
-              </View>
-            </View>
-          ))}
-
-          {/* War Types */}
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, marginTop: 16, marginBottom: 12 }}>War Types</Text>
-
-          {[
-            { icon: 'heartbeat' as const, color: '#ef4444', title: 'Lifting War', desc: 'Total lifting volume across all members is compared. Every set counts.' },
-            { icon: 'road' as const, color: '#81ecff', title: 'Cardio War', desc: 'Total distance covered by all members. GPS-verified sessions earn full points.' },
-            { icon: 'bolt' as const, color: '#ce96ff', title: 'Mixed War', desc: 'Both lifting and cardio count. The most versatile clan wins.' },
-          ].map((type) => (
-            <View key={type.title} className="bg-[#23233f] rounded-xl p-4 mb-2 flex-row items-center">
-              <FontAwesome name={type.icon} size={18} color={type.color} style={{ marginRight: 12, width: 24, textAlign: 'center' }} />
-              <View className="flex-1">
-                <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>{type.title}</Text>
-                <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 11 }}>{type.desc}</Text>
-              </View>
-            </View>
-          ))}
-
-          {/* Scoring */}
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18, marginTop: 16, marginBottom: 12 }}>Scoring</Text>
-
-          <View className="bg-[#1d1d37] rounded-xl p-4 mb-3">
-            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13, lineHeight: 20 }}>
-              War scores are calculated from four components:{'\n\n'}
-              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }}>Output (30%)</Text> — Raw workout performance{'\n'}
-              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }}>Participation (30%)</Text> — Members who show up{'\n'}
-              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }}>Consistency (20%)</Text> — Spread across the war period{'\n'}
-              <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold' }}>Diversity (20%)</Text> — Variety of exercises{'\n\n'}
-              Each member has a daily cap of 500 points and a weekly cap of 20,000 points to prevent one person from carrying the entire clan.
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+        {!war ? (
+          /* No active war */
+          <View style={{ alignItems: 'center', paddingVertical: 48 }}>
+            <Text style={{ fontSize: 48, marginBottom: 16 }}>⚔️</Text>
+            <Text style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold', fontSize: 20, marginBottom: 8 }}>No Active War</Text>
+            <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
+              Your clan isn't currently in a war. Ask your clan leader to initiate one to start competing!
             </Text>
           </View>
+        ) : (
+          <>
+            {/* War countdown */}
+            {hoursLeft !== null && (
+              <View style={{
+                backgroundColor: VP.raised,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 12,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: hoursLeft < 3 ? 'rgba(239,68,68,0.3)' : 'rgba(255,215,9,0.2)',
+                shadowColor: hoursLeft < 3 ? '#ef4444' : '#ffd709',
+                shadowOpacity: 0.15,
+                shadowRadius: 10,
+                elevation: 5,
+              }}>
+                <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>Time Remaining</Text>
+                <Text style={{ color: hoursLeft < 3 ? '#ef4444' : VP.gold, fontFamily: 'Epilogue-Bold', fontSize: 36 }}>
+                  {hoursLeft}h {minsLeft}m
+                </Text>
+                {hoursLeft < 3 && (
+                  <Text style={{ color: '#ef4444', fontFamily: 'Lexend-SemiBold', fontSize: 11, marginTop: 4 }}>⚠️ Final hours — push hard!</Text>
+                )}
+              </View>
+            )}
 
-          {/* Duration */}
-          <View className="bg-[#1d1d37] rounded-xl p-4 mb-3">
-            <Text style={{ color: '#e5e3ff', fontFamily: 'Lexend-SemiBold', fontSize: 14, marginBottom: 4 }}>War Duration</Text>
-            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 12 }}>
-              Wars can last 1, 2, 3, 5, or 7 days. Shorter wars reward burst effort. Longer wars reward consistency.
-            </Text>
-          </View>
-
-          {/* Anti-Cheat */}
-          <View className="bg-[#23233f] rounded-xl p-4 mb-6">
-            <View className="flex-row items-center gap-2 mb-2">
-              <FontAwesome name="shield" size={14} color="#22c55e" />
-              <Text style={{ color: '#22c55e', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Fair Play</Text>
+            {/* Score bar */}
+            <View style={{ backgroundColor: VP.raised, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(206,150,255,0.12)', shadowColor: VP.primary, shadowOpacity: 0.12, shadowRadius: 10, elevation: 5 }}>
+              <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Score</Text>
+              <BiColorBar
+                leftLabel={myClanName}
+                rightLabel={enemyName}
+                leftPercent={myPct * 100}
+                leftColor="#ce96ff"
+                rightColor="#ff6e84"
+                showLabels
+                showPercents
+              />
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                <StatBox label="Us" value={myClanScore ?? 0} color={VP.primary} />
+                <StatBox label="Them" value={enemyScore ?? 0} color="#ff6e84" />
+                <StatBox label="Total" value={totalScore} color={VP.textSec} />
+              </View>
             </View>
-            <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 12, lineHeight: 18 }}>
-              All workouts are validated by our anti-cheat system. Suspicious activity is flagged and may result in voided war contributions. Play fair — your clan is counting on you.
-            </Text>
-          </View>
-        </View>
+
+            {/* Top contributors */}
+            {contributions && contributions.length > 0 && (
+              <View style={{ backgroundColor: VP.raised, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(206,150,255,0.12)' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: VP.cyan }} />
+                  <Text style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold', fontSize: 15 }}>Top Contributors</Text>
+                </View>
+                {(contributions as WarContribution[]).slice(0, 5).map((c: WarContribution, i: number) => (
+                  <View key={c.user_id ?? i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: i < 4 ? 1 : 0, borderBottomColor: 'rgba(206,150,255,0.06)' }}>
+                    <Text style={{ color: i === 0 ? VP.gold : VP.textMuted, fontFamily: 'Epilogue-Bold', fontSize: 14, width: 24 }}>#{i + 1}</Text>
+                    <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: VP.highest, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+                      <FontAwesome name="user" size={14} color={VP.textMuted} />
+                    </View>
+                    <Text style={{ color: VP.textPri, fontFamily: 'Lexend-SemiBold', fontSize: 13, flex: 1 }}>{c.display_name ?? 'Member'}</Text>
+                    <Text style={{ color: VP.primary, fontFamily: 'Epilogue-Bold', fontSize: 14 }}>{c.score ?? c.contribution ?? 0}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* War type info */}
+            <View style={{ backgroundColor: VP.raised, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(206,150,255,0.08)' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <View style={{ width: 3, height: 14, borderRadius: 2, backgroundColor: VP.primary }} />
+                <Text style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold', fontSize: 15 }}>War Info</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>Week Number</Text>
+                <Text style={{ color: VP.textSec, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>{war.week_number ?? '–'}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>Opponent</Text>
+                <Text style={{ color: VP.textSec, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>{enemyName}</Text>
+              </View>
+              {war.started_at && (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>Started</Text>
+                  <Text style={{ color: VP.textSec, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>
+                    {new Date(war.started_at).toLocaleDateString()}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

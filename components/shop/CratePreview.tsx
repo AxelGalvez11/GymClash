@@ -1,52 +1,87 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import Animated from "react-native-reanimated";
+import { CrateArtByRarity } from "./CrateArt";
+import { useStaggerEntrance } from "@/hooks/use-stagger-entrance";
+import { useGlowPulse } from "@/hooks/use-glow-pulse";
+import { usePressScale } from "@/hooks/use-press-scale";
+
+const RARITY_GLOW_COLORS = {
+  common: "#aaa8c3",
+  rare: "#81ecff",
+  epic: "#ce96ff",
+  legendary: "#ffd709",
+} as const;
 
 const CRATE_TIERS = [
-  { name: "Common Crate", color: "#aaa8c3", cost: "80 Diamonds" },
-  { name: "Rare Crate", color: "#81ecff", cost: "200 Diamonds" },
-  { name: "Epic Crate", color: "#ce96ff", cost: "500 Diamonds" },
-  { name: "Legendary Crate", color: "#ffd709", cost: "1,500 Diamonds" },
+  { rarity: "common" as const, name: "Common Crate", color: "#aaa8c3", cost: "80 Diamonds", shadowColor: "#aaa8c3" },
+  { rarity: "rare" as const, name: "Rare Crate", color: "#81ecff", cost: "200 Diamonds", shadowColor: "#81ecff" },
+  { rarity: "epic" as const, name: "Epic Crate", color: "#ce96ff", cost: "500 Diamonds", shadowColor: "#ce96ff" },
+  { rarity: "legendary" as const, name: "Legendary Crate", color: "#ffd709", cost: "1,500 Diamonds", shadowColor: "#ffd709" },
 ] as const;
+
+function CrateCard({
+  crate,
+  index,
+}: {
+  crate: typeof CRATE_TIERS[number];
+  index: number;
+}) {
+  const { animatedStyle: staggerStyle } = useStaggerEntrance(index, 80, 280);
+  const { glowStyle } = useGlowPulse(
+    RARITY_GLOW_COLORS[crate.rarity],
+    0.25,
+    0.6,
+    2600,
+    true,
+  );
+  const { animatedStyle: pressStyle, onPressIn, onPressOut } = usePressScale(0.97);
+
+  return (
+    <Animated.View style={[styles.cardWrapper, staggerStyle]}>
+      <Pressable onPressIn={onPressIn} onPressOut={onPressOut}>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              borderWidth: 1.5,
+              borderColor: crate.color,
+              elevation: 12,
+            },
+            glowStyle,
+            pressStyle,
+          ]}
+        >
+          <View style={styles.crateArtContainer}>
+            <CrateArtByRarity rarity={crate.rarity} size={80} />
+          </View>
+          <Text style={[styles.crateName, { color: crate.color }]}>
+            {crate.name}
+          </Text>
+          <View style={styles.priceRow}>
+            <Text style={[styles.diamondIcon, { color: crate.color }]}>
+              💎
+            </Text>
+            <Text style={[styles.cost, { color: "#e5e3ff" }]}>
+              {crate.cost}
+            </Text>
+          </View>
+
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>SOON</Text>
+          </View>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function CratePreview() {
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {CRATE_TIERS.map((crate) => (
-          <View key={crate.name} style={styles.cardWrapper}>
-            <View
-              style={[
-                styles.card,
-                {
-                  borderWidth: 1.5,
-                  borderColor: crate.color,
-                  shadowColor: crate.color,
-                  shadowOpacity: 0.4,
-                  shadowRadius: 15,
-                  shadowOffset: { width: 0, height: 0 },
-                  elevation: 8,
-                },
-              ]}
-            >
-              <FontAwesome name="cube" size={38} color={crate.color} />
-              <Text style={[styles.crateName, { color: crate.color }]}>
-                {crate.name}
-              </Text>
-              <View style={styles.priceRow}>
-                <Text style={[styles.diamondIcon, { color: crate.color }]}>
-                  💎
-                </Text>
-                <Text style={[styles.cost, { color: '#e5e3ff' }]}>
-                  {crate.cost}
-                </Text>
-              </View>
-
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>SOON</Text>
-              </View>
-            </View>
-          </View>
+        {CRATE_TIERS.map((crate, index) => (
+          <CrateCard key={crate.name} crate={crate} index={index} />
         ))}
       </View>
 
@@ -83,6 +118,11 @@ const styles = StyleSheet.create({
     gap: 6,
     position: "relative",
     overflow: "hidden",
+  },
+  crateArtContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
   },
   crateName: {
     fontFamily: "Lexend-SemiBold",

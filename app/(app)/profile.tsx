@@ -1,22 +1,19 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, ScrollView, Animated } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useQuery } from '@tanstack/react-query';
 
-import { Colors, Rank, Arena, getArenaTier } from '@/constants/theme';
-import { supabase } from '@/services/supabase';
 import { useProfile } from '@/hooks/use-profile';
 import { useMyWorkouts } from '@/hooks/use-workouts';
 import { useMy1RMRecords } from '@/hooks/use-1rm';
-import { CharacterDisplay } from '@/components/ui/CharacterDisplay';
-import { useAccent } from '@/stores/accent-store';
-import { useFadeSlide } from '@/hooks/use-fade-slide';
-import { usePlayerType } from '@/hooks/use-player-type';
-import { PlayerTypeBadge } from '@/components/PlayerTypeBadge';
 import { MuscleHeatmapCard } from '@/components/profile/MuscleHeatmapCard';
-import type { Rank as RankType, ArenaTier } from '@/types';
+import WeeklyVolumeChart from '@/components/profile/WeeklyVolumeChart';
+import { OneRMBenchmarkBars } from '@/components/profile/OneRMBenchmarkBars';
+
+import { useEntrance } from '@/hooks/use-entrance';
+import { usePressScale } from '@/hooks/use-press-scale';
 
 // ─── Victory Peak palette ───────────────────────────────
 const VP = {
@@ -41,73 +38,25 @@ const chromaticShadow = {
   elevation: 8,
 } as const;
 
-type AccountTier = 'unverified' | 'verified' | 'ranked_eligible';
-
-function computeAccountTier(profile: any, workoutCount: number): AccountTier {
-  const hasBiodata = profile?.body_weight_kg && profile?.height_cm && profile?.birth_date && profile?.biological_sex;
-  if (!hasBiodata) return 'unverified';
-
-  // Ranked-eligible: verified + 10 workouts + account age >= 14 days
-  const accountAge = profile?.created_at
-    ? (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
-    : 0;
-  if (workoutCount >= 10 && accountAge >= 14) return 'ranked_eligible';
-
-  return 'verified';
-}
-
-const TIER_CONFIG: Record<AccountTier, { label: string; color: string; icon: React.ComponentProps<typeof FontAwesome>['name'] }> = {
-  unverified: { label: 'Unverified', color: VP.textMuted, icon: 'circle-o' },
-  verified: { label: 'Verified', color: Colors.success, icon: 'check-circle' },
-  ranked_eligible: { label: 'Ranked', color: VP.gold, icon: 'star' },
-};
-
-function useActiveSeason() {
-  return useQuery({
-    queryKey: ['active-season'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('seasons')
-        .select('*')
-        .eq('status', 'active')
-        .single();
-      return data;
-    },
-    staleTime: 1000 * 60 * 10,
-  });
-}
-
 export default function ProfileScreen() {
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
-  const { data: season } = useActiveSeason();
   const { data: records } = useMy1RMRecords();
   const { data: workouts } = useMyWorkouts(100);
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const accent = useAccent();
-  const { playerType } = usePlayerType();
-  const accountTier = computeAccountTier(profile, workouts?.length ?? 0);
-  const tierConfig = TIER_CONFIG[accountTier];
 
-  const rankKey = (profile?.rank ?? 'rookie') as RankType;
-  const rankConfig = Rank[rankKey] ?? Rank.rookie;
-  const nextRank = Object.values(Rank).find((r) => r.minXp > (profile?.xp ?? 0));
-  const trophies = profile?.trophy_rating ?? 0;
-  const arenaTier: ArenaTier = (profile?.arena_tier as ArenaTier) ?? getArenaTier(trophies);
-  const arenaConfig = Arena[arenaTier] ?? Arena.rustyard;
-
-  // Entrance animations
-  const fadeHeader = useFadeSlide(0);
-  const fadeStats = useFadeSlide(100);
-  const fadeDiagrams = useFadeSlide(200);
-  const fadeRecords = useFadeSlide(300);
-  const fadeLinks = useFadeSlide(400);
+  // ── Entrance animations ────────────────────────────────────────────────────
+  const radarEntrance = useEntrance(0, 'fade-slide', 280);
+  const heatmapEntrance = useEntrance(100, 'fade-slide', 280);
+  const recordsEntrance = useEntrance(200, 'fade-slide', 280);
+  const calendarEntrance = useEntrance(300, 'fade-slide', 280);
+  const linksEntrance = useEntrance(400, 'spring-up');
 
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-[#0c0c1f] items-center justify-center">
-        <ActivityIndicator color={accent.DEFAULT} size="large" />
+        <ActivityIndicator color={VP.primary} size="large" />
       </SafeAreaView>
     );
   }
@@ -115,131 +64,19 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <ScrollView className="flex-1 px-5 pt-4" contentContainerClassName="pb-8">
-        {/* Settings gear */}
-        <Pressable
-          className="absolute right-4 top-4 z-10"
-          onPress={() => router.push('/(app)/settings' as any)}
-          hitSlop={10}
-        >
-          <FontAwesome name="cog" size={18} color={VP.textMuted} />
-        </Pressable>
 
-        {/* Profile Header */}
-        <Animated.View style={fadeHeader.style} className="items-center mb-6">
-          {/* Character avatar with glow ring */}
-          <View
-            className="mb-3"
-            style={{
-              borderWidth: 2.5,
-              borderColor: '#a434ff',
-              borderRadius: 999,
-              padding: 4,
-              shadowColor: '#a434ff',
-              shadowOffset: { width: 0, height: 0 },
-              shadowRadius: 25,
-              shadowOpacity: 0.6,
-              elevation: 15,
-            }}
-          >
-            <CharacterDisplay
-              level={profile?.level ?? 1}
-              strengthCount={profile?.strength_workout_count ?? 0}
-              scoutCount={profile?.scout_workout_count ?? 0}
-              playerType={playerType}
-              size="lg"
-            />
-          </View>
-          <Text className="text-2xl font-bold" style={{ color: VP.textPri }}>
-            {profile?.display_name || 'Warrior'}
-          </Text>
-          {/* Rank display — Victory Gold with text shadow */}
-          <Text
-            className="text-lg font-bold mt-1"
-            style={{
-              color: VP.gold,
-              textShadowColor: 'rgba(255, 215, 9, 0.4)',
-              textShadowOffset: { width: 0, height: 0 },
-              textShadowRadius: 8,
-              fontFamily: 'Epilogue-Bold',
-            }}
-          >
-            {rankConfig.label} — Level {profile?.level ?? 1}
-          </Text>
-          {/* Player type */}
-          <View className="mt-2">
-            <PlayerTypeBadge playerType={playerType} size="md" />
-          </View>
-          {/* Arena badge */}
-          <View className="flex-row items-center gap-2 mt-2">
-            <Text className="text-lg">{arenaConfig.badge}</Text>
-            <Text className="font-bold" style={{ color: arenaConfig.accent, fontFamily: 'Lexend-SemiBold' }}>
-              {arenaConfig.label}
-            </Text>
-            <Text style={{ color: VP.textSec }}>· {trophies} 🏆</Text>
-          </View>
-          {/* Account tier badge */}
-          <Pressable
-            className="flex-row items-center gap-1.5 mt-2 px-3 py-1 rounded-full"
-            style={{ backgroundColor: tierConfig.color + '15' }}
-            onPress={accountTier === 'unverified'
-              ? () => router.push('/(app)/settings/biodata')
-              : undefined}
-          >
-            <FontAwesome name={tierConfig.icon} size={12} color={tierConfig.color} />
-            <Text className="text-xs font-bold" style={{ color: tierConfig.color, fontFamily: 'Lexend-SemiBold' }}>
-              {tierConfig.label}
-            </Text>
-            {accountTier === 'unverified' && (
-              <Text className="text-xs" style={{ color: VP.textMuted }}> — Complete biodata</Text>
-            )}
-          </Pressable>
-        </Animated.View>
-
-        {/* XP Progress */}
-        <Animated.View style={fadeStats.style}>
-        {/* XP Progress */}
-        <View className="w-full px-4 mt-4 mb-4">
-          <View className="flex-row justify-between mb-1">
-            <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>XP Progress</Text>
-            <Text style={{ color: VP.textPri, fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>
-              {profile?.xp ?? 0} / {nextRank?.minXp ?? 1000}
-            </Text>
-          </View>
-          <View className="h-3 rounded-full bg-[#23233f] overflow-hidden">
-            <View className="h-3 rounded-full" style={{
-              width: `${Math.min(((profile?.xp ?? 0) / (nextRank?.minXp ?? 1000)) * 100, 100)}%`,
-              backgroundColor: '#f97316',
-            }} />
-          </View>
-        </View>
-
-        {/* Stats */}
-        <View className="flex-row gap-3 mb-4">
-          <View className="bg-[#1d1d37] rounded-2xl p-4 flex-1 items-center" style={{ borderWidth: 1, borderColor: 'rgba(164,52,255,0.3)' }}>
-            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 12, color: VP.textSec, textTransform: 'uppercase', marginBottom: 4 }}>Streak</Text>
-            <Text className="text-2xl font-bold" style={{ color: '#ffffff' }}>{profile?.current_streak ?? 0}</Text>
-          </View>
-          <View className="bg-[#1d1d37] rounded-2xl p-4 flex-1 items-center" style={{ borderWidth: 1, borderColor: 'rgba(164,52,255,0.3)' }}>
-            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 12, color: VP.textSec, textTransform: 'uppercase', marginBottom: 4 }}>Best</Text>
-            <Text className="text-2xl font-bold" style={{ color: '#ffffff' }}>{profile?.longest_streak ?? 0}</Text>
-          </View>
-        </View>
-        </Animated.View>
-
-        {/* Performance Radar + Muscle Heatmap */}
-        <Animated.View style={fadeDiagrams.style}>
-          {/* Performance Radar */}
+        {/* Performance Radar */}
+        <Animated.View style={radarEntrance.animatedStyle}>
           <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
             <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Performance Profile</Text>
             <View className="items-center">
               {(() => {
                 const dims = [
-                  { label: 'Strength', value: Math.min((profile?.strength_workout_count ?? 0) / 50, 1) },
-                  { label: 'Cardio', value: Math.min((profile?.scout_workout_count ?? 0) / 50, 1) },
-                  { label: 'Consistency', value: Math.min((profile?.current_streak ?? 0) / 30, 1) },
-                  { label: 'Volume', value: Math.min((profile?.xp ?? 0) / 5000, 1) },
-                  { label: 'Trophy', value: Math.min((profile?.trophy_rating ?? 0) / 1200, 1) },
-                  { label: 'Level', value: Math.min((profile?.level ?? 1) / 50, 1) },
+                  { label: 'Legs', value: Math.min((profile?.strength_workout_count ?? 0) * 0.4 / 25, 1) },
+                  { label: 'Arms', value: Math.min((profile?.strength_workout_count ?? 0) * 0.3 / 25, 1) },
+                  { label: 'Chest', value: Math.min((profile?.strength_workout_count ?? 0) * 0.2 / 20, 1) },
+                  { label: 'Back', value: Math.min((profile?.strength_workout_count ?? 0) * 0.25 / 20, 1) },
+                  { label: 'Cardio', value: Math.min((profile?.scout_workout_count ?? 0) / 30, 1) },
                 ];
                 const size = 140;
                 const center = size;
@@ -334,73 +171,50 @@ export default function ProfileScreen() {
               })()}
             </View>
           </View>
+        </Animated.View>
 
-          {/* Muscle Heatmap */}
+        {/* Muscle Heatmap */}
+        <Animated.View style={heatmapEntrance.animatedStyle}>
           <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
             <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Muscle Heatmap</Text>
             <MuscleHeatmapCard
               workouts={workouts ?? []}
               bodyWeightKg={profile?.body_weight_kg ?? null}
+              biologicalSex={profile?.biological_sex ?? null}
             />
           </View>
+
+          {/* Weekly Volume Chart */}
+          <WeeklyVolumeChart workouts={workouts ?? []} />
         </Animated.View>
 
-        {/* 1RM Records */}
-        <Animated.View style={fadeRecords.style}>
-        {records && records.length > 0 && (
-          <View className="mb-4">
-            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 18, color: VP.textPri, fontWeight: 'bold', marginBottom: 12 }}>Personal Records</Text>
-            <View className="gap-2">
-              {records.slice(0, 5).map((r: any) => (
-                <View
-                  key={r.id}
-                  className="bg-[#1d1d37] rounded-2xl p-3 flex-row items-center"
-                  style={chromaticShadow}
-                >
-                  <FontAwesome name="trophy" size={14} color={VP.gold} />
-                  <Text className="font-bold ml-3 flex-1" style={{ color: VP.textPri }}>{r.exercise}</Text>
-                  <Text className="font-bold" style={{ color: '#ffffff' }}>{Math.round(r.best_estimated_1rm)} kg</Text>
-                </View>
-              ))}
+        {/* Strength Benchmarks / Personal Records */}
+        <Animated.View style={recordsEntrance.animatedStyle}>
+          {records && records.length > 0 && (
+            <View className="mb-4">
+              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 18, color: VP.textPri, fontWeight: 'bold', marginBottom: 12 }}>Personal Records</Text>
+              <View className="gap-2">
+                {records.slice(0, 5).map((r: any) => (
+                  <View
+                    key={r.id}
+                    className="bg-[#1d1d37] rounded-2xl p-3 flex-row items-center"
+                    style={chromaticShadow}
+                  >
+                    <FontAwesome name="trophy" size={14} color={VP.gold} />
+                    <Text className="font-bold ml-3 flex-1" style={{ color: VP.textPri }}>{r.exercise}</Text>
+                    <Text className="font-bold" style={{ color: '#ffffff' }}>{Math.round(r.best_estimated_1rm)} kg</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          )}
+
+          {/* Strength Benchmarks */}
+          <OneRMBenchmarkBars records={records ?? []} bodyWeightKg={profile?.body_weight_kg ?? null} />
         </Animated.View>
-
-        {/* Season */}
-        {season && (
-          <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="font-bold" style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold' }}>{season.name}</Text>
-              <Text className="text-sm font-bold" style={{ color: VP.textPri }}>Season {season.number}</Text>
-            </View>
-            <Text className="text-xs" style={{ color: VP.textMuted }}>
-              {Math.max(0, Math.ceil((new Date(season.ended_at).getTime() - Date.now()) / 86400000))} days left
-            </Text>
-          </View>
-        )}
-
-        {/* Cardio Stats */}
-        {(profile?.max_heart_rate || profile?.estimated_vo2max) && (
-          <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
-            <Text className="font-bold mb-2" style={{ color: VP.textPri, fontFamily: 'Lexend-SemiBold' }}>Cardio Profile</Text>
-            {profile?.max_heart_rate && (
-              <View className="flex-row justify-between py-1">
-                <Text style={{ color: VP.textSec }}>Max Heart Rate</Text>
-                <Text className="font-bold" style={{ color: '#ffffff' }}>{profile.max_heart_rate} bpm</Text>
-              </View>
-            )}
-            {profile?.estimated_vo2max && (
-              <View className="flex-row justify-between py-1">
-                <Text style={{ color: VP.textSec }}>Est. VO2max</Text>
-                <Text className="font-bold" style={{ color: '#ffffff' }}>{Math.round(profile.estimated_vo2max * 10) / 10} ml/kg/min</Text>
-              </View>
-            )}
-          </View>
-        )}
 
         {/* Workout Calendar */}
-        <Animated.View style={fadeRecords.style}>
+        <Animated.View style={calendarEntrance.animatedStyle}>
           <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
             <Text className="font-bold mb-3" style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold' }}>
               {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -428,7 +242,6 @@ export default function ProfileScreen() {
                 );
                 const today = now.getDate();
                 const cells = [];
-                // Empty cells for padding
                 for (let i = 0; i < firstDay; i++) {
                   cells.push(<View key={`e-${i}`} style={{ width: '14.28%', paddingVertical: 4 }} />);
                 }
@@ -522,32 +335,54 @@ export default function ProfileScreen() {
           )}
         </Animated.View>
 
-        {/* Quick Links */}
-        <Animated.View style={fadeLinks.style} className="gap-2 mb-6">
-          <Pressable
-            className="bg-[#1d1d37] rounded-2xl p-4 flex-row items-center active:scale-[0.98]"
-            style={chromaticShadow}
+        {/* Workout History — quick link */}
+        <Animated.View style={linksEntrance.animatedStyle} className="gap-2 mb-6">
+          <QuickLinkRow
+            icon="history"
+            iconColor={VP.textSec}
+            label="Workout History"
             onPress={() => router.push('/(app)/history')}
-          >
-            <FontAwesome name="history" size={18} color={VP.textSec} />
-            <Text className="font-bold ml-3 flex-1" style={{ color: VP.textPri }}>Workout History</Text>
-            <FontAwesome name="chevron-right" size={14} color={VP.textMuted} />
-          </Pressable>
-          <Pressable
-            className="bg-[#1d1d37] rounded-2xl p-4 flex-row items-center active:scale-[0.98]"
-            style={chromaticShadow}
-            onPress={() => router.push('/(app)/shop' as any)}
-          >
-            <FontAwesome name="shopping-bag" size={18} color={VP.gold} />
-            <Text className="font-bold ml-3 flex-1" style={{ color: VP.textPri }}>Shop</Text>
-            <View className="flex-row items-center gap-1 mr-2">
-              <FontAwesome name="circle" size={8} color={VP.gold} />
-              <Text className="text-xs font-bold" style={{ color: '#ffffff' }}>{profile?.gym_coins ?? 0}</Text>
-            </View>
-            <FontAwesome name="chevron-right" size={14} color={VP.textMuted} />
-          </Pressable>
+          />
         </Animated.View>
+
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// ─── Quick link row — isolated so usePressScale is unconditional ─────────────
+
+function QuickLinkRow({
+  icon,
+  iconColor,
+  label,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof FontAwesome>['name'];
+  iconColor: string;
+  label: string;
+  onPress: () => void;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale(0.97);
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        className="bg-[#1d1d37] rounded-2xl p-4 flex-row items-center"
+        style={{
+          shadowColor: '#ce96ff',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
+          elevation: 8,
+        }}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        <FontAwesome name={icon} size={18} color={iconColor} />
+        <Text className="font-bold ml-3 flex-1" style={{ color: '#e5e3ff' }}>{label}</Text>
+        <FontAwesome name="chevron-right" size={14} color="#74738b" />
+      </Pressable>
+    </Animated.View>
   );
 }

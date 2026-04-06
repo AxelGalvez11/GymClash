@@ -22,7 +22,9 @@ function getMaxHR(form: OnboardingFormState): string {
   }
 
   if (form.birthDate.trim().length > 0) {
-    const birthYear = new Date(form.birthDate).getFullYear();
+    const dateObj = new Date(form.birthDate);
+    if (isNaN(dateObj.getTime())) return '—';
+    const birthYear = dateObj.getFullYear();
     const currentYear = new Date().getFullYear();
     const age = currentYear - birthYear;
     return String(220 - age);
@@ -58,7 +60,7 @@ export function StepSummary({ form, onFinish, saving }: StepSummaryProps) {
   const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
-    Animated.parallel([
+    const anim = Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
@@ -69,7 +71,13 @@ export function StepSummary({ form, onFinish, saving }: StepSummaryProps) {
         duration: 800,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
+    anim.start();
+    return () => {
+      anim.stop();
+      fadeAnim.setValue(0);
+      slideAnim.setValue(20);
+    };
   }, [fadeAnim, slideAnim]);
 
   const weightUnit = form.unitSystem === 'imperial' ? 'lbs' : 'kg';

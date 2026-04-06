@@ -1,6 +1,6 @@
-import { View, Text, TextInput, Pressable } from 'react-native';
-
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import type { OnboardingFormState } from './types';
+import { DrumPicker } from './DrumPicker';
 
 interface StepOneRepMaxProps {
   readonly form: OnboardingFormState;
@@ -11,77 +11,142 @@ interface StepOneRepMaxProps {
 interface LiftField {
   readonly label: string;
   readonly key: 'squat1RM' | 'bench1RM' | 'deadlift1RM' | 'ohp1RM';
-  readonly placeholder: string;
 }
 
 const LIFT_FIELDS: readonly LiftField[] = [
-  { label: 'Squat', key: 'squat1RM', placeholder: 'e.g. 100' },
-  { label: 'Bench Press', key: 'bench1RM', placeholder: 'e.g. 70' },
-  { label: 'Deadlift', key: 'deadlift1RM', placeholder: 'e.g. 120' },
-  { label: 'Overhead Press', key: 'ohp1RM', placeholder: 'e.g. 45' },
+  { label: 'Squat', key: 'squat1RM' },
+  { label: 'Bench Press', key: 'bench1RM' },
+  { label: 'Deadlift', key: 'deadlift1RM' },
+  { label: 'Overhead Press', key: 'ohp1RM' },
 ] as const;
 
+// ── Picker item builders ─────────────────────────────────────────────────────
+// Imperial: — then 5, 10, … 700 lbs (5 lb increments)
+function buildLbsItems(): ReadonlyArray<{ label: string; value: string }> {
+  const items: Array<{ label: string; value: string }> = [{ label: '—', value: '' }];
+  for (let v = 5; v <= 700; v += 5) {
+    items.push({ label: String(v), value: String(v) });
+  }
+  return items;
+}
+
+// Metric: — then 2.5, 5, … 320 kg (2.5 kg increments)
+function buildKgItems(): ReadonlyArray<{ label: string; value: string }> {
+  const items: Array<{ label: string; value: string }> = [{ label: '—', value: '' }];
+  for (let v = 2.5; v <= 320; v = Math.round((v + 2.5) * 10) / 10) {
+    items.push({ label: v % 1 === 0 ? String(v) : v.toFixed(1), value: String(v) });
+  }
+  return items;
+}
+
+const LBS_ITEMS = buildLbsItems();
+const KG_ITEMS = buildKgItems();
+
+// Snap a raw string value to the nearest available item value
+function snapValue(raw: string, items: ReadonlyArray<{ label: string; value: string }>): string {
+  if (!raw) return '';
+  const n = parseFloat(raw);
+  if (isNaN(n) || n <= 0) return '';
+  let best = '';
+  let bestDist = Infinity;
+  for (const item of items) {
+    if (item.value === '') continue;
+    const dist = Math.abs(parseFloat(item.value) - n);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = item.value;
+    }
+  }
+  return best;
+}
+
 export function StepOneRepMax({ form, onUpdate, onNext }: StepOneRepMaxProps) {
-  const unitLabel = form.unitSystem === 'metric' ? 'kg' : 'lbs';
+  const unitLabel = form.unitSystem === 'imperial' ? 'lbs' : 'kg';
+  const items = form.unitSystem === 'imperial' ? LBS_ITEMS : KG_ITEMS;
 
   return (
-    <View className="flex-1 justify-center px-6">
+    <ScrollView
+      style={{ flex: 1, backgroundColor: '#0c0c1f' }}
+      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Title */}
       <Text
-        className="text-3xl mb-2"
-        style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', letterSpacing: 2 }}
+        style={{
+          fontFamily: 'Epilogue-Bold',
+          fontSize: 28,
+          color: '#e5e3ff',
+          letterSpacing: 1,
+          marginBottom: 6,
+        }}
       >
-        Estimated 1 Rep Max
+        1 Rep Max
       </Text>
 
       {/* Subtitle */}
       <Text
-        className="text-sm mb-8 leading-6"
-        style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}
+        style={{
+          fontFamily: 'BeVietnamPro-Regular',
+          fontSize: 14,
+          color: '#aaa8c3',
+          marginBottom: 28,
+          lineHeight: 22,
+        }}
       >
-        Optional — helps predict your output. You can add these later in Settings.
+        Optional — helps predict your output. Scroll to set, leave at — to skip.
       </Text>
 
-      {/* Lift inputs */}
+      {/* Lift pickers */}
       {LIFT_FIELDS.map((field) => (
-        <View key={field.key} className="mb-4">
+        <View key={field.key} style={{ marginBottom: 24 }}>
           <Text
-            className="mb-1.5 ml-1"
-            style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 13 }}
+            style={{
+              fontFamily: 'Lexend-SemiBold',
+              fontSize: 13,
+              color: '#aaa8c3',
+              marginBottom: 10,
+            }}
           >
             {field.label} ({unitLabel})
           </Text>
-          <TextInput
-            className="rounded-xl px-4 py-3 text-base"
+          <View
             style={{
               backgroundColor: '#000000',
-              color: '#e5e3ff',
-              fontFamily: 'BeVietnamPro-Regular',
+              borderRadius: 16,
+              overflow: 'hidden',
             }}
-            placeholder={field.placeholder}
-            placeholderTextColor="#74738b"
-            value={form[field.key]}
-            onChangeText={(text) => onUpdate({ [field.key]: text })}
-            keyboardType="decimal-pad"
-            returnKeyType="done"
-          />
+          >
+            <DrumPicker
+              key={`${field.key}-${form.unitSystem}`}
+              items={items}
+              value={snapValue(form[field.key], items)}
+              onChange={(v) => onUpdate({ [field.key]: v })}
+            />
+          </View>
         </View>
       ))}
 
       {/* Info note */}
       <Text
-        className="mt-2 mb-6 leading-5"
-        style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 12 }}
+        style={{
+          fontFamily: 'BeVietnamPro-Regular',
+          fontSize: 12,
+          color: '#74738b',
+          marginBottom: 28,
+          lineHeight: 18,
+        }}
       >
         Don't worry if you're unsure — the system will learn your baseline from your first few
         sessions.
       </Text>
 
-      {/* Continue button */}
+      {/* Continue */}
       <Pressable
-        className="py-3.5 items-center rounded-[2rem] active:scale-[0.98]"
         style={{
           backgroundColor: '#a434ff',
+          borderRadius: 14,
+          paddingVertical: 16,
+          alignItems: 'center',
           shadowColor: '#a434ff',
           shadowOpacity: 0.5,
           shadowRadius: 20,
@@ -91,18 +156,26 @@ export function StepOneRepMax({ form, onUpdate, onNext }: StepOneRepMaxProps) {
         onPress={onNext}
       >
         <Text
-          style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 14, letterSpacing: 2 }}
+          style={{
+            fontFamily: 'Epilogue-Bold',
+            fontSize: 16,
+            color: '#ffffff',
+            letterSpacing: 1.5,
+          }}
         >
           CONTINUE
         </Text>
       </Pressable>
 
-      {/* Skip link */}
-      <Pressable className="mt-4 items-center py-2" onPress={onNext}>
-        <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>
+      {/* Skip */}
+      <Pressable
+        style={{ marginTop: 14, alignItems: 'center', paddingVertical: 8 }}
+        onPress={onNext}
+      >
+        <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 13, color: '#74738b' }}>
           Skip this for now
         </Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }

@@ -1,4 +1,5 @@
-import { View, Text, Pressable, ScrollView, TextInput, Alert, ActivityIndicator, Animated, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -9,7 +10,10 @@ import { Colors } from '@/constants/theme';
 import { REASON_CODE_LABELS, REASON_CODE_SEVERITY } from '@/lib/validation';
 import { useWorkoutDetail } from '@/hooks/use-workouts';
 import { createAppeal } from '@/services/api';
-import { useFadeSlide } from '@/hooks/use-fade-slide';
+import { useEntrance } from '@/hooks/use-entrance';
+import { usePressScale } from '@/hooks/use-press-scale';
+import { useGlowPulse } from '@/hooks/use-glow-pulse';
+import { useStaggerEntrance } from '@/hooks/use-stagger-entrance';
 import type { ReasonCode, ValidationStatus } from '@/types';
 
 const STATUS_CONFIG: Record<
@@ -47,14 +51,42 @@ const STATUS_CONFIG: Record<
   },
 };
 
+function ReasonCodeCard({ code, index }: { readonly code: ReasonCode; readonly index: number }) {
+  const { animatedStyle } = useStaggerEntrance(index, 60);
+  const severity = REASON_CODE_SEVERITY[code];
+  const severityColor =
+    severity === 'critical'
+      ? Colors.danger
+      : severity === 'warning'
+      ? Colors.warning
+      : '#81ecff';
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <View className="bg-[#1d1d37] rounded-xl p-3 mb-2">
+        <View className="flex-row items-center gap-2">
+          <View
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: severityColor }}
+          />
+          <Text className="flex-1" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>
+            {REASON_CODE_LABELS[code]}
+          </Text>
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
 export default function WorkoutReviewScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const router = useRouter();
   const [appealReason, setAppealReason] = useState('');
 
-  // Entrance animations
-  const fadeHeaderAnim = useFadeSlide(0);
-  const fadeContentAnim = useFadeSlide(100);
+  const { animatedStyle: headerStyle } = useEntrance(0, 'fade-slide');
+  const { animatedStyle: contentStyle } = useEntrance(100, 'fade-slide');
+  const { animatedStyle: appealStyle } = useEntrance(200, 'spring-up');
+  const { animatedStyle: submitPressStyle, onPressIn: submitIn, onPressOut: submitOut } = usePressScale(0.95);
 
   const { data, isLoading } = useWorkoutDetail(workoutId);
   const appealMutation = useMutation({
@@ -92,6 +124,13 @@ export default function WorkoutReviewScreen() {
     validationStatus === 'excluded_from_clan_score' ||
     validationStatus === 'rejected';
 
+  const statusGlowColor =
+    validationStatus === 'accepted' || validationStatus === 'accepted_with_low_confidence'
+      ? '#22c55e'
+      : validationStatus === 'rejected' || validationStatus === 'excluded_from_clan_score'
+      ? '#ef4444'
+      : '#ffd709';
+
   function handleSubmitAppeal() {
     if (!appealReason.trim()) {
       Alert.alert('Error', 'Please describe why you believe this is incorrect.');
@@ -105,90 +144,41 @@ export default function WorkoutReviewScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
       <ScrollView className="flex-1 px-4" contentContainerClassName="pb-8" keyboardShouldPersistTaps="handled">
         {/* Back button */}
-        <Pressable onPress={() => router.replace('/(app)/home' as any)} className="py-4 active:scale-[0.98]">
+        <Pressable onPress={() => router.replace('/(app)/home' as any)} className="py-4">
           <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} Back</Text>
         </Pressable>
 
         {/* Header */}
-        <Animated.View style={fadeHeaderAnim.style}>
-        <Text className="text-2xl mb-1" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>
-          Workout Review
-        </Text>
-        <Text className="text-sm mb-6" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
-          {workout.type === 'strength' ? 'Strength' : 'Run'} --{' '}
-          {new Date(workout.created_at).toLocaleDateString()} -- ID: {workoutId}
-        </Text>
+        <Animated.View style={headerStyle}>
+          <Text className="text-2xl mb-1" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>
+            Workout Review
+          </Text>
+          <Text className="text-sm mb-6" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
+            {workout.type === 'strength' ? 'Strength' : 'Run'} --{' '}
+            {new Date(workout.created_at).toLocaleDateString()} -- ID: {workoutId}
+          </Text>
         </Animated.View>
 
         {/* Status Badge */}
-        <Animated.View style={fadeContentAnim.style}>
-        <View
-          className="rounded-xl p-4 mb-6"
-          style={{
-            backgroundColor: '#1d1d37',
-            shadowColor: statusConfig.color,
-            shadowOpacity: 0.2,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 0 },
-            elevation: 6,
-          }}
-        >
-          <View className="flex-row items-center gap-2 mb-2">
-            <FontAwesome
-              name={
-                validationStatus === 'accepted' ? 'check-circle' : 'exclamation-triangle'
-              }
-              size={18}
-              color={statusConfig.color}
-            />
-            <Text className="text-lg" style={{ color: statusConfig.color, fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
-              {statusConfig.label}
-            </Text>
-          </View>
-          <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>{statusConfig.description}</Text>
-          <Text className="text-sm mt-2" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
-            Confidence: {Math.round(confidenceScore * 100)}%
-          </Text>
-        </View>
+        <Animated.View style={contentStyle}>
+          <StatusBadge statusConfig={statusConfig} validationStatus={validationStatus} confidenceScore={confidenceScore} glowColor={statusGlowColor} />
 
-        {/* Reason Codes */}
-        {reasonCodes.length > 0 && (
-          <View className="mb-6">
-            <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
-              Flagged Issues
-            </Text>
-            {reasonCodes.map((code) => {
-              const severity = REASON_CODE_SEVERITY[code];
-              const severityColor =
-                severity === 'critical'
-                  ? Colors.danger
-                  : severity === 'warning'
-                  ? Colors.warning
-                  : '#81ecff';
-
-              return (
-                <View
-                  key={code}
-                  className="bg-[#1d1d37] rounded-xl p-3 mb-2"
-                >
-                  <View className="flex-row items-center gap-2">
-                    <View
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: severityColor }}
-                    />
-                    <Text className="flex-1" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>
-                      {REASON_CODE_LABELS[code]}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
+          {/* Reason Codes */}
+          {reasonCodes.length > 0 && (
+            <View className="mb-6">
+              <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
+                Flagged Issues
+              </Text>
+              {reasonCodes.map((code, i) => (
+                <ReasonCodeCard key={code} code={code} index={i} />
+              ))}
+            </View>
+          )}
+        </Animated.View>
 
         {/* Appeal Form */}
         {canAppeal && (
-          <View>
+          <Animated.View style={appealStyle}>
             <Text className="text-lg mb-3" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
               Submit an Appeal
             </Text>
@@ -198,7 +188,13 @@ export default function WorkoutReviewScreen() {
             </Text>
             <TextInput
               className="bg-[#000000] rounded-xl px-4 py-3 text-base mb-4"
-              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular', minHeight: 100 }}
+              style={{
+                color: '#e5e3ff',
+                fontFamily: 'BeVietnamPro-Regular',
+                minHeight: 100,
+                borderWidth: 1,
+                borderColor: appealReason.length > 0 ? 'rgba(164,52,255,0.35)' : 'rgba(206,150,255,0.1)',
+              }}
               placeholder="Describe why this flag is incorrect..."
               placeholderTextColor="#74738b"
               value={appealReason}
@@ -207,27 +203,77 @@ export default function WorkoutReviewScreen() {
               numberOfLines={4}
               textAlignVertical="top"
             />
-            <Pressable
-              className="py-3.5 items-center rounded-[2rem] active:scale-[0.98]"
-              style={{
-                backgroundColor: '#a434ff',
-                shadowColor: '#a434ff',
-                shadowOpacity: 0.4,
-                shadowRadius: 16,
-                shadowOffset: { width: 0, height: 4 },
-                elevation: 10,
-              }}
-              onPress={handleSubmitAppeal}
-            >
-              <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>
-                Submit Appeal
-              </Text>
-            </Pressable>
-          </View>
+            <Animated.View style={submitPressStyle}>
+              <Pressable
+                className="py-3.5 items-center rounded-[2rem]"
+                style={{
+                  backgroundColor: '#a434ff',
+                  shadowColor: '#a434ff',
+                  shadowOpacity: 0.4,
+                  shadowRadius: 16,
+                  shadowOffset: { width: 0, height: 4 },
+                  elevation: 10,
+                }}
+                onPress={handleSubmitAppeal}
+                onPressIn={submitIn}
+                onPressOut={submitOut}
+              >
+                <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', fontSize: 18 }}>
+                  Submit Appeal
+                </Text>
+              </Pressable>
+            </Animated.View>
+          </Animated.View>
         )}
-        </Animated.View>
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function StatusBadge({
+  statusConfig,
+  validationStatus,
+  confidenceScore,
+  glowColor,
+}: {
+  readonly statusConfig: { label: string; color: string; description: string };
+  readonly validationStatus: ValidationStatus;
+  readonly confidenceScore: number;
+  readonly glowColor: string;
+}) {
+  const { glowStyle } = useGlowPulse(glowColor, 0.15, 0.5, 2400);
+
+  return (
+    <Animated.View
+      style={[
+        {
+          backgroundColor: '#1d1d37',
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 24,
+          borderWidth: 1,
+          borderColor: statusConfig.color + '30',
+        },
+        glowStyle,
+      ]}
+    >
+      <View className="flex-row items-center gap-2 mb-2">
+        <FontAwesome
+          name={
+            validationStatus === 'accepted' ? 'check-circle' : 'exclamation-triangle'
+          }
+          size={18}
+          color={statusConfig.color}
+        />
+        <Text className="text-lg" style={{ color: statusConfig.color, fontFamily: 'Epilogue-Bold', fontWeight: '700' }}>
+          {statusConfig.label}
+        </Text>
+      </View>
+      <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>{statusConfig.description}</Text>
+      <Text className="text-sm mt-2" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
+        Confidence: {Math.round(confidenceScore * 100)}%
+      </Text>
+    </Animated.View>
   );
 }

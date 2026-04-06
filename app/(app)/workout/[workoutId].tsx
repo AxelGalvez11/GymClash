@@ -2,11 +2,13 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, Animated } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useQuery } from '@tanstack/react-query';
 
 import { Colors } from '@/constants/theme';
 import { REASON_CODE_LABELS, REASON_CODE_SEVERITY } from '@/lib/validation';
 import { useWorkoutDetail } from '@/hooks/use-workouts';
 import { useFadeSlide } from '@/hooks/use-fade-slide';
+import { fetchVideoAnalysis } from '@/services/api';
 import type { ReasonCode, ValidationStatus, StrengthSet, RouteData } from '@/types';
 
 const STATUS_CONFIG: Record<
@@ -24,6 +26,12 @@ const TYPE_ICONS: Record<string, { name: React.ComponentProps<typeof FontAwesome
   strength: { name: 'heartbeat', color: Colors.danger },
   scout: { name: 'road', color: '#81ecff' },
   active_recovery: { name: 'leaf', color: Colors.success },
+};
+
+const VERIFICATION_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentProps<typeof FontAwesome>['name'] }> = {
+  verified: { label: 'Form Verified', color: Colors.success, icon: 'check-circle' },
+  needs_review: { label: 'Needs Review', color: Colors.warning, icon: 'clock-o' },
+  rejected: { label: 'Form Rejected', color: Colors.danger, icon: 'times-circle' },
 };
 
 function SectionHeader({ title }: { readonly title: string }) {
@@ -75,6 +83,182 @@ function ScoutBreakdown({ route }: { readonly route: RouteData }) {
   );
 }
 
+// ─── Video Analysis Card ──────────────────────────────────────────────────────
+
+interface VideoAnalysisCardProps {
+  readonly workoutId: string;
+}
+
+function VideoAnalysisCard({ workoutId }: VideoAnalysisCardProps) {
+  const { data: analysis, isLoading } = useQuery({
+    queryKey: ['videoAnalysis', workoutId],
+    queryFn: () => fetchVideoAnalysis(workoutId),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  if (isLoading) {
+    return (
+      <View className="bg-[#1d1d37] rounded-xl p-4 mb-6 items-center">
+        <ActivityIndicator color="#ce96ff" size="small" />
+        <Text className="text-xs mt-2" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
+          Loading form analysis…
+        </Text>
+      </View>
+    );
+  }
+
+  if (!analysis) return null;
+
+  const verif = VERIFICATION_CONFIG[analysis.verification_status] ?? VERIFICATION_CONFIG.needs_review;
+  const formPct = Math.round(analysis.form_score ?? 0);
+  const confPct = Math.round((analysis.analysis_confidence ?? 0) * 100);
+  const flags: string[] = Array.isArray(analysis.cheat_flags) ? analysis.cheat_flags : [];
+  const warnings: string[] = Array.isArray(analysis.warnings) ? analysis.warnings : [];
+  const reps: any[] = Array.isArray(analysis.reps) ? analysis.reps : [];
+  const agg: any = analysis.aggregate_metrics ?? {};
+
+  const formColor =
+    formPct >= 80 ? Colors.success
+    : formPct >= 60 ? Colors.warning
+    : Colors.danger;
+
+  return (
+    <>
+      <SectionHeader title="Form Analysis" />
+      <View className="bg-[#1d1d37] rounded-xl p-4 mb-6">
+        {/* Verification status + form score */}
+        <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-row items-center gap-2">
+            <FontAwesome name={verif.icon} size={15} color={verif.color} />
+            <Text style={{ color: verif.color, fontFamily: 'Lexend-SemiBold' }}>{verif.label}</Text>
+          </View>
+          <View className="items-end">
+            <Text className="text-2xl" style={{ color: formColor, fontFamily: 'Epilogue-Bold' }}>
+              {formPct}
+            </Text>
+            <Text className="text-xs" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
+              Form Score
+            </Text>
+          </View>
+        </View>
+
+        {/* Rep counts */}
+        <View className="flex-row gap-4 mb-3">
+          <View className="flex-1 bg-[#0c0c1f] rounded-lg p-3 items-center">
+            <Text className="text-xl" style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>
+              {analysis.rep_count ?? 0}
+            </Text>
+            <Text className="text-xs mt-0.5" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Total Reps</Text>
+          </View>
+          <View className="flex-1 bg-[#0c0c1f] rounded-lg p-3 items-center">
+            <Text className="text-xl" style={{ color: Colors.success, fontFamily: 'Epilogue-Bold' }}>
+              {analysis.valid_rep_count ?? 0}
+            </Text>
+            <Text className="text-xs mt-0.5" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Clean Reps</Text>
+          </View>
+          <View className="flex-1 bg-[#0c0c1f] rounded-lg p-3 items-center">
+            <Text className="text-xl" style={{ color: '#81ecff', fontFamily: 'Epilogue-Bold' }}>
+              {confPct}%
+            </Text>
+            <Text className="text-xs mt-0.5" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>Confidence</Text>
+          </View>
+        </View>
+
+        {/* Aggregate metrics */}
+        {agg && agg.avg_range_of_motion != null && (
+          <ScoreRow label="Avg Range of Motion" value={`${agg.avg_range_of_motion}°`} />
+        )}
+        {agg && agg.avg_tempo_seconds != null && (
+          <ScoreRow label="Avg Rep Tempo" value={`${agg.avg_tempo_seconds}s`} />
+        )}
+        {agg && agg.avg_symmetry != null && (
+          <ScoreRow label="Symmetry" value={`${agg.avg_symmetry}%`} />
+        )}
+        {agg && agg.tempo_consistency != null && (
+          <ScoreRow label="Tempo Consistency" value={`${Math.round(agg.tempo_consistency)}%`} />
+        )}
+
+        {/* Flags */}
+        {flags.length > 0 && (
+          <View className="mt-3">
+            {flags.map((flag, i) => (
+              <View key={i} className="flex-row items-center gap-2 py-1.5">
+                <FontAwesome name="exclamation-circle" size={13} color={Colors.danger} />
+                <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>
+                  {String(flag).replace(/_/g, ' ')}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Warnings */}
+        {warnings.length > 0 && (
+          <View className="mt-1">
+            {warnings.map((w, i) => (
+              <View key={i} className="flex-row items-center gap-2 py-1.5">
+                <FontAwesome name="warning" size={13} color={Colors.warning} />
+                <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13 }}>
+                  {String(w).replace(/_/g, ' ')}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Per-rep breakdown */}
+      {reps.length > 0 && (
+        <>
+          <SectionHeader title="Rep Breakdown" />
+          <View className="mb-6 gap-2">
+            {reps.map((rep: any, i: number) => {
+              const quality: string = rep.quality ?? 'acceptable';
+              const repColor =
+                quality === 'good' ? Colors.success
+                : quality === 'acceptable' ? Colors.warning
+                : Colors.danger;
+              const rom = rep.metrics?.range_of_motion;
+              const tempo = rep.metrics?.tempo_seconds;
+
+              return (
+                <View
+                  key={i}
+                  className="bg-[#1d1d37] rounded-xl px-3 py-2.5 flex-row items-center"
+                >
+                  <View
+                    className="w-7 h-7 rounded-full items-center justify-center mr-3"
+                    style={{ backgroundColor: `${repColor}22` }}
+                  >
+                    <Text className="text-xs" style={{ color: repColor, fontFamily: 'Lexend-SemiBold' }}>
+                      {i + 1}
+                    </Text>
+                  </View>
+                  <Text className="flex-1 capitalize" style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Regular' }}>
+                    {quality}
+                  </Text>
+                  {rom != null && (
+                    <Text className="text-xs mr-3" style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }}>
+                      {Math.round(rom)}° ROM
+                    </Text>
+                  )}
+                  {tempo != null && (
+                    <Text className="text-xs" style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}>
+                      {tempo.toFixed(1)}s
+                    </Text>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </>
+      )}
+    </>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
 export default function WorkoutDetailScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const router = useRouter();
@@ -92,6 +276,7 @@ export default function WorkoutDetailScreen() {
   const fadeHeaderAnim = useFadeSlide(0);
   const fadeScoreAnim = useFadeSlide(100);
   const fadeSetsAnim = useFadeSlide(200);
+  const fadeAnalysisAnim = useFadeSlide(300);
 
   const { workout, validations } = data;
   const validationStatus = (workout.validation_status ?? 'accepted') as ValidationStatus;
@@ -260,6 +445,13 @@ export default function WorkoutDetailScreen() {
           </Pressable>
         )}
         </Animated.View>
+
+        {/* Video Form Analysis — shown for strength workouts */}
+        {workout.type === 'strength' && workoutId && (
+          <Animated.View style={fadeAnalysisAnim.style}>
+            <VideoAnalysisCard workoutId={workoutId} />
+          </Animated.View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

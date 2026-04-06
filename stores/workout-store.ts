@@ -121,7 +121,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
         idempotencyKey: state.idempotencyKey,
         strengthSets: state.strengthSets,
         distanceKm: state.distanceKm,
-        elapsedSeconds: state.elapsedSeconds,
+        // elapsedSeconds intentionally not persisted — always starts fresh
       }),
     }
   )

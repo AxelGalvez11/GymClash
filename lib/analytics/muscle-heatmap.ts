@@ -23,7 +23,7 @@ import {
 } from './muscle-mapping';
 
 export type HeatLevel = 'cold' | 'warm' | 'hot' | 'maxed';
-export type TimeWindow = '7D' | '14D' | '30D';
+export type TimeWindow = '1D' | '7D' | '14D' | '30D';
 
 export interface MuscleLoadResult {
   readonly muscle: MuscleGroup;
@@ -44,22 +44,23 @@ export interface HeatmapData {
 // --- Heat Colors (Victory Peak palette) ---
 
 export const HEAT_COLORS: Record<HeatLevel, string> = {
-  cold: '#23233f',     // Surface dark -- no training
-  warm: '#eab308',     // Gold -- light training
-  hot: '#f97316',      // Orange -- moderate
-  maxed: '#ef4444',    // Red -- heavy training
+  cold: '#23233f',                // Surface dark -- no heat
+  warm: 'rgba(206,150,255,0.35)', // Light purple glow
+  hot: 'rgba(206,150,255,0.65)',  // Medium purple glow
+  maxed: '#ce96ff',               // Full bright purple (100% glow)
 };
 
 export const HEAT_GLOW: Record<HeatLevel, number> = {
   cold: 0,
-  warm: 0.2,
-  hot: 0.4,
-  maxed: 0.6,
+  warm: 0.3,
+  hot: 0.55,
+  maxed: 0.85,
 };
 
 // --- Time filtering ---
 
 const TIMEFRAME_MS: Record<TimeWindow, number> = {
+  '1D': 1 * 24 * 60 * 60 * 1000,
   '7D': 7 * 24 * 60 * 60 * 1000,
   '14D': 14 * 24 * 60 * 60 * 1000,
   '30D': 30 * 24 * 60 * 60 * 1000,

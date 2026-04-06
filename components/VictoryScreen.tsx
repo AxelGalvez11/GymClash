@@ -352,6 +352,31 @@ export function VictoryScreen({
     }).start();
   }, [visible, overlayOpacity]);
 
+  // ─── Header spring-in ─────────────────────────────────
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerScale = useRef(new Animated.Value(0.7)).current;
+  useEffect(() => {
+    if (visible) {
+      headerOpacity.setValue(0);
+      headerScale.setValue(0.7);
+      Animated.parallel([
+        Animated.timing(headerOpacity, {
+          toValue: 1,
+          duration: 280,
+          delay: 60,
+          useNativeDriver: true,
+        }),
+        Animated.spring(headerScale, {
+          toValue: 1,
+          delay: 60,
+          friction: 5,
+          tension: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, headerOpacity, headerScale]);
+
   // ─── Staggered entry animations ───────────────────────
   // Score counter finishes at ~1500ms, then badges stagger
 
@@ -475,8 +500,14 @@ export function VictoryScreen({
           onPress={handleSkip}
         >
           <View className="flex-1 items-center justify-center px-8" pointerEvents="box-none">
-            {/* Top: Workout type icon + title */}
-            <View className="items-center mb-10">
+            {/* Top: Workout type icon + title — spring pop entrance */}
+            <Animated.View
+              className="items-center mb-10"
+              style={{
+                opacity: headerOpacity,
+                transform: [{ scale: headerScale }],
+              }}
+            >
               <View
                 className="w-16 h-16 rounded-full items-center justify-center mb-4"
                 style={{ backgroundColor: workoutColor + '20' }}
@@ -489,7 +520,7 @@ export function VictoryScreen({
               >
                 WORKOUT COMPLETE
               </Text>
-            </View>
+            </Animated.View>
 
             {/* Center: Animated score counter */}
             <View className="items-center mb-8">
@@ -681,11 +712,12 @@ export function VictoryScreen({
             {/* Continue button */}
             <Animated.View style={{ opacity: buttonOpacity }} className="w-full mt-6">
               <Button
-                label="Continue"
                 onPress={handleDismiss}
                 variant="primary"
                 size="lg"
-              />
+              >
+                Continue
+              </Button>
             </Animated.View>
           </View>
         </Pressable>

@@ -232,11 +232,12 @@ export function CelebrationModal({
             {/* Continue button */}
             <View className="w-full mt-8">
               <Button
-                label="Continue"
                 onPress={onDismiss}
                 variant="primary"
                 size="lg"
-              />
+              >
+                Continue
+              </Button>
             </View>
           </View>
         </Animated.View>

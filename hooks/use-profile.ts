@@ -9,19 +9,20 @@ export function useProfile() {
     queryKey: ['profile', session?.user?.id],
     queryFn: fetchMyProfile,
     enabled: !!session,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
-  const { session } = useAuthStore();
 
   return useMutation({
     mutationFn: updateProfile,
     onSuccess: () => {
+      // Invalidate all profile queries without specifying userId since it may change
       queryClient.invalidateQueries({
-        queryKey: ['profile', session?.user?.id],
+        queryKey: ['profile'],
+        exact: false,
       });
     },
   });
@@ -29,13 +30,14 @@ export function useUpdateProfile() {
 
 export function useUpdateBiodata() {
   const queryClient = useQueryClient();
-  const { session } = useAuthStore();
 
   return useMutation({
     mutationFn: updateBiodata,
     onSuccess: () => {
+      // Invalidate all profile queries without specifying userId since it may change
       queryClient.invalidateQueries({
-        queryKey: ['profile', session?.user?.id],
+        queryKey: ['profile'],
+        exact: false,
       });
     },
   });

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 import type { OnboardingFormState, ExperienceLevel } from './types';
 
@@ -131,8 +132,7 @@ export default function StepExperience({
         onSelect={(value) => onUpdate({ runningExperience: value })}
       />
 
-      <TouchableOpacity
-        activeOpacity={0.8}
+      <Pressable
         onPress={onNext}
         disabled={!canContinue}
         style={[
@@ -148,7 +148,7 @@ export default function StepExperience({
         >
           CONTINUE
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </ScrollView>
   );
 }

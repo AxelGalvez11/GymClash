@@ -1,0 +1,267 @@
+<html class="dark"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;700;800;900&amp;family=Be+Vietnam+Pro:wght@300;400;600;700&amp;family=Lexend:wght@400;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#0c0c1f",
+            "on-secondary": "#5b4b00",
+            "secondary-dim": "#efc900",
+            "inverse-surface": "#fcf8ff",
+            "on-primary-container": "#370060",
+            "on-tertiary-fixed": "#003840",
+            "surface-container": "#17172f",
+            "surface-tint": "#ce96ff",
+            "on-background": "#e5e3ff",
+            "primary-fixed": "#c583ff",
+            "tertiary-fixed-dim": "#00d4ec",
+            "on-error-container": "#ffb2b9",
+            "outline": "#74738b",
+            "on-primary": "#48007a",
+            "on-primary-fixed": "#000000",
+            "secondary-fixed": "#ffd709",
+            "primary-dim": "#a434ff",
+            "on-secondary-container": "#fff7e6",
+            "on-secondary-fixed": "#453900",
+            "on-tertiary-fixed-variant": "#005762",
+            "secondary": "#ffd709",
+            "tertiary-dim": "#00d4ec",
+            "error-container": "#a70138",
+            "background": "#0c0c1f",
+            "error": "#ff6e84",
+            "on-primary-fixed-variant": "#440075",
+            "tertiary-fixed": "#00e3fd",
+            "secondary-fixed-dim": "#efc900",
+            "inverse-on-surface": "#53536a",
+            "secondary-container": "#705d00",
+            "surface-dim": "#0c0c1f",
+            "primary-fixed-dim": "#bb6fff",
+            "primary": "#ce96ff",
+            "tertiary": "#81ecff",
+            "on-surface": "#e5e3ff",
+            "on-tertiary-container": "#004d57",
+            "surface-bright": "#292948",
+            "on-secondary-fixed-variant": "#665500",
+            "primary-container": "#c583ff",
+            "tertiary-container": "#00e3fd",
+            "surface-container-lowest": "#000000",
+            "surface-variant": "#23233f",
+            "on-error": "#490013",
+            "error-dim": "#d73357",
+            "on-surface-variant": "#aaa8c3",
+            "on-tertiary": "#005762",
+            "surface-container-low": "#111127",
+            "outline-variant": "#46465c",
+            "surface-container-high": "#1d1d37",
+            "inverse-primary": "#8d00e7",
+            "surface-container-highest": "#23233f"
+          },
+          fontFamily: {
+            "headline": ["Epilogue"],
+            "body": ["Be Vietnam Pro"],
+            "label": ["Lexend"]
+          },
+          borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .hero-glow {
+      box-shadow: 0 0 40px -10px rgba(206, 150, 255, 0.3);
+    }
+    .glass-panel {
+      background: rgba(23, 23, 47, 0.8);
+      backdrop-filter: blur(24px);
+    }
+    .shimmer {
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      background-size: 200% 100%;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 max-w-none bg-[#0c0c1f] gap-y-3.5 bg-gradient-to-b from-[#17172f] to-transparent shadow-[0_4px_20px_rgba(206,150,255,0.1)]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border-2 border-primary overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Close up portrait of a focused athlete with tactical headgear and sweat glistening under blue cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiEs8g3s7uMNAOokQNkcWwPoQra-kL1kA6LdnMr7MkPaQGyT3DiGJRMNiW87AQDpfwBHpgWku11loIRRqjaXOzBZeDets3KMaNN2t8qQJh8MELftmpCJMvlfleiaX9bgYeJSxQD82I9cpVdpUU7SsSstXqfPER2AfBCZlO5CrbrgHX4QXzaUa3R3JzrZUinBGuUtzY7omJgzEKX-xX1UGoLml6vqjosV1WEMs0tYL_A0WiYlNWoEI83OL6qKT3loeAI0D1_ryBy-ii"/>
+</div>
+<h1 class="font-headline tracking-tighter uppercase font-black text-2xl text-[#ffd709] drop-shadow-[0_0_8px_rgba(255,215,9,0.4)]">DEMON SLAYER</h1>
+</div>
+<div class="flex items-center gap-2 px-4 py-1.5 bg-surface-container-highest rounded-full border border-outline-variant/20 hover:scale-105 transition-transform active:scale-95 duration-100">
+<span class="font-label font-bold text-secondary">4,250 🏆</span>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-5xl mx-auto space-y-8">
+<!-- PHASE 1: WORKOUT SELECTION -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Weight Lifting Card -->
+<button class="group relative overflow-hidden rounded-xl bg-surface-container-high p-1 text-left transition-all hover:scale-[1.02] active:scale-95 border-2 border-transparent hover:border-tertiary">
+<div class="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity">
+<img alt="Weight Lifting" class="w-full h-full object-cover" data-alt="Heavy iron dumbbells in a dark industrial gym setting with dramatic teal and purple rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCymWFByiAbfB3IX76Pcn0IpQssmqmBlOUh1Lm7UWB4kIjx4rhICsLKzIf9I3P8N2moZxKoA7qfpqgBpU3ILjpD003OCGDUnEhqDcH8yM3BWoQz7vrxmkuSdl_obFBchPv8NyhXrf3eBwKWPHAfA5gozsPZHX7jIXzJ8TU1af5eVLXG_0GkZOsg6Y8FhMAsaZXDW32uf2ESvZhhVXR0pw01QKxvE5cYIkfXAPIDQsAaQa9Aym8z0k2eAJRA5RiW_vJbdW7pUrU7BCKg"/>
+</div>
+<div class="relative h-48 flex flex-col justify-end p-6 bg-gradient-to-t from-surface-container-highest to-transparent">
+<span class="font-headline text-3xl font-black italic tracking-tighter text-tertiary">WEIGHT LIFTING</span>
+<p class="text-on-surface-variant font-label text-xs uppercase tracking-widest mt-1">Iron &amp; Steel Protocol</p>
+</div>
+</button>
+<!-- Cardio Card -->
+<button class="group relative overflow-hidden rounded-xl bg-surface-container-high p-1 text-left transition-all hover:scale-[1.02] active:scale-95 border-2 border-transparent hover:border-secondary">
+<div class="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity">
+<img alt="Cardio" class="w-full h-full object-cover" data-alt="Dynamic shot of a sprinter starting a race on a dark track with electric orange light trails and sparks" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmAfoDgeDFBQ7mLtKUHCOkBOt1FdfK1SFa_7YMTlb9kpEvjILl4Yijd807fRfqdlm8Bq8Q9fB3WKTq6kh9AP6Tw6PmQo72sZwmg_MufSIIygaNvqSDKmHn0z8SL4g3LuXTt9MjM8MELjygWJAIZkbinxZcnhml2pQoXdAxej4pWJcluzrzBDnUD9BoMJiamIdEbYMKdfiRFDutyDDXnmmFPlePbB0dOWpz78DMkvGvUiqTXsnvCoBjFcbm_Kb5DpbM6v7fRkss4FVu"/>
+</div>
+<div class="relative h-48 flex flex-col justify-end p-6 bg-gradient-to-t from-surface-container-highest to-transparent">
+<span class="font-headline text-3xl font-black italic tracking-tighter text-secondary">CARDIO</span>
+<p class="text-on-surface-variant font-label text-xs uppercase tracking-widest mt-1">Lightning &amp; Endurance</p>
+</div>
+</button>
+</section>
+<!-- PHASE 2: LIFTING INTERFACE (BENTO STYLE) -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Input Panel -->
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-surface-container rounded-xl p-6 border border-outline-variant/10">
+<div class="flex items-center gap-4 mb-6">
+<span class="material-symbols-outlined text-tertiary text-3xl">search</span>
+<input class="w-full bg-surface-container-lowest border-none focus:ring-2 focus:ring-primary-dim rounded-lg font-label uppercase text-sm tracking-tight placeholder:text-outline/50" placeholder="SEARCH EXERCISE (e.g. Dumbbell Bench Press)" type="text"/>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between px-4 py-2 bg-surface-container-high rounded-lg border-l-4 border-tertiary">
+<span class="font-headline font-bold text-lg">SET 1</span>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<span class="text-[10px] font-label text-outline uppercase tracking-widest">REPS</span>
+<input class="w-16 bg-surface-container-lowest border-none text-center font-black text-xl rounded-md text-tertiary" type="number" value="12"/>
+</div>
+<div class="flex flex-col items-center">
+<span class="text-[10px] font-label text-outline uppercase tracking-widest">WEIGHT (KG)</span>
+<input class="w-20 bg-surface-container-lowest border-none text-center font-black text-xl rounded-md text-tertiary" type="number" value="40"/>
+</div>
+</div>
+</div>
+<button class="w-full py-4 rounded-lg bg-surface-container-highest border border-dashed border-outline-variant/30 flex items-center justify-center gap-2 hover:bg-surface-bright transition-colors group">
+<span class="material-symbols-outlined text-primary group-hover:scale-125 transition-transform">add_circle</span>
+<span class="font-headline font-bold tracking-tight">ADD SET 2</span>
+</button>
+<div class="bg-error/10 border border-error/20 p-3 rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-error text-sm">warning</span>
+<p class="text-[10px] font-label text-error-container uppercase tracking-wide leading-relaxed">
+                Note: Diminishing Returns after Set 3. Focus on quality over volume for hypertrophy efficiency.
+              </p>
+</div>
+</div>
+</div>
+<!-- Real-time Scoring HUD -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-highest rounded-xl p-6 border-b-4 border-primary">
+<span class="text-[10px] font-label text-outline uppercase tracking-widest block mb-2">Current Volume Score</span>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-black text-primary">1,480</span>
+<span class="text-xs font-label text-primary-dim">VOL</span>
+</div>
+</div>
+<div class="bg-surface-container-highest rounded-xl p-6 border-b-4 border-tertiary">
+<span class="text-[10px] font-label text-outline uppercase tracking-widest block mb-2">Predicted Target</span>
+<div class="flex items-baseline gap-2">
+<span class="text-4xl font-headline font-black text-tertiary">2,100</span>
+<span class="text-xs font-label text-tertiary-dim">ELITE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Experience & Progress (Sidebar) -->
+<div class="space-y-6">
+<div class="bg-surface-container rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-4">
+<div class="relative w-32 h-32 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<circle class="text-surface-container-highest" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-dasharray="364" stroke-dashoffset="120" stroke-width="8"></circle>
+</svg>
+<span class="text-3xl font-headline font-black">LVL 42</span>
+</div>
+<div class="w-full space-y-2">
+<div class="flex justify-between text-[10px] font-label uppercase tracking-widest text-outline">
+<span>Next Level</span>
+<span>850 / 1200 XP</span>
+</div>
+<div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden p-[2px]">
+<div class="h-full bg-gradient-to-r from-primary to-primary-dim rounded-full relative overflow-hidden" style="width: 70%">
+<div class="absolute inset-0 shimmer opacity-30"></div>
+</div>
+</div>
+<p class="text-[10px] font-label text-secondary uppercase tracking-tighter">+120 XP EARNED THIS SESSION</p>
+</div>
+</div>
+<!-- Cardio View Mini-HUD -->
+<div class="bg-surface-container rounded-xl overflow-hidden">
+<div class="h-32 relative">
+<div class="absolute inset-0 bg-cover bg-center opacity-60" data-alt="Dark stylized GPS map view of a city grid with glowing neon paths" data-location="Los Angeles" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCOlmkDdrgHg6VGaKp_0NpEvYHuwIP9rmeimPB_3fmxed-iFp5EpL6OfCQW13hBoB4QX4pX16nKWpLbNJInUrkygDdmkOB0yMeFlo8T-FthGrAsLUBwYAh_RnHS_D4sZ6isAGNyqMjNknIBg6F6-eTKetKzoWme22BIIJ4RwZFCJ7HNP2LGZLpPvJFudPWPw42WPhlnrhheQIOuRjkee0zMCVEOBUVa--djLp4LzTTxq4nwR2YwcQlGSZBNPCIaq5jHOmm7HLB0h2fW')"></div>
+<div class="absolute top-3 left-3 px-2 py-1 bg-surface/80 backdrop-blur-md rounded border border-secondary/40 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-secondary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span class="text-[9px] font-label font-bold text-secondary uppercase tracking-widest">Verified Status</span>
+</div>
+<div class="absolute bottom-3 right-3 flex items-center gap-1 bg-error/20 px-2 py-1 rounded-md">
+<span class="material-symbols-outlined text-error text-xs">favorite</span>
+<span class="font-label text-xs font-bold text-error">142 BPM</span>
+</div>
+</div>
+<div class="p-4 grid grid-cols-2 gap-2 text-center border-t border-outline-variant/10">
+<div>
+<span class="text-[9px] font-label text-outline uppercase block">Distance</span>
+<span class="font-headline font-bold text-tertiary">3.2 KM</span>
+</div>
+<div>
+<span class="text-[9px] font-label text-outline uppercase block">Pace</span>
+<span class="font-headline font-bold text-tertiary">5'12"</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ACTION BUTTON -->
+<div class="flex justify-center pt-8">
+<button class="px-12 py-5 bg-gradient-to-b from-primary-fixed to-primary-dim rounded-lg font-headline font-black text-xl text-on-primary-fixed uppercase tracking-tighter shadow-[0_10px_40px_rgba(206,150,255,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-4">
+        FINISH BATTLE
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-[#17172f]/80 backdrop-blur-xl rounded-t-[3rem] border-t-2 border-[#ce96ff]/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined mb-1">sports_kabaddi</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Arena</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#ffd709] bg-[#23233f] rounded-[2rem] px-5 py-2 shadow-[inset_0_-2px_0_rgba(255,215,9,0.5)] active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined mb-1">fitness_center</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Workout</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined mb-1">groups</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Clans</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined mb-1">local_mall</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Shop</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#81ecff]/60 px-5 py-2 hover:text-[#ce96ff] transition-colors active:scale-90 duration-150 ease-out" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-['Lexend'] font-bold text-[10px] uppercase tracking-widest">Profile</span>
+</a>
+</nav>
+</body></html>

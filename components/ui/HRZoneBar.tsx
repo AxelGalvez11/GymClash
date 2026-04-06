@@ -1,5 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from "react-native-reanimated";
 
 const ZONE_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
   1: "#94a3b8",
@@ -17,13 +24,54 @@ const ZONE_LABELS: Record<1 | 2 | 3 | 4 | 5, string> = {
   5: "Max",
 };
 
+interface ZoneEntry {
+  readonly zone: 1 | 2 | 3 | 4 | 5;
+  readonly minutes: number;
+  readonly points: number;
+}
+
 interface HRZoneBarProps {
-  readonly breakdown: ReadonlyArray<{
-    readonly zone: 1 | 2 | 3 | 4 | 5;
-    readonly minutes: number;
-    readonly points: number;
-  }>;
+  readonly breakdown: ReadonlyArray<ZoneEntry>;
   readonly totalMinutes: number;
+}
+
+/** Single animated zone segment inside the stacked bar. */
+function AnimatedZoneSegment({
+  widthPercent,
+  color,
+  isFirst,
+  isLast,
+  index,
+}: {
+  widthPercent: number;
+  color: string;
+  isFirst: boolean;
+  isLast: boolean;
+  index: number;
+}) {
+  const animatedWidth = useSharedValue(0);
+
+  useEffect(() => {
+    // Stagger each segment slightly so they fan in left-to-right
+    animatedWidth.value = withDelay(
+      index * 80,
+      withTiming(widthPercent, {
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+      })
+    );
+  }, [widthPercent]);
+
+  const style = useAnimatedStyle(() => ({
+    width: `${animatedWidth.value}%` as `${number}%`,
+    backgroundColor: color,
+    borderTopLeftRadius: isFirst ? 9999 : 0,
+    borderBottomLeftRadius: isFirst ? 9999 : 0,
+    borderTopRightRadius: isLast ? 9999 : 0,
+    borderBottomRightRadius: isLast ? 9999 : 0,
+  }));
+
+  return <Animated.View style={style} />;
 }
 
 export function HRZoneBar({ breakdown, totalMinutes }: HRZoneBarProps) {
@@ -51,7 +99,7 @@ export function HRZoneBar({ breakdown, totalMinutes }: HRZoneBarProps) {
 
   return (
     <View style={{ gap: 8 }}>
-      {/* Stacked bar */}
+      {/* Stacked animated bar */}
       <View
         style={{
           height: 12,
@@ -64,18 +112,13 @@ export function HRZoneBar({ breakdown, totalMinutes }: HRZoneBarProps) {
         {activeZones.map((entry, index) => {
           const widthPercent = (entry.minutes / safeTotal) * 100;
           return (
-            <View
+            <AnimatedZoneSegment
               key={entry.zone}
-              style={{
-                width: `${widthPercent}%`,
-                backgroundColor: ZONE_COLORS[entry.zone],
-                borderTopLeftRadius: index === 0 ? 9999 : 0,
-                borderBottomLeftRadius: index === 0 ? 9999 : 0,
-                borderTopRightRadius:
-                  index === activeZones.length - 1 ? 9999 : 0,
-                borderBottomRightRadius:
-                  index === activeZones.length - 1 ? 9999 : 0,
-              }}
+              widthPercent={widthPercent}
+              color={ZONE_COLORS[entry.zone]}
+              isFirst={index === 0}
+              isLast={index === activeZones.length - 1}
+              index={index}
             />
           );
         })}

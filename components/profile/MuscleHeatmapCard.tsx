@@ -1,24 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { BodyFigureFront } from './BodyFigureFront';
-import { BodyFigureBack } from './BodyFigureBack';
-import { MuscleParticleOverlay } from './MuscleParticleOverlay';
+import Body from 'react-native-body-highlighter';
 import {
   calculateMuscleHeatmap,
   getMuscleColor,
   HEAT_COLORS,
   type TimeWindow,
-  type HeatmapData,
 } from '@/lib/analytics/muscle-heatmap';
 import {
   type MuscleGroup,
-  ALL_MUSCLES,
   MUSCLE_LABELS,
   FRONT_MUSCLES,
   BACK_MUSCLES,
 } from '@/lib/analytics/muscle-mapping';
 import type { StrengthSet } from '@/types';
+import {
+  BODY_HIGHLIGHTER_HIDDEN_PARTS,
+  buildBodyHighlighterData,
+  resolveBodyHighlighterGender,
+  resolveMuscleGroupFromBodyPart,
+} from './muscle-body-highlighter-adapter';
 
 // VP palette (match profile.tsx)
 const VP = {
@@ -38,9 +40,17 @@ interface MuscleHeatmapCardProps {
     readonly sets: readonly StrengthSet[] | null;
   }[];
   readonly bodyWeightKg: number | null;
+  readonly biologicalSex?: string | null;
 }
 
-const TIME_WINDOWS: TimeWindow[] = ['7D', '14D', '30D'];
+const TIME_WINDOWS: TimeWindow[] = ['1D', '7D', '30D'];
+
+const TIME_WINDOW_LABELS: Record<TimeWindow, string> = {
+  '1D': 'Daily',
+  '7D': 'Weekly',
+  '14D': '14D',
+  '30D': 'Monthly',
+};
 
 const HEAT_LEGEND: { level: string; color: string }[] = [
   { level: 'Cold', color: HEAT_COLORS.cold },
@@ -49,9 +59,13 @@ const HEAT_LEGEND: { level: string; color: string }[] = [
   { level: 'Max', color: HEAT_COLORS.maxed },
 ];
 
-export function MuscleHeatmapCard({ workouts, bodyWeightKg }: MuscleHeatmapCardProps) {
+export function MuscleHeatmapCard({
+  workouts,
+  bodyWeightKg,
+  biologicalSex,
+}: MuscleHeatmapCardProps) {
   const [view, setView] = useState<'front' | 'back'>('front');
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>('14D');
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>('7D');
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
 
   const heatmapData = useMemo(
@@ -59,32 +73,20 @@ export function MuscleHeatmapCard({ workouts, bodyWeightKg }: MuscleHeatmapCardP
     [workouts, timeWindow, bodyWeightKg],
   );
 
-  // Build color map for SVG figures
-  const muscleColors = useMemo(() => {
-    const colors: Record<string, string> = {};
-    for (const muscle of ALL_MUSCLES) {
-      colors[muscle] = getMuscleColor(heatmapData, muscle);
-    }
-    return colors as Record<MuscleGroup, string>;
-  }, [heatmapData]);
+  const bodyHighlighterData = useMemo(
+    () => buildBodyHighlighterData({ heatmapData, selectedMuscle, view }),
+    [heatmapData, selectedMuscle, view],
+  );
+
+  const bodyHighlighterGender = useMemo(
+    () => resolveBodyHighlighterGender(biologicalSex),
+    [biologicalSex],
+  );
 
   const visibleMuscles = view === 'front' ? FRONT_MUSCLES : BACK_MUSCLES;
   const selectedData = selectedMuscle ? heatmapData.muscles.get(selectedMuscle) : null;
 
-  // Empty state
-  if (heatmapData.workoutCount === 0) {
-    return (
-      <View className="items-center py-6">
-        <FontAwesome name="fire" size={28} color={VP.textMuted} />
-        <Text style={{ color: VP.textMuted, fontFamily: 'Epilogue-Bold', fontSize: 14, marginTop: 8 }}>
-          No Strength Data
-        </Text>
-        <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 12, textAlign: 'center', marginTop: 4 }}>
-          Complete strength workouts to see your muscle heatmap
-        </Text>
-      </View>
-    );
-  }
+  const isEmpty = heatmapData.workoutCount === 0;
 
   return (
     <View>
@@ -102,7 +104,7 @@ export function MuscleHeatmapCard({ workouts, bodyWeightKg }: MuscleHeatmapCardP
               fontFamily: 'Lexend-SemiBold',
               fontSize: 11,
             }}>
-              {tw}
+              {TIME_WINDOW_LABELS[tw]}
             </Text>
           </Pressable>
         ))}
@@ -126,17 +128,90 @@ export function MuscleHeatmapCard({ workouts, bodyWeightKg }: MuscleHeatmapCardP
         </Pressable>
       </View>
 
+      {/* Top Worked Muscles */}
+      {!isEmpty && (() => {
+        const sorted = Array.from(heatmapData.muscles.entries())
+          .filter(([, d]) => d.setCount > 0)
+          .sort(([, a], [, b]) => b.setCount - a.setCount)
+          .slice(0, 3);
+        if (sorted.length === 0) return null;
+        return (
+          <>
+            <Text
+              style={{
+                color: VP.textMuted,
+                fontFamily: 'Lexend-SemiBold',
+                fontSize: 9,
+                letterSpacing: 1.2,
+                textTransform: 'uppercase',
+                marginBottom: 6,
+              }}
+            >
+              Top Worked
+            </Text>
+            <View className="flex-row gap-2 mb-4">
+              {sorted.map(([muscle, data]) => (
+                <View
+                  key={muscle}
+                  className="flex-1 items-center rounded-xl p-2"
+                  style={{
+                    backgroundColor: VP.raised,
+                    borderWidth: 1,
+                    borderColor: 'rgba(206,150,255,0.12)',
+                  }}
+                >
+                  <View
+                    className="w-2.5 h-2.5 rounded-sm mb-1"
+                    style={{ backgroundColor: getMuscleColor(heatmapData, muscle) }}
+                  />
+                  <Text
+                    style={{
+                      color: VP.textMuted,
+                      fontFamily: 'Lexend-SemiBold',
+                      fontSize: 9,
+                      textAlign: 'center',
+                      marginBottom: 2,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {MUSCLE_LABELS[muscle]}
+                  </Text>
+                  <Text style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold', fontSize: 18, lineHeight: 20 }}>
+                    {data.setCount}
+                  </Text>
+                  <Text style={{ color: VP.textMuted, fontFamily: 'Lexend-SemiBold', fontSize: 8 }}>sets</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        );
+      })()}
+
       {/* Body figure */}
       <View className="items-center mb-4">
-        <View style={{ position: 'relative' }}>
-          {view === 'front' ? (
-            <BodyFigureFront muscleColors={muscleColors} />
-          ) : (
-            <BodyFigureBack muscleColors={muscleColors} />
-          )}
-          <MuscleParticleOverlay
-            heatmapData={heatmapData}
-            view={view}
+        <View
+          className="rounded-[28px] px-4 py-3"
+          style={{
+            backgroundColor: '#101022',
+            borderWidth: 1,
+            borderColor: 'rgba(206,150,255,0.10)',
+          }}
+        >
+          <Body
+            data={bodyHighlighterData}
+            side={view}
+            gender={bodyHighlighterGender}
+            scale={1.12}
+            border="none"
+            hiddenParts={[...BODY_HIGHLIGHTER_HIDDEN_PARTS]}
+            defaultFill="#17172f"
+            defaultStroke="rgba(116,115,139,0.32)"
+            defaultStrokeWidth={0.9}
+            onBodyPartPress={(bodyPart) => {
+              const muscle = resolveMuscleGroupFromBodyPart(bodyPart.slug, view);
+              if (!muscle) return;
+              setSelectedMuscle((current) => (current === muscle ? null : muscle));
+            }}
           />
         </View>
       </View>
@@ -173,7 +248,7 @@ export function MuscleHeatmapCard({ workouts, bodyWeightKg }: MuscleHeatmapCardP
       </View>
 
       {/* Selected muscle detail */}
-      {selectedData && (
+      {!isEmpty && selectedData && (
         <View className="bg-[#0c0c1f] rounded-lg p-3 mb-3">
           <Text style={{ color: VP.textPri, fontFamily: 'Epilogue-Bold', fontSize: 13, marginBottom: 4 }}>
             {MUSCLE_LABELS[selectedData.muscle]}
@@ -190,6 +265,12 @@ export function MuscleHeatmapCard({ workouts, bodyWeightKg }: MuscleHeatmapCardP
             <View>
               <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 10 }}>Intensity</Text>
               <Text style={{ color: VP.textPri, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>{Math.round(selectedData.normalizedIntensity * 100)}%</Text>
+            </View>
+            <View>
+              <Text style={{ color: VP.textMuted, fontFamily: 'BeVietnamPro-Regular', fontSize: 10 }}>Density</Text>
+              <Text style={{ color: VP.textPri, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>
+                {selectedData.setCount > 0 ? Math.round(selectedData.rawLoad / selectedData.setCount).toLocaleString() : 0}
+              </Text>
             </View>
           </View>
         </View>

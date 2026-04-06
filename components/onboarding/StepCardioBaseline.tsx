@@ -1,13 +1,7 @@
-import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import React, { useMemo, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import type { OnboardingFormState } from './types';
+import { DrumPicker, DRUM_PICKER_H } from './DrumPicker';
 
 interface StepCardioBaselineProps {
   readonly form: OnboardingFormState;
@@ -15,25 +9,19 @@ interface StepCardioBaselineProps {
   readonly onNext: () => void;
 }
 
+// ── Age / HR helpers ─────────────────────────────────────────────────────────
 function computeAge(birthDate: string): number | null {
   const parts = birthDate.split('-');
   if (parts.length !== 3) return null;
-
   const year = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10);
   const day = parseInt(parts[2], 10);
-
   if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-
   const today = new Date();
   const birth = new Date(year, month - 1, day);
-
   let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age -= 1;
-  }
-
+  const md = today.getMonth() - birth.getMonth();
+  if (md < 0 || (md === 0 && today.getDate() < birth.getDate())) age -= 1;
   return age > 0 ? age : null;
 }
 
@@ -44,6 +32,23 @@ function getFitnessRating(vo2max: number): string {
   return 'Below average';
 }
 
+// ── Picker item generators ───────────────────────────────────────────────────
+// Max HR: 120–220 bpm
+const MAX_HR_ITEMS = Array.from({ length: 101 }, (_, i) => {
+  const v = String(120 + i);
+  return { label: v, value: v };
+});
+
+// Resting HR: 30–120 bpm (first item = skip / not set)
+const RESTING_HR_ITEMS = [
+  { label: '—', value: '' },
+  ...Array.from({ length: 91 }, (_, i) => {
+    const v = String(30 + i);
+    return { label: v, value: v };
+  }),
+];
+
+// ── Component ────────────────────────────────────────────────────────────────
 export default function StepCardioBaseline({
   form,
   onUpdate,
@@ -52,34 +57,36 @@ export default function StepCardioBaseline({
   const age = useMemo(() => computeAge(form.birthDate), [form.birthDate]);
   const calculatedMaxHR = age !== null ? 220 - age : null;
 
-  const effectiveMaxHR = form.maxHROverride !== ''
-    ? parseInt(form.maxHROverride, 10)
-    : calculatedMaxHR;
+  // Derive effective max HR from picker value
+  const maxHRParsed = form.maxHROverride !== '' ? parseInt(form.maxHROverride, 10) : null;
+  const effectiveMaxHR =
+    maxHRParsed !== null && !isNaN(maxHRParsed) && maxHRParsed > 0
+      ? maxHRParsed
+      : calculatedMaxHR;
 
-  const restingHR = form.restingHR !== ''
-    ? parseInt(form.restingHR, 10)
-    : null;
+  const restingHRParsed =
+    form.restingHR !== '' ? parseInt(form.restingHR, 10) : null;
 
   const vo2max = useMemo(() => {
     if (
       effectiveMaxHR == null ||
-      isNaN(effectiveMaxHR) ||
-      restingHR == null ||
-      isNaN(restingHR) ||
-      restingHR <= 0
+      effectiveMaxHR <= 0 ||
+      restingHRParsed == null ||
+      isNaN(restingHRParsed) ||
+      restingHRParsed <= 0
     ) {
       return null;
     }
-    return Math.round((15.3 * (effectiveMaxHR / restingHR)) * 10) / 10;
-  }, [effectiveMaxHR, restingHR]);
+    return Math.round((15.3 * (effectiveMaxHR / restingHRParsed)) * 10) / 10;
+  }, [effectiveMaxHR, restingHRParsed]);
 
-  // Pre-fill maxHROverride with calculated value when age becomes available
-  // and user hasn't manually set a value yet
-  React.useEffect(() => {
-    if (calculatedMaxHR !== null && form.maxHROverride === '') {
-      onUpdate({ maxHROverride: String(calculatedMaxHR) });
-    }
-  }, [calculatedMaxHR, form.maxHROverride, onUpdate]);
+  // Default maxHR value for the picker
+  const maxHRDefault =
+    form.maxHROverride !== ''
+      ? form.maxHROverride
+      : calculatedMaxHR !== null
+        ? String(calculatedMaxHR)
+        : '190';
 
   return (
     <ScrollView
@@ -101,38 +108,39 @@ export default function StepCardioBaseline({
       ) : (
         <View style={styles.formulaCard}>
           <Text style={styles.formulaText}>
-            (220 - {age} = {calculatedMaxHR} bpm)
+            Formula: 220 − {age} = {calculatedMaxHR} bpm
           </Text>
         </View>
       )}
 
-      {/* Max Heart Rate */}
+      {/* ── Max Heart Rate Drum Picker ─────────────────────────────────── */}
       <View style={styles.section}>
-        <Text style={styles.label}>Max Heart Rate (bpm)</Text>
-        <TextInput
-          style={styles.input}
-          value={form.maxHROverride}
-          onChangeText={(value) => onUpdate({ maxHROverride: value })}
-          keyboardType="number-pad"
-          placeholderTextColor="#74738b"
-          placeholder={calculatedMaxHR !== null ? String(calculatedMaxHR) : 'Enter max HR'}
-        />
+        <Text style={styles.label}>Max Heart Rate</Text>
+        <View style={styles.pickerWrapper}>
+          <DrumPicker
+            key={`maxhr-${calculatedMaxHR}`}
+            items={MAX_HR_ITEMS}
+            value={maxHRDefault}
+            onChange={(v) => onUpdate({ maxHROverride: v })}
+            unit="bpm"
+          />
+        </View>
       </View>
 
-      {/* Resting Heart Rate */}
+      {/* ── Resting Heart Rate Drum Picker ────────────────────────────── */}
       <View style={styles.section}>
-        <Text style={styles.label}>Resting Heart Rate (bpm) — optional</Text>
-        <TextInput
-          style={styles.input}
-          value={form.restingHR}
-          onChangeText={(value) => onUpdate({ restingHR: value })}
-          keyboardType="number-pad"
-          placeholderTextColor="#74738b"
-          placeholder="e.g. 60"
-        />
+        <Text style={styles.label}>Resting Heart Rate — optional</Text>
+        <View style={styles.pickerWrapper}>
+          <DrumPicker
+            items={RESTING_HR_ITEMS}
+            value={form.restingHR}
+            onChange={(v) => onUpdate({ restingHR: v })}
+            unit={form.restingHR !== '' ? 'bpm' : undefined}
+          />
+        </View>
       </View>
 
-      {/* VO2 Max Estimate */}
+      {/* ── VO2 Max Estimate ───────────────────────────────────────────── */}
       {vo2max !== null && (
         <View style={styles.vo2Card}>
           <Text style={styles.vo2Title}>Estimated VO2 Max</Text>
@@ -141,13 +149,18 @@ export default function StepCardioBaseline({
         </View>
       )}
 
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={onNext}
-        style={styles.continueButton}
+      {/* ── Continue ──────────────────────────────────────────────────── */}
+      <View
+        style={[styles.continueButton]}
+        // Using Pressable-like onPress via outer wrapper approach
       >
-        <Text style={styles.continueButtonText}>CONTINUE</Text>
-      </TouchableOpacity>
+        <Text
+          style={styles.continueButtonText}
+          onPress={onNext}
+        >
+          CONTINUE
+        </Text>
+      </View>
     </ScrollView>
   );
 }
@@ -172,25 +185,21 @@ const styles = StyleSheet.create({
     fontFamily: 'BeVietnamPro-Regular',
     fontSize: 14,
     color: '#aaa8c3',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   label: {
     fontFamily: 'Lexend-SemiBold',
-    fontSize: 14,
-    color: '#e5e3ff',
-    marginBottom: 8,
+    fontSize: 13,
+    color: '#aaa8c3',
+    marginBottom: 10,
   },
-  input: {
+  pickerWrapper: {
     backgroundColor: '#000000',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontFamily: 'BeVietnamPro-Regular',
-    fontSize: 16,
-    color: '#e5e3ff',
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   formulaCard: {
     marginBottom: 24,
@@ -239,15 +248,15 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     backgroundColor: '#a434ff',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 8,
   },
   continueButtonText: {
-    fontFamily: 'Lexend-SemiBold',
+    fontFamily: 'Epilogue-Bold',
     fontSize: 16,
-    color: '#e5e3ff',
-    letterSpacing: 1,
+    color: '#ffffff',
+    letterSpacing: 1.5,
   },
 });

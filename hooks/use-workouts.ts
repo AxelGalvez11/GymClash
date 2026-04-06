@@ -23,18 +23,21 @@ export function useWorkoutDetail(workoutId: string | undefined) {
     queryKey: ['workout', workoutId],
     queryFn: () => fetchWorkoutWithValidation(workoutId!),
     enabled: !!workoutId,
+    staleTime: 1000 * 60 * 5, // 5 minutes — workout details are stable
   });
 }
 
 export function useSubmitWorkout() {
   const queryClient = useQueryClient();
-  const { session } = useAuthStore();
 
   return useMutation({
     mutationFn: (input: CreateWorkoutInput) => createWorkout(input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Invalidate all workout and profile queries using exact: false
+      queryClient.invalidateQueries({ queryKey: ['workouts'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['profile'], exact: false });
+      // Also invalidate 1RM records as they may be affected by new workout
+      queryClient.invalidateQueries({ queryKey: ['1rm-records'], exact: false });
     },
   });
 }

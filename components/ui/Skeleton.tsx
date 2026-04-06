@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { Animated, type ViewStyle } from 'react-native';
+import { useState } from 'react';
+import { View, type ViewStyle, type LayoutChangeEvent } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { useShimmer } from '@/hooks/use-shimmer';
 
 interface SkeletonProps {
   readonly width: number | `${number}%` | 'auto';
@@ -9,32 +11,48 @@ interface SkeletonProps {
 }
 
 function SkeletonBase({ width, height, borderRadius = 8, style }: SkeletonProps) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
+  // For percentage/auto widths we measure the container so useShimmer gets the real pixel width
+  const [measuredWidth, setMeasuredWidth] = useState<number>(
+    typeof width === 'number' ? width : 200,
+  );
 
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [opacity]);
+  const { shimmerStyle } = useShimmer(measuredWidth);
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    if (w > 0) setMeasuredWidth(w);
+  };
 
   return (
-    <Animated.View
+    <View
+      onLayout={typeof width !== 'number' ? onLayout : undefined}
       style={[
         {
           width,
           height,
           borderRadius,
           backgroundColor: '#1d1d37',
-          opacity,
+          overflow: 'hidden',
         },
         style,
       ]}
-    />
+    >
+      {/* Shimmer sweep layer */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            width: measuredWidth * 0.55,
+            // Subtle white highlight gradient approximated via a translucent white bar
+            backgroundColor: 'rgba(255,255,255,0.07)',
+            borderRadius,
+          },
+          shimmerStyle,
+        ]}
+      />
+    </View>
   );
 }
 

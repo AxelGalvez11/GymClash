@@ -13,8 +13,31 @@ export function SetRow({ set, index, onRemove }: SetRowProps) {
   const tonnage = set.sets * set.reps * set.weight_kg;
 
   return (
-    <View className="bg-[#1d1d37] rounded-xl p-3 flex-row items-center">
-      <View className="flex-1">
+    <View
+      style={{
+        backgroundColor: '#17172f',
+        borderRadius: 12,
+        padding: 10,
+        marginBottom: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(206,150,255,0.08)',
+        flexDirection: 'row',
+        alignItems: 'center',
+      }}
+    >
+      <View
+        style={{
+          width: 3,
+          height: '100%',
+          borderRadius: 2,
+          backgroundColor: '#ce96ff',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+        }}
+      />
+      <View className="flex-1" style={{ marginLeft: 12 }}>
         <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}>{set.exercise}</Text>
         <Text className="text-sm" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
           {set.sets} × {set.reps} @ {set.weight_kg}kg — {tonnage}kg total

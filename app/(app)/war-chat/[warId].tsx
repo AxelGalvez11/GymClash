@@ -212,7 +212,7 @@ export default function WarChatScreen() {
           }}
           ListEmptyComponent={
             <View className="items-center py-12">
-              <FontAwesome name="comments-o" size={32} color="#74738b" />
+              <FontAwesome name="comments" size={32} color="#74738b" />
               <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-lg mt-3">No messages yet</Text>
               <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-sm mt-1">Start the war talk!</Text>
             </View>

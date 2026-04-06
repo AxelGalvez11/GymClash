@@ -42,7 +42,7 @@ export function useFadeSlide(delay = 0) {
     return () => {
       cancelled = true;
     };
-  }, [opacity, translateY, delay]);
+  }, [delay]);
 
   return {
     opacity,

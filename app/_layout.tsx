@@ -23,6 +23,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { queryClient } from '@/services/query-client';
 import { useAuthStore } from '@/stores/auth-store';
@@ -65,7 +66,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       router.replace('/(auth)/landing');
     } else if (session && needsOnboarding && !inOnboarding) {
       router.replace('/(auth)/onboarding');
-    } else if (session && !needsOnboarding && inAuthGroup) {
+    } else if (session && !needsOnboarding && inAuthGroup && !inOnboarding) {
       router.replace('/(app)/home');
     }
   }, [session, isLoading, isGuest, needsOnboarding, segments, router]);
@@ -90,6 +91,8 @@ export default function RootLayout() {
     'Lexend-Regular': Lexend_400Regular,
     'Lexend-SemiBold': Lexend_600SemiBold,
     'Lexend-Bold': Lexend_700Bold,
+    // Monospace font used in GlowingTabBar labels, VictoryScreen, CelebrationModal
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
 
@@ -108,10 +111,12 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthGate>
-        <Slot />
-      </AuthGate>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthGate>
+          <Slot />
+        </AuthGate>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

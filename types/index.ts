@@ -23,7 +23,26 @@ export type Rank =
   | 'champion'
   | 'olympian';
 
-export type ArenaTier = 'rustyard' | 'iron_forge' | 'titan_vault' | 'apex_colosseum';
+export type ArenaTier =
+  | 'sweat_zone'
+  | 'pump_room'
+  | 'grindhouse'
+  | 'rack_arena'
+  | 'the_iron_yard'
+  | 'barbell_pit'
+  | 'plate_factory'
+  | 'pr_chamber'
+  | 'strength_circuit'
+  | 'deadlift_den'
+  | 'titan_training_grounds'
+  | 'forge_of_strength'
+  | 'arena_of_reps'
+  | 'champions_floor'
+  | 'iron_pantheon'
+  | 'valhalla_barbell'
+  | 'hall_of_ascension'
+  | 'mount_olympus'
+  | 'the_colosseum';
 
 export type ClanRole = 'leader' | 'officer' | 'member';
 
