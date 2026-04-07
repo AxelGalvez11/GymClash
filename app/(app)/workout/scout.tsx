@@ -23,7 +23,9 @@ import { calculateScoutRawScore } from '@/lib/scoring/raw-score';
 import { TrophyRewards } from '@/constants/theme';
 import { useProfile } from '@/hooks/use-profile';
 import { useGpsTracking } from '@/hooks/use-gps-tracking';
+import { useLiveHeartRate } from '@/hooks/use-live-heart-rate';
 import { HeartRateZoneBox } from '@/components/workout/HeartRateZoneBox';
+import { TerritoryMap } from '@/components/workout/TerritoryMap';
 import { VictoryScreen } from '@/components/VictoryScreen';
 import { CardioModeSelector } from '@/components/CardioModeSelector';
 import { GpsDropOverlay } from '@/components/GpsDropOverlay';
@@ -35,17 +37,18 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { usePressScale } from '@/hooks/use-press-scale';
 import { useGlowPulse } from '@/hooks/use-glow-pulse';
 
-// ─── Design tokens ──────────────────────────────────────────────────────────
+// ─── Design tokens — pulls from theme ──────────────────────────────────────
+import { Colors } from '@/constants/theme';
 
-const SURFACE = '#0c0c1f';
-const CARD_BG = '#1d1d37';
-const MUTED = '#74738b';
-const TEXT_PRIMARY = '#e5e3ff';
-const ACCENT_PURPLE = '#ce96ff';
-const ACCENT_CYAN = '#81ecff';
-const ACCENT_DIM = '#a434ff';
-const DANGER = '#ef4444';
-const GPS_TEAL = '#0d2b2e';
+const SURFACE = Colors.surface.DEFAULT;
+const CARD_BG = Colors.surface.containerHigh;
+const MUTED = Colors.text.muted;
+const TEXT_PRIMARY = Colors.text.primary;
+const ACCENT_PURPLE = Colors.primary.DEFAULT;
+const ACCENT_CYAN = Colors.tertiary.DEFAULT;
+const ACCENT_DIM = Colors.primary.dim;
+const DANGER = Colors.error.DEFAULT;
+const GPS_TEAL = '#0d2b2e'; // intentional custom map background
 const GPS_ROUTE_PURPLE = 'rgba(164,52,255,0.5)';
 const GPS_ROUTE_CYAN = 'rgba(129,236,255,0.4)';
 
@@ -379,102 +382,46 @@ function GpsMapSection({
         )}
       </View>
 
-      {/* Map-like body */}
-      <View style={{ backgroundColor: GPS_TEAL, paddingVertical: 24, paddingHorizontal: 16 }}>
-        {/* Decorative route lines */}
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
-          {/* Horizontal "street" lines */}
-          <View style={{ position: 'absolute', top: '25%', left: 0, right: 0, height: 1, backgroundColor: 'rgba(129,236,255,0.08)' }} />
-          <View style={{ position: 'absolute', top: '55%', left: 0, right: 0, height: 1, backgroundColor: 'rgba(129,236,255,0.06)' }} />
-          <View style={{ position: 'absolute', top: '80%', left: 0, right: 0, height: 1, backgroundColor: 'rgba(129,236,255,0.05)' }} />
-          {/* Vertical "street" lines */}
-          <View style={{ position: 'absolute', top: 0, bottom: 0, left: '30%', width: 1, backgroundColor: 'rgba(129,236,255,0.06)' }} />
-          <View style={{ position: 'absolute', top: 0, bottom: 0, left: '65%', width: 1, backgroundColor: 'rgba(129,236,255,0.08)' }} />
-          {/* Route trace — diagonal accent line */}
-          <View
-            style={{
-              position: 'absolute',
-              top: '20%',
-              left: '15%',
-              width: '70%',
-              height: 3,
-              backgroundColor: GPS_ROUTE_PURPLE,
-              borderRadius: 2,
-              transform: [{ rotate: '-15deg' }],
-            }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '25%',
-              width: '55%',
-              height: 3,
-              backgroundColor: GPS_ROUTE_CYAN,
-              borderRadius: 2,
-              transform: [{ rotate: '8deg' }],
-            }}
-          />
+      {/* Real GPS map */}
+      {gps.status === 'error' ? (
+        <View style={{ backgroundColor: GPS_TEAL, paddingVertical: 32, paddingHorizontal: 16, alignItems: 'center' }}>
+          <FontAwesome name="exclamation-triangle" size={24} color="#ff6e84" style={{ marginBottom: 8 }} />
+          <Text style={{ color: '#ff6e84', fontSize: 13, fontFamily: 'BeVietnamPro-Regular', marginBottom: 4 }}>
+            GPS unavailable
+          </Text>
+          <Text style={{ color: MUTED, fontSize: 12, fontFamily: 'BeVietnamPro-Regular' }}>
+            Check location permissions and try again
+          </Text>
         </View>
+      ) : (
+        <TerritoryMap points={gps.points} height={260} />
+      )}
 
-        {gps.status === 'tracking' ? (
-          <View style={{ alignItems: 'center' }}>
-            {/* Location pin */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <View
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: ACCENT_CYAN,
-                  borderWidth: 2,
-                  borderColor: '#fff',
-                }}
-              />
-              <Text style={{ color: ACCENT_CYAN, fontSize: 11, fontFamily: 'Lexend-SemiBold' }}>
-                Live Location
-              </Text>
-            </View>
-
-            <Text
-              style={{
-                color: TEXT_PRIMARY,
-                fontSize: 40,
-                fontFamily: 'Lexend-Bold',
-                letterSpacing: -1,
-              }}
-            >
-              {gps.distance.toFixed(2)} km
-            </Text>
-            <Text
-              style={{
-                color: MUTED,
-                fontSize: 13,
-                fontFamily: 'BeVietnamPro-Regular',
-                marginTop: 6,
-              }}
-            >
-              Pace: {formatPace(gps.pace)} min/km {'\u00B7'} {gps.points.length} points
-            </Text>
-          </View>
-        ) : gps.status === 'error' ? (
-          <View style={{ alignItems: 'center' }}>
-            <FontAwesome name="exclamation-triangle" size={24} color="#ff6e84" style={{ marginBottom: 8 }} />
-            <Text style={{ color: '#ff6e84', fontSize: 13, fontFamily: 'BeVietnamPro-Regular', marginBottom: 4 }}>
-              GPS unavailable
-            </Text>
-            <Text style={{ color: MUTED, fontSize: 12, fontFamily: 'BeVietnamPro-Regular' }}>
-              Check location permissions and try again
-            </Text>
-          </View>
-        ) : (
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ color: MUTED, fontSize: 13, fontFamily: 'BeVietnamPro-Regular' }}>
-              Starting GPS...
-            </Text>
-          </View>
-        )}
-      </View>
+      {/* Stats below map */}
+      {gps.status === 'tracking' && (
+        <View style={{ backgroundColor: CARD_BG, paddingVertical: 12, paddingHorizontal: 16, alignItems: 'center' }}>
+          <Text
+            style={{
+              color: TEXT_PRIMARY,
+              fontSize: 28,
+              fontFamily: 'Lexend-Bold',
+              letterSpacing: -0.5,
+            }}
+          >
+            {gps.distance.toFixed(2)} km
+          </Text>
+          <Text
+            style={{
+              color: MUTED,
+              fontSize: 12,
+              fontFamily: 'BeVietnamPro-Regular',
+              marginTop: 2,
+            }}
+          >
+            Pace: {formatPace(gps.pace)} min/km {'\u00B7'} {gps.points.length} points
+          </Text>
+        </View>
+      )}
     </Reanimated.View>
   );
 }
@@ -545,6 +492,7 @@ export default function ScoutWorkoutScreen() {
   const maxHR = profile?.max_heart_rate ?? (profile?.birth_date ? 220 - Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null);
 
   const gps = useGpsTracking();
+  const liveHR = useLiveHeartRate(isActive);
   const [showVictory, setShowVictory] = useState(false);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [victoryData, setVictoryData] = useState({ score: 0, trophies: 12, streak: 0, isPB: false, currencyEarned: 0 });
@@ -603,12 +551,13 @@ export default function ScoutWorkoutScreen() {
     hrTranslateY.value = withDelay(320, withTiming(0, { duration: 260, easing }));
   }, []);
 
-  // Start workout and GPS on mount
+  // Start workout and GPS on mount, connect health adapter
   useEffect(() => {
     if (mode !== 'territory') return;
     if (!isActive) startWorkout('scout');
     if (gps.status === 'idle') gps.startTracking();
-  }, [isActive, startWorkout, mode, gps]);
+    if (!liveHR.isConnected) void liveHR.connect();
+  }, [isActive, startWorkout, mode, gps, liveHR]);
 
   // Elapsed time tracker
   useEffect(() => {
@@ -789,7 +738,7 @@ export default function ScoutWorkoutScreen() {
   // ── Territory mode (main run tracker) ─────────────────────────────────────
 
   return (
-    <ScreenBackground glowColor={ACCENT_PURPLE} glowOpacity={0.1} glowPosition="top" withStarField>
+    <ScreenBackground glowColor={ACCENT_PURPLE} glowOpacity={0.1} glowPosition="top">
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingBottom: 32 }}>
 
         {/* Header: Cancel / Finish pills */}
@@ -876,7 +825,7 @@ export default function ScoutWorkoutScreen() {
 
         {/* Heart rate zone */}
         <Reanimated.View style={hrStyle}>
-          <HeartRateZoneBox heartRate={null} maxHR={maxHR} />
+          <HeartRateZoneBox heartRate={liveHR.currentHeartRate} maxHR={maxHR} />
         </Reanimated.View>
 
         {/* GPS Map section */}

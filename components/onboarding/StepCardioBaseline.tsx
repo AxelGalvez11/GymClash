@@ -1,7 +1,9 @@
-import React, { useMemo, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import type { OnboardingFormState } from './types';
-import { DrumPicker, DRUM_PICKER_H } from './DrumPicker';
+import { DrumPicker } from './DrumPicker';
+import { GymClashWheelModal } from '@/components/ui/GymClashWheelModal';
+import { GymClashWheelTrigger } from '@/components/ui/GymClashWheelTrigger';
 
 interface StepCardioBaselineProps {
   readonly form: OnboardingFormState;
@@ -54,6 +56,7 @@ export default function StepCardioBaseline({
   onUpdate,
   onNext,
 }: StepCardioBaselineProps) {
+  const [activePicker, setActivePicker] = useState<'max' | 'resting' | null>(null);
   const age = useMemo(() => computeAge(form.birthDate), [form.birthDate]);
   const calculatedMaxHR = age !== null ? 220 - age : null;
 
@@ -115,29 +118,21 @@ export default function StepCardioBaseline({
 
       {/* ── Max Heart Rate Drum Picker ─────────────────────────────────── */}
       <View style={styles.section}>
-        <Text style={styles.label}>Max Heart Rate</Text>
-        <View style={styles.pickerWrapper}>
-          <DrumPicker
-            key={`maxhr-${calculatedMaxHR}`}
-            items={MAX_HR_ITEMS}
-            value={maxHRDefault}
-            onChange={(v) => onUpdate({ maxHROverride: v })}
-            unit="bpm"
-          />
-        </View>
+        <GymClashWheelTrigger
+          label="Max Heart Rate"
+          value={`${maxHRDefault} bpm`}
+          onPress={() => setActivePicker('max')}
+        />
       </View>
 
       {/* ── Resting Heart Rate Drum Picker ────────────────────────────── */}
       <View style={styles.section}>
-        <Text style={styles.label}>Resting Heart Rate — optional</Text>
-        <View style={styles.pickerWrapper}>
-          <DrumPicker
-            items={RESTING_HR_ITEMS}
-            value={form.restingHR}
-            onChange={(v) => onUpdate({ restingHR: v })}
-            unit={form.restingHR !== '' ? 'bpm' : undefined}
-          />
-        </View>
+        <GymClashWheelTrigger
+          label="Resting Heart Rate"
+          value={form.restingHR ? `${form.restingHR} bpm` : ''}
+          placeholder="Tap to set or skip"
+          onPress={() => setActivePicker('resting')}
+        />
       </View>
 
       {/* ── VO2 Max Estimate ───────────────────────────────────────────── */}
@@ -150,17 +145,40 @@ export default function StepCardioBaseline({
       )}
 
       {/* ── Continue ──────────────────────────────────────────────────── */}
-      <View
-        style={[styles.continueButton]}
-        // Using Pressable-like onPress via outer wrapper approach
+      <Pressable
+        style={styles.continueButton}
+        onPress={onNext}
       >
-        <Text
-          style={styles.continueButtonText}
-          onPress={onNext}
-        >
+        <Text style={styles.continueButtonText}>
           CONTINUE
         </Text>
-      </View>
+      </Pressable>
+
+      <GymClashWheelModal
+        visible={activePicker !== null}
+        title={activePicker === 'resting' ? 'Resting Heart Rate' : 'Max Heart Rate'}
+        subtitle="Tap or slide until the heart rate is centered."
+        onClose={() => setActivePicker(null)}
+      >
+        {activePicker === 'max' ? (
+          <DrumPicker
+            key={`maxhr-${calculatedMaxHR}`}
+            items={MAX_HR_ITEMS}
+            value={maxHRDefault}
+            onChange={(nextValue) => onUpdate({ maxHROverride: nextValue })}
+            unit="bpm"
+          />
+        ) : null}
+
+        {activePicker === 'resting' ? (
+          <DrumPicker
+            items={RESTING_HR_ITEMS}
+            value={form.restingHR}
+            onChange={(nextValue) => onUpdate({ restingHR: nextValue })}
+            unit={form.restingHR !== '' ? 'bpm' : undefined}
+          />
+        ) : null}
+      </GymClashWheelModal>
     </ScrollView>
   );
 }
@@ -189,17 +207,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 24,
-  },
-  label: {
-    fontFamily: 'Lexend-SemiBold',
-    fontSize: 13,
-    color: '#aaa8c3',
-    marginBottom: 10,
-  },
-  pickerWrapper: {
-    backgroundColor: '#000000',
-    borderRadius: 16,
-    overflow: 'hidden',
   },
   formulaCard: {
     marginBottom: 24,

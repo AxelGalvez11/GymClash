@@ -90,11 +90,6 @@ export function StepSummary({ form, onFinish, saving }: StepSummaryProps) {
 
   return (
     <View className="flex-1 items-center justify-center px-6">
-      {/* Gold symbol */}
-      <Text className="text-6xl mb-2" style={{ color: '#ffd709' }}>
-        {'<>'}
-      </Text>
-
       {/* Title */}
       <Text
         className="text-3xl mb-2 text-center"

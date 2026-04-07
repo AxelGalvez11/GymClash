@@ -6,10 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useGlowPulse } from '@/hooks/use-glow-pulse';
 import { usePressScale } from '@/hooks/use-press-scale';
+import { Colors, IconSize } from '@/constants/theme';
 
 // ─── Design tokens ──────────────────────────────────────────────────────────
-const ACCENT = '#ce96ff';
-const INACTIVE = '#74738b';
+const ACCENT = Colors.primary.DEFAULT;
+const INACTIVE = Colors.text.muted;
 const BAR_BG = 'rgba(12,12,31,0.95)';
 const BAR_BORDER = 'rgba(206,150,255,0.1)';
 const BAR_HEIGHT = 64;
@@ -17,12 +18,13 @@ const BAR_HEIGHT = 64;
 // ─── Icon map ────────────────────────────────────────────────────────────────
 type FAIconName = React.ComponentProps<typeof FontAwesome>['name'];
 
+// All tab icons use the same size (IconSize.md = 18) for consistency
 const ICON_MAP: Record<string, { icon: FAIconName; size: number }> = {
-  shop:    { icon: 'shopping-bag', size: 18 },
-  profile: { icon: 'user',         size: 20 },
-  home:    { icon: 'home',         size: 22 },
-  clan:    { icon: 'shield',       size: 20 },
-  coach:   { icon: 'bolt',         size: 18 },
+  shop:    { icon: 'shopping-bag', size: IconSize.md },
+  profile: { icon: 'user',         size: IconSize.md },
+  home:    { icon: 'home',         size: IconSize.md },
+  clan:    { icon: 'shield',       size: IconSize.md },
+  coach:   { icon: 'bolt',         size: IconSize.md },
 };
 
 // ─── Sub-components ──────────────────────────────────────────────────────────

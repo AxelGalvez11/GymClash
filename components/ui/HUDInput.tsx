@@ -7,6 +7,7 @@ import Animated, {
   interpolateColor,
   Easing,
 } from 'react-native-reanimated';
+import { Colors } from '@/constants/theme';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,25 +28,25 @@ interface HUDInputProps {
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 
 /** surface_container_lowest — recessed field bed */
-const COLOR_FIELD_BG = '#000000';
+const COLOR_FIELD_BG = Colors.surface.containerLowest;
 
 /** outline_variant at 20% opacity — ghost border at rest */
 const COLOR_BORDER_REST = 'rgba(70, 70, 92, 0.20)';
 
 /** primary_dim — focus glow ring */
-const COLOR_BORDER_FOCUS = '#a434ff';
+const COLOR_BORDER_FOCUS = Colors.primary.dim;
 
 /** Body text */
-const COLOR_TEXT = '#e5e3ff';
+const COLOR_TEXT = Colors.text.primary;
 
 /** Placeholder + unit muted tone */
-const COLOR_MUTED = '#74738b';
+const COLOR_MUTED = Colors.text.muted;
 
 /** Label above field */
-const COLOR_LABEL = '#aaa8c3';
+const COLOR_LABEL = Colors.text.secondary;
 
 /** Error state */
-const COLOR_ERROR = '#ff6e84';
+const COLOR_ERROR = Colors.error.DEFAULT;
 
 /** How long focus transitions animate (ms) */
 const FOCUS_DURATION_MS = 200;

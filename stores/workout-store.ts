@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as crypto from 'expo-crypto';
 import type { StrengthSet, WorkoutType } from '@/types';
+import type { HeartRateSample } from '@/lib/health/types';
 
 // ─── Guest Workout (stored locally, synced on sign-up) ──
 
@@ -55,6 +56,7 @@ interface ActiveWorkoutState {
   readonly strengthSets: readonly StrengthSet[];
   readonly distanceKm: number;
   readonly elapsedSeconds: number;
+  readonly heartRateSamples: readonly HeartRateSample[];
 }
 
 interface WorkoutActions {
@@ -63,6 +65,7 @@ interface WorkoutActions {
   readonly removeStrengthSet: (index: number) => void;
   readonly updateDistance: (km: number) => void;
   readonly updateElapsed: (seconds: number) => void;
+  readonly setHeartRateSamples: (samples: readonly HeartRateSample[]) => void;
   readonly reset: () => void;
 }
 
@@ -76,6 +79,7 @@ const initialState: ActiveWorkoutState = {
   strengthSets: [],
   distanceKm: 0,
   elapsedSeconds: 0,
+  heartRateSamples: [],
 };
 
 export const useWorkoutStore = create<WorkoutStore>()(
@@ -92,6 +96,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
           strengthSets: [],
           distanceKm: 0,
           elapsedSeconds: 0,
+          heartRateSamples: [],
         }),
 
       addStrengthSet: (newSet) =>
@@ -107,6 +112,8 @@ export const useWorkoutStore = create<WorkoutStore>()(
       updateDistance: (km) => set({ distanceKm: km }),
 
       updateElapsed: (seconds) => set({ elapsedSeconds: seconds }),
+
+      setHeartRateSamples: (samples) => set({ heartRateSamples: samples }),
 
       reset: () => set(initialState),
     }),

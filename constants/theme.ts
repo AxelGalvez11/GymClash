@@ -80,6 +80,83 @@ export const Colors = {
   },
 } as const;
 
+// ─── Spacing Scale ───────────────────────────────────────
+// 4pt grid. Snap all margin/padding/gap to these values.
+export const Spacing = {
+  xs:   4,
+  sm:   8,
+  md:   12,
+  lg:   16,
+  xl:   20,
+  xxl:  24,
+  huge: 32,
+  mega: 48,
+} as const;
+
+// ─── Border Radius Scale ─────────────────────────────────
+// sm → badges/tags. md → buttons/inputs. lg → cards. xl → modals/sheets. pill → fully rounded.
+export const Radius = {
+  sm:   8,
+  md:   14,
+  lg:   20,
+  xl:   28,
+  pill: 999,
+} as const;
+
+// ─── Icon Size Scale ─────────────────────────────────────
+// xs → inline decoration. sm → list rows. md → primary buttons/tabs. lg → hero CTAs. xl → feature icons.
+export const IconSize = {
+  xs: 10,
+  sm: 14,
+  md: 18,
+  lg: 22,
+  xl: 28,
+} as const;
+
+// ─── Typography Scale ────────────────────────────────────
+// Pair font family + size + letter spacing for consistent type.
+export const Type = {
+  label:    { fontFamily: 'Lexend-SemiBold',    fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase' as const },
+  caption:  { fontFamily: 'BeVietnamPro-Regular', fontSize: 11, letterSpacing: 0 },
+  body:     { fontFamily: 'BeVietnamPro-Regular', fontSize: 13, letterSpacing: 0 },
+  bodyBold: { fontFamily: 'Lexend-SemiBold',    fontSize: 13, letterSpacing: 0 },
+  title:    { fontFamily: 'Epilogue-Bold',      fontSize: 16, letterSpacing: 0 },
+  heading:  { fontFamily: 'Epilogue-Bold',      fontSize: 22, letterSpacing: -0.3 },
+  display:  { fontFamily: 'Epilogue-Bold',      fontSize: 30, letterSpacing: -0.5 },
+  mono:     { fontFamily: 'SpaceMono',          fontSize: 13, letterSpacing: 0 },
+} as const;
+
+// ─── Elevation / Shadow Presets ──────────────────────────
+// Use these instead of ad-hoc inline shadow objects. Includes iOS + Android.
+import { Platform } from 'react-native';
+
+const iosShadow = (color: string, opacity: number, radius: number, offsetY: number = 0) =>
+  Platform.OS === 'ios'
+    ? {
+        shadowColor: color,
+        shadowOpacity: opacity,
+        shadowRadius: radius,
+        shadowOffset: { width: 0, height: offsetY },
+      }
+    : { elevation: Math.round(radius / 2) };
+
+export const Elevation = {
+  // Subtle card — default resting state
+  card:     iosShadow('#000000', 0.2, 8, 2),
+  // Interactive floating element — modals, popovers, sheets
+  floating: iosShadow('#000000', 0.35, 16, 4),
+  // Hero CTA with brand glow
+  hero:     iosShadow('#a434ff', 0.5, 20, 4),
+  // Cyan accent glow for tertiary actions
+  heroCyan: iosShadow('#81ecff', 0.4, 16, 0),
+  // Purple subtle glow for selection states
+  glowPurple: iosShadow('#ce96ff', 0.3, 12, 0),
+  // Gold glow for trophy / premium actions
+  glowGold: iosShadow('#ffd709', 0.4, 14, 0),
+  // Danger glow for destructive confirmation
+  glowDanger: iosShadow('#ff6e84', 0.35, 12, 0),
+} as const;
+
 export const Rank = {
   rookie: { label: 'Rookie', color: '#aaa8c3', minXp: 0 },
   iron: { label: 'Iron', color: '#8b8b8b', minXp: 1000 },
@@ -116,12 +193,13 @@ export type ArenaTier =
 
 export const Arena: Record<
   ArenaTier,
-  { label: string; accent: string; badge: string; minTrophies: number; description: string }
+  { label: string; accent: string; badge: string; emblem: string; minTrophies: number; description: string }
 > = {
   sweat_zone: {
     label: 'Sweat Zone',
     accent: '#8B7355',
     badge: '💧',
+    emblem: 'tint',
     minTrophies: 0,
     description: 'Every legend starts somewhere. Welcome to the grind.',
   },
@@ -129,6 +207,7 @@ export const Arena: Record<
     label: 'Pump Room',
     accent: '#A0896C',
     badge: '💪',
+    emblem: 'hand-rock-o',
     minTrophies: 100,
     description: 'You found the pump. Now keep it flowing.',
   },
@@ -136,6 +215,7 @@ export const Arena: Record<
     label: 'Grindhouse',
     accent: '#B0B0B0',
     badge: '⚙️',
+    emblem: 'cog',
     minTrophies: 200,
     description: 'Day in, day out. The grind never lies.',
   },
@@ -143,6 +223,7 @@ export const Arena: Record<
     label: 'Rack Arena',
     accent: '#C0C0C0',
     badge: '🏋️',
+    emblem: 'cubes',
     minTrophies: 350,
     description: 'Step up to the rack. Prove you belong.',
   },
@@ -150,6 +231,7 @@ export const Arena: Record<
     label: 'The Iron Yard',
     accent: '#A8A8A8',
     badge: '⚒️',
+    emblem: 'industry',
     minTrophies: 500,
     description: 'Where iron meets willpower.',
   },
@@ -157,6 +239,7 @@ export const Arena: Record<
     label: 'Barbell Pit',
     accent: '#D4A84B',
     badge: '🔥',
+    emblem: 'anchor',
     minTrophies: 650,
     description: 'Descend into the pit. Only the strong rise.',
   },
@@ -164,6 +247,7 @@ export const Arena: Record<
     label: 'Plate Factory',
     accent: '#E0C068',
     badge: '🏭',
+    emblem: 'cogs',
     minTrophies: 800,
     description: 'Stacking plates is your profession now.',
   },
@@ -171,6 +255,7 @@ export const Arena: Record<
     label: 'PR Chamber',
     accent: '#FFD700',
     badge: '📈',
+    emblem: 'trophy',
     minTrophies: 1000,
     description: 'Personal records are forged in this chamber.',
   },
@@ -178,6 +263,7 @@ export const Arena: Record<
     label: 'Strength Circuit',
     accent: '#FFC107',
     badge: '⚡',
+    emblem: 'bolt',
     minTrophies: 1200,
     description: 'Power surges through every rep.',
   },
@@ -185,6 +271,7 @@ export const Arena: Record<
     label: 'Deadlift Den',
     accent: '#FF9800',
     badge: '🐻',
+    emblem: 'link',
     minTrophies: 1400,
     description: 'Heavy pulls and heavier resolve.',
   },
@@ -192,6 +279,7 @@ export const Arena: Record<
     label: 'Titan Training Grounds',
     accent: '#FF6D00',
     badge: '🏛️',
+    emblem: 'shield',
     minTrophies: 1600,
     description: 'Train where titans once walked.',
   },
@@ -199,6 +287,7 @@ export const Arena: Record<
     label: 'Forge of Strength',
     accent: '#FF5722',
     badge: '🔨',
+    emblem: 'fire',
     minTrophies: 1850,
     description: 'Raw power hammered into perfection.',
   },
@@ -206,6 +295,7 @@ export const Arena: Record<
     label: 'Arena of Reps',
     accent: '#E91E63',
     badge: '⚔️',
+    emblem: 'refresh',
     minTrophies: 2100,
     description: 'Every rep is a battle won.',
   },
@@ -213,6 +303,7 @@ export const Arena: Record<
     label: "Champion's Floor",
     accent: '#9C27B0',
     badge: '👑',
+    emblem: 'star',
     minTrophies: 2400,
     description: 'Only champions set foot here.',
   },
@@ -220,6 +311,7 @@ export const Arena: Record<
     label: 'Iron Pantheon',
     accent: '#7B1FA2',
     badge: '🏆',
+    emblem: 'university',
     minTrophies: 2700,
     description: 'Ascend among the iron gods.',
   },
@@ -227,6 +319,7 @@ export const Arena: Record<
     label: 'Valhalla Barbell',
     accent: '#4A148C',
     badge: '⚡',
+    emblem: 'bolt',
     minTrophies: 3000,
     description: 'The worthy are called to lift eternal.',
   },
@@ -234,6 +327,7 @@ export const Arena: Record<
     label: 'Hall of Ascension',
     accent: '#311B92',
     badge: '✨',
+    emblem: 'arrow-up',
     minTrophies: 3400,
     description: 'Transcend your limits. Ascend beyond.',
   },
@@ -241,6 +335,7 @@ export const Arena: Record<
     label: 'Mount Olympus',
     accent: '#1A237E',
     badge: '🌩️',
+    emblem: 'diamond',
     minTrophies: 3800,
     description: 'Where mortals become legends.',
   },
@@ -248,6 +343,7 @@ export const Arena: Record<
     label: 'The Colosseum',
     accent: '#FF6B6B',
     badge: '🏟️',
+    emblem: 'building',
     minTrophies: 4200,
     description: 'The pinnacle. The crowd roars for you.',
   },

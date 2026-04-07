@@ -258,8 +258,7 @@ CREATE TABLE IF NOT EXISTS active_boosts (
   expires_at timestamptz NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_boosts_user_active ON active_boosts(user_id, expires_at)
-  WHERE expires_at > now();
+CREATE INDEX IF NOT EXISTS idx_boosts_user_active ON active_boosts(user_id, expires_at);
 ALTER TABLE active_boosts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY boosts_select ON active_boosts FOR SELECT USING (auth.uid() = user_id);
 

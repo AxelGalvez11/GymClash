@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-import { Colors, Rank } from '@/constants/theme';
+import { Colors, Rank, Spacing, Radius } from '@/constants/theme';
 import { ClanEmblem } from '@/components/ClanEmblem';
 import { BiColorBar } from '@/components/BiColorBar';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -64,16 +64,16 @@ const ROLE_LABELS: Record<ClanRole, string> = {
 };
 
 const ROLE_COLORS: Record<ClanRole, string> = {
-  leader: '#ffd709',
-  officer: '#ce96ff',
-  member: '#74738b',
+  leader:  Colors.secondary.DEFAULT,
+  officer: Colors.primary.DEFAULT,
+  member:  Colors.text.muted,
 };
 
 // Role badge background — diluted version of role color
 const ROLE_BG: Record<ClanRole, string> = {
-  leader: 'rgba(255,215,9,0.15)',
+  leader:  'rgba(255,215,9,0.15)',
   officer: 'rgba(206,150,255,0.15)',
-  member: 'rgba(116,115,139,0.15)',
+  member:  'rgba(116,115,139,0.15)',
 };
 
 const WAR_TYPE_LABELS: Record<string, string> = {
@@ -253,11 +253,17 @@ function MemberRow({
           </View>
 
           {/* Name + role */}
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Medium', fontSize: 14, marginBottom: 2 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              numberOfLines={1}
+              style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Medium', fontSize: 14, marginBottom: 2 }}
+            >
               {displayName || 'Warrior'}
             </Text>
-            <Text style={{ color: rankConfig.color, fontFamily: 'Lexend-SemiBold', fontSize: 10, textTransform: 'uppercase' }}>
+            <Text
+              numberOfLines={1}
+              style={{ color: rankConfig.color, fontFamily: 'Lexend-SemiBold', fontSize: 10, textTransform: 'uppercase' }}
+            >
               Lv.{level} · {rankConfig.label}
             </Text>
           </View>
@@ -315,10 +321,8 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
   const warBtnGlow = useGlowPulse('#ffd709', 0.2, 0.55, 2000);
   const chatCardPress = usePressScale(0.97);
   const { animatedStyle: chatCardEntrance } = useStaggerEntrance(0, 60, 260);
-  const clanChatCardPress = usePressScale(0.97);
-  const { animatedStyle: clanChatCardEntrance } = useStaggerEntrance(1, 60, 260);
   const lbCardPress = usePressScale(0.97);
-  const { animatedStyle: lbCardEntrance } = useStaggerEntrance(2, 60, 260);
+  const { animatedStyle: lbCardEntrance } = useStaggerEntrance(1, 60, 260);
   const leavePress = usePressScaleHeavy(0.95);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -510,6 +514,29 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           </View>
         )}
 
+        {/* ── Clan description (above war button) ──────────── */}
+        {clan.description ? (
+          <View style={{ backgroundColor: 'rgba(206,150,255,0.04)', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(206,150,255,0.1)' }}>
+            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13, lineHeight: 20, textAlign: 'center' }}>
+              {clan.description}
+            </Text>
+            {clan.my_role === 'leader' && (
+              <Pressable onPress={() => setShowEditDesc(true)} style={{ alignSelf: 'center', marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <FontAwesome name="pencil" size={10} color="#ce96ff" />
+                <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>Edit</Text>
+              </Pressable>
+            )}
+          </View>
+        ) : (
+          clan.my_role === 'leader' && (
+            <Pressable onPress={() => setShowEditDesc(true)} style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(206,150,255,0.15)', borderStyle: 'dashed', padding: 12, alignItems: 'center' }}>
+              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>
+                + Add Clan Description
+              </Text>
+            </Pressable>
+          )
+        )}
+
         {/* ── Initiate War Button ────────────────────────────── */}
         {!warLoading && (clan.my_role === 'leader' || clan.my_role === 'officer') && (
           <Reanimated.View style={[{ marginBottom: 20 }]}>
@@ -573,40 +600,6 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
             </View>
           )}
 
-          {/* Report button */}
-          <Pressable
-            style={{ borderRadius: 10, borderWidth: 1, borderColor: 'rgba(116,115,139,0.2)', paddingVertical: 10, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6, marginBottom: 20 }}
-            onPress={() => Alert.alert('Report', 'Unfair play reporting coming soon.')}
-          >
-            <FontAwesome name="flag" size={11} color="#74738b" />
-            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 11, color: '#74738b', textTransform: 'uppercase', letterSpacing: 1 }}>
-              Report for Unfair Play
-            </Text>
-          </Pressable>
-        </Reanimated.View>
-
-        {/* ── Global Rankings Section ─────────────────────────── */}
-        <Reanimated.View style={cardsEntrance.animatedStyle}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <View style={{ width: 4, height: 18, borderRadius: 2, backgroundColor: '#81ecff' }} />
-            <FontAwesome name="globe" size={14} color="#81ecff" />
-            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: '#e5e3ff', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              Global Rankings
-            </Text>
-          </View>
-
-          <Card variant="default" accentBorder="#81ecff" style={{ marginBottom: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 16, color: '#ffd709' }}>#12 National</Text>
-              <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: '#74738b' }}>Top 0.5%</Text>
-            </View>
-          </Card>
-          <Card variant="default" style={{ marginBottom: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 16, color: '#81ecff' }}>#3 Local</Text>
-              <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: '#74738b' }}>City ranking</Text>
-            </View>
-          </Card>
         </Reanimated.View>
 
         {/* ── Navigation Links: Chat / Leaderboard ──────────── */}
@@ -614,13 +607,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           <Reanimated.View style={chatCardPress.animatedStyle}>
             <Pressable
               style={{ backgroundColor: '#1d1d37', borderRadius: 14, padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(206,150,255,0.2)' }}
-              onPress={() => {
-                if (hasActiveWar) {
-                  router.push(`/(app)/war-chat/${war.id}` as any);
-                } else {
-                  Alert.alert('War Chat', 'Start an active war to access the war chat channel.');
-                }
-              }}
+              onPress={() => router.push(`/(app)/clan-chat/${clan.id}${hasActiveWar ? '?tab=war' : ''}` as any)}
               onPressIn={chatCardPress.onPressIn}
               onPressOut={chatCardPress.onPressOut}
             >
@@ -628,9 +615,9 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
                 <FontAwesome name="comments" size={16} color="#ce96ff" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: '#e5e3ff' }}>War Chat</Text>
+                <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: '#e5e3ff' }}>Chat</Text>
                 <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 11, color: '#74738b', marginTop: 1 }}>
-                  {hasActiveWar ? `Channel #001 · vs ${opponentName}` : 'Active during war'}
+                  {hasActiveWar ? `Clan + War tabs · vs ${opponentName}` : 'Clan channel with a war tab when active'}
                 </Text>
               </View>
               <FontAwesome name="chevron-right" size={11} color="#46465c" />
@@ -638,26 +625,27 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           </Reanimated.View>
         </Reanimated.View>
 
-        <Reanimated.View style={[cardsEntrance.animatedStyle, clanChatCardEntrance]}>
-          <Reanimated.View style={clanChatCardPress.animatedStyle}>
-            <Pressable
-              style={{ backgroundColor: '#1d1d37', borderRadius: 14, padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(129,236,255,0.2)' }}
-              onPress={() => router.push(`/(app)/clan-chat/${clan.id}` as any)}
-              onPressIn={clanChatCardPress.onPressIn}
-              onPressOut={clanChatCardPress.onPressOut}
-            >
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(129,236,255,0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                <FontAwesome name="comments" size={16} color="#81ecff" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: '#e5e3ff' }}>Clan Chat</Text>
-                <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 11, color: '#74738b', marginTop: 1 }}>
-                  Chat with your clanmates
-                </Text>
-              </View>
-              <FontAwesome name="chevron-right" size={11} color="#46465c" />
-            </Pressable>
-          </Reanimated.View>
+        <Reanimated.View style={cardsEntrance.animatedStyle}>
+          <Pressable
+            style={{ backgroundColor: '#1d1d37', borderRadius: 14, padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,215,9,0.15)' }}
+            onPress={() =>
+              Alert.alert(
+                'War Rules',
+                '1. Wars last 7 days.\n2. Every clan member\'s workouts contribute points.\n3. Daily contribution caps prevent single-player carry.\n4. Strength & cardio workouts both count.\n5. Anti-cheat validated — flagged workouts are excluded.\n6. Winning clan earns trophies & bonus rewards.\n7. Ties are broken by total member participation %.',
+              )
+            }
+          >
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,215,9,0.08)', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+              <FontAwesome name="book" size={16} color="#ffd709" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: '#e5e3ff' }}>War Rules</Text>
+              <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 11, color: '#74738b', marginTop: 1 }}>
+                How wars work &amp; scoring
+              </Text>
+            </View>
+            <FontAwesome name="chevron-right" size={11} color="#46465c" />
+          </Pressable>
         </Reanimated.View>
 
         <Reanimated.View style={[cardsEntrance.animatedStyle, lbCardEntrance]}>
@@ -730,28 +718,7 @@ function MyClanView({ clan, onLeave }: { clan: any; onLeave: () => void }) {
           </View>
         )}
 
-        {/* ── Clan description ───────────────────────────────── */}
-        {clan.description ? (
-          <View style={{ backgroundColor: 'rgba(206,150,255,0.04)', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(206,150,255,0.1)' }}>
-            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 13, lineHeight: 20, textAlign: 'center' }}>
-              {clan.description}
-            </Text>
-            {clan.my_role === 'leader' && (
-              <Pressable onPress={() => setShowEditDesc(true)} style={{ alignSelf: 'center', marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <FontAwesome name="pencil" size={10} color="#ce96ff" />
-                <Text style={{ color: '#ce96ff', fontFamily: 'Lexend-SemiBold', fontSize: 10 }}>Edit</Text>
-              </Pressable>
-            )}
-          </View>
-        ) : (
-          clan.my_role === 'leader' && (
-            <Pressable onPress={() => setShowEditDesc(true)} style={{ marginBottom: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(206,150,255,0.15)', borderStyle: 'dashed', padding: 12, alignItems: 'center' }}>
-              <Text style={{ color: '#74738b', fontFamily: 'Lexend-SemiBold', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>
-                + Add Clan Description
-              </Text>
-            </Pressable>
-          )
-        )}
+        {/* (clan description moved above war button) */}
 
         {/* ── Leave Clan ─────────────────────────────────────── */}
         <Reanimated.View style={[leavePress.animatedStyle, { marginBottom: 8 }]}>

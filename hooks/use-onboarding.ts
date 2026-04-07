@@ -18,12 +18,12 @@ export function useNeedsOnboarding() {
           .from('profiles')
           .select('display_name')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
         if (error) {
           console.warn('Onboarding check failed:', error.message);
           return false; // Don't block navigation if DB is unreachable
         }
-        return !data?.display_name || data.display_name === '';
+        return !data?.display_name || data.display_name.trim() === '';
       } catch (err) {
         console.warn('Onboarding check error:', err);
         return false;

@@ -14,20 +14,21 @@ import { OneRMBenchmarkBars } from '@/components/profile/OneRMBenchmarkBars';
 
 import { useEntrance } from '@/hooks/use-entrance';
 import { usePressScale } from '@/hooks/use-press-scale';
+import { Colors, Spacing, Radius } from '@/constants/theme';
 
-// ─── Victory Peak palette ───────────────────────────────
+// ─── Victory Peak palette — pulls from theme ────────────
 const VP = {
-  surface:    '#0c0c1f',
-  raised:     '#17172f',
-  active:     '#1d1d37',
-  highest:    '#23233f',
-  textPri:    '#e5e3ff',
-  textSec:    '#aaa8c3',
-  textMuted:  '#74738b',
-  primary:    '#ce96ff',
-  primaryDim: '#a434ff',
-  gold:       '#ffd709',
-  cyan:       '#81ecff',
+  surface:    Colors.surface.DEFAULT,
+  raised:     Colors.surface.container,
+  active:     Colors.surface.containerHigh,
+  highest:    Colors.surface.containerHighest,
+  textPri:    Colors.text.primary,
+  textSec:    Colors.text.secondary,
+  textMuted:  Colors.text.muted,
+  primary:    Colors.primary.DEFAULT,
+  primaryDim: Colors.primary.dim,
+  gold:       Colors.secondary.DEFAULT,
+  cyan:       Colors.tertiary.DEFAULT,
 } as const;
 
 const chromaticShadow = {
@@ -64,6 +65,49 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]" edges={['top']}>
       <ScrollView className="flex-1 px-5 pt-4" contentContainerClassName="pb-8">
+
+        {/* Stats title + Level/XP bar */}
+        <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 22, color: '#e5e3ff', marginBottom: 4 }}>
+          {profile?.display_name ?? 'Warrior'}&apos;s Stats
+        </Text>
+        <View
+          style={{
+            backgroundColor: VP.raised,
+            borderRadius: 16,
+            padding: 14,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(70,70,92,0.35)',
+            ...chromaticShadow,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text
+              style={{
+                fontFamily: 'Epilogue-Bold',
+                fontSize: 16,
+                color: VP.primary,
+                fontStyle: 'italic',
+                letterSpacing: 0.5,
+              }}
+            >
+              LEVEL {profile?.level ?? 1}
+            </Text>
+            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 11, color: VP.textMuted }}>
+              {profile?.xp ?? 0} / {((profile?.level ?? 1) * 100) + 100} XP
+            </Text>
+          </View>
+          <View style={{ height: 10, backgroundColor: VP.surface, borderRadius: 5, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(70,70,92,0.2)' }}>
+            <View
+              style={{
+                height: '100%',
+                width: `${Math.min(((profile?.xp ?? 0) / (((profile?.level ?? 1) * 100) + 100)) * 100, 100)}%`,
+                backgroundColor: VP.primary,
+                borderRadius: 5,
+              }}
+            />
+          </View>
+        </View>
 
         {/* Performance Radar */}
         <Animated.View style={radarEntrance.animatedStyle}>

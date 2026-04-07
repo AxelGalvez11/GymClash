@@ -14,7 +14,15 @@
       "backgroundColor": "#1A1A2E"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "GymClash uses your location to track distance and pace during scout workouts.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "GymClash uses background location to continue tracking your scout workout when the app is in the background.",
+        "NSHealthShareUsageDescription": "GymClash reads heart rate and activity data to verify workouts and display live stats.",
+        "NSHealthUpdateUsageDescription": "GymClash saves your workout summaries to Apple Health."
+      },
+      "bundleIdentifier": "com.gymclash.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -30,7 +38,21 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-apple-authentication",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "GymClash uses background location to continue tracking your scout workout when the app is in the background.",
+          "locationWhenInUsePermission": "GymClash uses your location to track distance and pace during scout workouts.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-task-manager",
+        {}
+      ]
     ],
     "experiments": {
       "typedRoutes": true

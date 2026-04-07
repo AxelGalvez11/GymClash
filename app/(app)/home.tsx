@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { Colors, Arena, getArenaTier } from '@/constants/theme';
+import { Colors, Arena, getArenaTier, Spacing, Radius } from '@/constants/theme';
 import { useAuthStore } from '@/stores/auth-store';
 import { useGuestWorkoutStore, useWorkoutStore } from '@/stores/workout-store';
 import { useAccent } from '@/stores/accent-store';
@@ -33,22 +33,23 @@ import { usePressScale } from '@/hooks/use-press-scale';
 import { ConfettiBurst } from '@/components/ConfettiBurst';
 import { WorkoutTypeModal } from '@/components/WorkoutTypeModal';
 import type { ArenaTier } from '@/types';
+import { CharacterDisplay3D } from '@/components/character/CharacterDisplay3D';
 
-// ─── Palette (Victory Peak) ──────────────────────────────────────────────────
+// ─── Palette (Victory Peak) — now pulls from theme Colors ──────────────────
 const VP = {
-  surface:     '#0c0c1f',
-  raised:      '#17172f',
-  active:      '#1d1d37',
-  highest:     '#23233f',
-  textPri:     '#e5e3ff',
-  textSec:     '#aaa8c3',
-  textMuted:   '#74738b',
-  primary:     '#ce96ff',
-  primaryDim:  '#a434ff',
-  gold:        '#ffd709',
-  cyan:        '#81ecff',
-  error:       '#ff6e84',
-  tertiary:    '#00d4ec',
+  surface:     Colors.surface.DEFAULT,
+  raised:      Colors.surface.container,
+  active:      Colors.surface.containerHigh,
+  highest:     Colors.surface.containerHighest,
+  textPri:     Colors.text.primary,
+  textSec:     Colors.text.secondary,
+  textMuted:   Colors.text.muted,
+  primary:     Colors.primary.DEFAULT,
+  primaryDim:  Colors.primary.dim,
+  gold:        Colors.secondary.DEFAULT,
+  cyan:        Colors.tertiary.DEFAULT,
+  error:       Colors.error.DEFAULT,
+  tertiary:    Colors.tertiary.dim,
 } as const;
 
 // ─── Last Workout Stats Card ──────────────────────────────────────────────────
@@ -275,9 +276,9 @@ export default function HomeScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              paddingHorizontal: 20,
-              paddingTop: 8,
-              paddingBottom: 12,
+              paddingHorizontal: Spacing.xl,
+              paddingTop: Spacing.sm,
+              paddingBottom: Spacing.md,
               backgroundColor: 'rgba(23,23,47,0.85)',
               shadowColor: VP.primary,
               shadowOpacity: 0.1,
@@ -291,10 +292,11 @@ export default function HomeScreen() {
           {/* Avatar → Settings */}
           <Pressable
             onPress={() => router.push('/(app)/settings' as any)}
+            hitSlop={8}
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
+              width: 44,
+              height: 44,
+              borderRadius: Radius.pill,
               backgroundColor: VP.active,
               alignItems: 'center',
               justifyContent: 'center',
@@ -339,25 +341,32 @@ export default function HomeScreen() {
         {isGuest && (
           <Pressable
             style={{
-              marginHorizontal: 20,
-              marginTop: 8,
+              marginHorizontal: Spacing.xl,
+              marginTop: Spacing.sm,
               backgroundColor: 'rgba(164,52,255,0.12)',
-              borderRadius: 16,
-              padding: 14,
+              borderRadius: Radius.lg,
+              padding: Spacing.md,
+              minHeight: 44,
               borderWidth: 1,
               borderColor: 'rgba(206,150,255,0.35)',
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 12,
+              gap: Spacing.md,
             }}
             onPress={() => router.push('/(auth)/login?mode=signup')}
           >
             <FontAwesome name="user-plus" size={16} color={VP.primaryDim} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 13, color: VP.textPri }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text
+                numberOfLines={1}
+                style={{ fontFamily: 'Epilogue-Bold', fontSize: 13, color: VP.textPri }}
+              >
                 Create Account
               </Text>
-              <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 11, color: VP.textMuted, marginTop: 1 }}>
+              <Text
+                numberOfLines={1}
+                style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 11, color: VP.textMuted, marginTop: 1 }}
+              >
                 {5 - guestWorkouts.length} guest workouts left · Unlock clans &amp; wars
               </Text>
             </View>
@@ -365,10 +374,10 @@ export default function HomeScreen() {
           </Pressable>
         )}
 
-        {/* ══ HERO SECTION (character + XP bar) ═══════════════════════════════ */}
+        {/* ══ HERO SECTION (character + daily challenges button) ═════════════ */}
         <Animated.View
           style={[
-            { marginTop: 12, marginHorizontal: 20, alignItems: 'center', position: 'relative' },
+            { marginTop: Spacing.md, marginHorizontal: Spacing.xl, alignItems: 'center', position: 'relative' },
             heroEntrance.animatedStyle,
           ]}
         >
@@ -386,88 +395,107 @@ export default function HomeScreen() {
             }}
           />
 
-          {/* Character placeholder silhouette */}
-          <View
+          {/* Daily Challenges icon button — upper right — shows dropdown */}
+          <Pressable
+            onPress={() => setShowChallenges((v) => !v)}
             style={{
-              width: 160,
-              height: 200,
+              position: 'absolute',
+              top: 4,
+              right: 0,
+              zIndex: 10,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: VP.active,
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: 80,
-              backgroundColor: 'rgba(206,150,255,0.05)',
+              borderWidth: 1,
+              borderColor: questsDone === questsTotal ? 'rgba(255,215,9,0.5)' : 'rgba(206,150,255,0.25)',
             }}
           >
-            <FontAwesome name="user" size={80} color="rgba(206,150,255,0.3)" />
+            <FontAwesome name="bolt" size={16} color={questsDone === questsTotal ? VP.gold : VP.primary} />
+            {questsDone < questsTotal && (
+              <View style={{
+                position: 'absolute', top: -2, right: -2,
+                width: 16, height: 16, borderRadius: 8,
+                backgroundColor: VP.primaryDim,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, color: '#fff' }}>
+                  {questsDone}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+
+          {/* Daily Challenges dropdown */}
+          {showChallenges && (
+            <View style={{
+              position: 'absolute', top: 48, right: 0, zIndex: 20,
+              backgroundColor: VP.highest, borderRadius: 14, padding: 14,
+              borderWidth: 1, borderColor: 'rgba(206,150,255,0.25)',
+              width: 220,
+              shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 16,
+              shadowOffset: { width: 0, height: 4 }, elevation: 12,
+            }}>
+              <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 11, color: VP.textPri, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+                Daily Challenges
+              </Text>
+              <View style={{ gap: 8 }}>
+                <QuestRow done={todayStrength >= 1} label="Complete a strength workout" />
+                <QuestRow done={todayScout >= 1} label="Complete a cardio workout" />
+                <QuestRow done={todayAny >= 1} label="Any workout today" />
+              </View>
+              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.gold, marginTop: 10, textAlign: 'center' }}>
+                {questsDone}/{questsTotal} completed
+              </Text>
+            </View>
+          )}
+
+          {/* Level badge above character */}
+          <View style={{
+            width: 36, height: 36, borderRadius: 18,
+            backgroundColor: '#a434ff',
+            alignItems: 'center', justifyContent: 'center',
+            marginBottom: -18,
+            zIndex: 10,
+            borderWidth: 2, borderColor: '#ce96ff',
+            shadowColor: '#a434ff', shadowOpacity: 0.5, shadowRadius: 10, shadowOffset: { width: 0, height: 0 },
+          }}>
+            <Text style={{ color: '#fff', fontFamily: 'Epilogue-Bold', fontSize: 14 }}>{userLevel}</Text>
+          </View>
+
+          {/* 3D Character (falls back to emoji on web/GL failure) */}
+          <View
+            style={{
+              width: 280,
+              height: 320,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 24,
+              backgroundColor: 'rgba(206,150,255,0.05)',
+              overflow: 'visible',
+            }}
+          >
+            <CharacterDisplay3D
+              level={userLevel}
+              strengthCount={profile?.strength_workout_count ?? 0}
+              scoutCount={profile?.scout_workout_count ?? 0}
+              isWorkingOut={useWorkoutStore.getState().isActive}
+              size="xl"
+            />
           </View>
 
           {/* Username below character */}
-          <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 18, color: VP.textPri, marginTop: 8, marginBottom: 16 }}>
+          <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 18, color: VP.textPri, marginTop: 8 }}>
             {displayName}
           </Text>
-
-          {/* Level / XP overlay card */}
-          <View
-            style={{
-              width: '100%',
-              marginTop: 8,
-              backgroundColor: 'rgba(35,35,63,0.92)',
-              borderRadius: 16,
-              padding: 14,
-              borderWidth: 1,
-              borderColor: 'rgba(70,70,92,0.35)',
-              shadowColor: '#000',
-              shadowOpacity: 0.5,
-              shadowRadius: 20,
-              shadowOffset: { width: 0, height: 6 },
-              elevation: 10,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text
-                style={{
-                  fontFamily: 'Epilogue-Bold',
-                  fontSize: 16,
-                  color: VP.primary,
-                  fontStyle: 'italic',
-                  letterSpacing: 0.5,
-                }}
-              >
-                LEVEL {userLevel}
-              </Text>
-              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 11, color: VP.textMuted }}>
-                {xpCurrent} / {xpMax} XP
-              </Text>
-            </View>
-
-            {/* XP progress bar */}
-            <View style={{ height: 10, backgroundColor: '#0c0c1f', borderRadius: 5, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(70,70,92,0.2)' }}>
-              <LinearGradient
-                colors={[VP.primary, VP.primaryDim]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{ height: '100%', width: `${xpPct * 100}%`, borderRadius: 5 }}
-              />
-              {/* Shimmer streak */}
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  borderRadius: 5,
-                }}
-                pointerEvents="none"
-              />
-            </View>
-          </View>
         </Animated.View>
 
-        {/* ══ ARENA PROGRESSION ══════════════════════════════════════════════ */}
+        {/* ═══ 1. ARENA PROGRESSION ═══════════════════════════════════════════ */}
         <Pressable
           onPress={() => setShowArenaInfo(true)}
-          style={{ marginHorizontal: 20, marginTop: 16 }}
+          style={{ marginHorizontal: Spacing.xl, marginTop: Spacing.lg }}
         >
           <Card
             variant="default"
@@ -485,128 +513,13 @@ export default function HomeScreen() {
           </Card>
         </Pressable>
 
-        {/* ══ TWO-COLUMN HUD ═══════════════════════════════════════════════════ */}
-        <View style={{ flexDirection: 'row', marginHorizontal: 20, marginTop: 16, gap: 12 }}>
-
-          {/* Left column: Streak */}
-          <Animated.View style={[{ flex: 1 }, leftColEntrance.animatedStyle]}>
-            <MetricCard
-              label="Current Streak"
-              value={`${profile?.current_streak ?? 0} DAYS`}
-              icon="fire"
-              iconColor={VP.gold}
-              accentColor={VP.tertiary}
-            />
-          </Animated.View>
-
-          {/* Right column: Daily Quests (clickable) */}
-          <Animated.View style={[{ flex: 1 }, rightColEntrance.animatedStyle]}>
-            <Card variant="default" onPress={() => router.push('/(app)/quests' as any)}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text
-                  style={{
-                    fontFamily: 'Lexend-SemiBold',
-                    fontSize: 9,
-                    letterSpacing: 2,
-                    textTransform: 'uppercase',
-                    color: VP.textMuted,
-                  }}
-                >
-                  Daily Quests
-                </Text>
-                <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 11, color: VP.gold }}>
-                  {questsDone}/{questsTotal}
-                </Text>
-              </View>
-              <View style={{ gap: 8 }}>
-                <QuestRow done={todayStrength >= 1} label="Crush 50 Pushups" />
-                <QuestRow done={todayScout >= 1} label="30min Battle HIIT" />
-                <QuestRow done={todayAny >= 1} label="Any Workout" />
-              </View>
-            </Card>
-          </Animated.View>
-        </View>
-
-        {/* ══ CLAN + WAR HORIZONTAL BAR ═══════════════════════════════════════ */}
-        <Pressable
-          onPress={() => myClan ? router.push('/(app)/clan' as any) : undefined}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: VP.active,
-            borderRadius: 16,
-            padding: 14,
-            marginHorizontal: 20,
-            marginTop: 12,
-            borderWidth: 1,
-            borderColor: 'rgba(206,150,255,0.15)',
-            gap: 12,
-          }}
-        >
-          <FontAwesome name="shield" size={18} color={VP.primary} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: VP.textPri }}>
-              {myClan?.name ?? 'No Clan'}
-            </Text>
-          </View>
-          {myClan?.active_war_id ? (
-            <Pressable
-              onPress={() => router.push(`/(app)/war-details/${myClan.active_war_id}` as any)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                backgroundColor: 'rgba(255,110,132,0.15)',
-                borderRadius: 10,
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-              }}
-            >
-              <Text style={{ fontSize: 12 }}>⚔️</Text>
-              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.error, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                War Active
-              </Text>
-            </Pressable>
-          ) : (
-            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.textMuted }}>
-              No active war
-            </Text>
-          )}
-          <FontAwesome name="chevron-right" size={10} color={VP.textMuted} />
-        </Pressable>
-
-        {/* ══ FLAGGED WORKOUT ALERT ════════════════════════════════════════════ */}
-        {flaggedWorkouts.length > 0 && (
-          <Pressable
-            style={{
-              marginHorizontal: 20,
-              marginTop: 12,
-              backgroundColor: 'rgba(255,110,132,0.1)',
-              borderRadius: 14,
-              padding: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              borderWidth: 1,
-              borderColor: 'rgba(255,110,132,0.3)',
-            }}
-            onPress={() => router.push(`/(app)/review/${flaggedWorkouts[0].id}` as any)}
-          >
-            <FontAwesome name="exclamation-triangle" size={14} color={Colors.danger} />
-            <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: Colors.danger, flex: 1 }}>
-              {flaggedWorkouts.length} workout{flaggedWorkouts.length > 1 ? 's' : ''} flagged for review
-            </Text>
-            <FontAwesome name="chevron-right" size={10} color={Colors.danger} />
-          </Pressable>
-        )}
-
-        {/* ══ INITIATE WORKOUT — MEGA CTA ══════════════════════════════════════ */}
+        {/* ═══ 2. INITIATE WORKOUT — MEGA CTA ════════════════════════════════ */}
         <Animated.View
           style={[
             {
-              marginHorizontal: 20,
-              marginTop: 20,
-              borderRadius: 32,
+              marginHorizontal: Spacing.xl,
+              marginTop: Spacing.lg,
+              borderRadius: Radius.xl,
             },
             ctaEntrance.animatedStyle,
             ctaGlow,
@@ -614,10 +527,7 @@ export default function HomeScreen() {
           ]}
         >
           <Pressable
-            style={{
-              borderRadius: 32,
-              overflow: 'hidden',
-            }}
+            style={{ borderRadius: 32, overflow: 'hidden' }}
             onPress={() => setShowWorkoutModal(true)}
             onPressIn={ctaPress.onPressIn}
             onPressOut={ctaPress.onPressOut}
@@ -634,47 +544,20 @@ export default function HomeScreen() {
                 borderRadius: 32,
               }}
             >
-              {/* Inner radial overlay */}
               <LinearGradient
                 colors={['rgba(255,255,255,0.12)', 'transparent']}
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  borderRadius: 32,
-                }}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 32 }}
                 pointerEvents="none"
               />
-              {/* Bottom accent line */}
               <View
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 2,
-                  backgroundColor: VP.gold,
-                  opacity: 0.45,
-                  borderBottomLeftRadius: 32,
-                  borderBottomRightRadius: 32,
-                }}
+                style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, backgroundColor: VP.gold, opacity: 0.45, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
                 pointerEvents="none"
               />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                 <FontAwesome name="fire" size={26} color={VP.gold} />
-                <Text
-                  style={{
-                    fontFamily: 'Epilogue-Bold',
-                    fontSize: 22,
-                    color: '#fff',
-                    letterSpacing: 2,
-                    textTransform: 'uppercase',
-                  }}
-                >
+                <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 22, color: '#fff', letterSpacing: 2, textTransform: 'uppercase' }}>
                   Initiate Workout
                 </Text>
               </View>
@@ -682,169 +565,173 @@ export default function HomeScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* ══ BENTO GRID (Last Workout + Shop Offer + Rankings) ════════════════ */}
+        {/* ═══ 3. QUESTS BAR ═══════════════════════════════════════════════════ */}
+        <Pressable
+          onPress={() => router.push('/(app)/quests' as any)}
+          style={{
+            flexDirection: 'row', alignItems: 'center',
+            backgroundColor: VP.active, borderRadius: Radius.lg, padding: Spacing.md,
+            minHeight: 44,
+            marginHorizontal: Spacing.xl, marginTop: Spacing.md,
+            borderWidth: 1, borderColor: 'rgba(206,150,255,0.25)', gap: Spacing.md,
+          }}
+        >
+          <View style={{
+            width: 40, height: 40, borderRadius: 20,
+            backgroundColor: 'rgba(164,52,255,0.18)',
+            alignItems: 'center', justifyContent: 'center',
+            borderWidth: 1, borderColor: 'rgba(206,150,255,0.3)',
+          }}>
+            <FontAwesome name="map" size={16} color={VP.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: VP.textPri }}>Quests</Text>
+            <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: VP.textMuted, marginTop: 2 }}>
+              Navigate checkpoints · Earn rewards
+            </Text>
+          </View>
+          <FontAwesome name="chevron-right" size={10} color={VP.primary} />
+        </Pressable>
+
+        {/* ═══ 4. CLAN BAR ════════════════════════════════════════════════════ */}
+        <Pressable
+          onPress={() => myClan ? router.push('/(app)/clan' as any) : undefined}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: VP.active,
+            borderRadius: Radius.lg,
+            padding: Spacing.md,
+            minHeight: 44,
+            marginHorizontal: Spacing.xl,
+            marginTop: Spacing.md,
+            borderWidth: 1,
+            borderColor: 'rgba(206,150,255,0.15)',
+            gap: Spacing.md,
+          }}
+        >
+          <FontAwesome name="shield" size={18} color={VP.primary} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              numberOfLines={1}
+              style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: VP.textPri }}
+            >
+              {myClan?.name ?? 'No Clan'}
+            </Text>
+          </View>
+          {myClan?.active_war_id ? (
+            <Pressable
+              onPress={() => router.push(`/(app)/war-details/${myClan.active_war_id}` as any)}
+              style={{
+                flexDirection: 'row', alignItems: 'center', gap: 6,
+                backgroundColor: 'rgba(255,110,132,0.15)', borderRadius: 10,
+                paddingHorizontal: 10, paddingVertical: 5,
+              }}
+            >
+              <Text style={{ fontSize: 12 }}>⚔️</Text>
+              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.error, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                War Active
+              </Text>
+            </Pressable>
+          ) : (
+            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.textMuted }}>
+              No active war
+            </Text>
+          )}
+          <FontAwesome name="chevron-right" size={10} color={VP.textMuted} />
+        </Pressable>
+
+        {/* ═══ FLAGGED WORKOUT ALERT ══════════════════════════════════════════ */}
+        {flaggedWorkouts.length > 0 && (
+          <Pressable
+            style={{
+              marginHorizontal: Spacing.xl, marginTop: Spacing.md,
+              backgroundColor: 'rgba(255,110,132,0.1)', borderRadius: Radius.md, padding: Spacing.md,
+              minHeight: 44,
+              flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+              borderWidth: 1, borderColor: 'rgba(255,110,132,0.3)',
+            }}
+            onPress={() => router.push(`/(app)/review/${flaggedWorkouts[0].id}` as any)}
+          >
+            <FontAwesome name="exclamation-triangle" size={14} color={Colors.danger} />
+            <Text
+              numberOfLines={1}
+              style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: Colors.danger, flex: 1, minWidth: 0 }}
+            >
+              {flaggedWorkouts.length} workout{flaggedWorkouts.length > 1 ? 's' : ''} flagged for review
+            </Text>
+            <FontAwesome name="chevron-right" size={10} color={Colors.danger} />
+          </Pressable>
+        )}
+
+        {/* ═══ 5. SHOP + RANKINGS BOXES ═══════════════════════════════════════ */}
         <Animated.View
           style={[
-            { marginHorizontal: 20, marginTop: 20, gap: 12 },
+            { flexDirection: 'row', marginHorizontal: Spacing.xl, marginTop: Spacing.md, gap: Spacing.md },
             bentoEntrance.animatedStyle,
           ]}
         >
-          {/* Last Workout Stats */}
-          {!isGuest && workouts && workouts.length > 0 && (
-            <LastWorkoutStatsCard workout={workouts[0]} />
-          )}
-
-          {/* Shop Offer + Rankings row */}
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            {/* Shop Offer */}
-            <Card
-              variant="elevated"
-              style={{ flex: 1, borderWidth: 1, borderColor: 'rgba(206,150,255,0.2)' }}
-              onPress={() => router.push('/(app)/shop' as any)}
-            >
-              <Text
-                style={{
-                  fontFamily: 'Epilogue-Bold',
-                  fontSize: 14,
-                  color: VP.textPri,
-                  fontStyle: 'italic',
-                  textTransform: 'uppercase',
-                  marginBottom: 6,
-                }}
-              >
-                Shop Offer
-              </Text>
-              <Text
-                style={{
-                  fontFamily: 'Lexend-SemiBold',
-                  fontSize: 9,
-                  color: VP.gold,
-                  textTransform: 'uppercase',
-                  letterSpacing: 1,
-                  marginBottom: 2,
-                }}
-              >
-                Limited Skin
-              </Text>
-              <Text
-                style={{
-                  fontFamily: 'BeVietnamPro-Regular',
-                  fontSize: 12,
-                  color: VP.textPri,
-                  marginBottom: 10,
-                }}
-              >
-                Neon Ronin V2
-              </Text>
-              <View
-                style={{
-                  backgroundColor: VP.gold,
-                  borderRadius: 10,
-                  paddingVertical: 6,
-                  alignItems: 'center',
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: 'Lexend-SemiBold',
-                    fontSize: 9,
-                    color: '#000',
-                    letterSpacing: 1.5,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  View Deals
-                </Text>
-              </View>
-            </Card>
-
-            {/* Rankings */}
-            <Card
-              variant="elevated"
-              style={{ flex: 1, borderWidth: 1, borderColor: 'rgba(0,212,236,0.2)' }}
-              onPress={() => router.push('/(app)/leaderboard' as any)}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                <FontAwesome name="trophy" size={14} color={VP.cyan} />
-                <Text
-                  style={{
-                    fontFamily: 'Epilogue-Bold',
-                    fontSize: 14,
-                    color: VP.textPri,
-                    fontStyle: 'italic',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Rankings
-                </Text>
-              </View>
-              <View style={{ gap: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: VP.textPri }} numberOfLines={1}>
-                    1. TitanX
-                  </Text>
-                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.gold }}>
-                    5.2k 🏆
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingTop: 6,
-                    borderTopWidth: 1,
-                    borderTopColor: 'rgba(70,70,92,0.15)',
-                  }}
-                >
-                  <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: VP.primary }} numberOfLines={1}>
-                    2. {displayName}
-                  </Text>
-                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.gold }}>
-                    {trophies} 🏆
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </View>
-
-          {/* Quests banner */}
-          <Pressable
-            onPress={() => router.push('/(app)/quests' as any)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: VP.active,
-              borderRadius: 20,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: 'rgba(206,150,255,0.25)',
-              gap: 14,
-            }}
+          {/* Shop */}
+          <Card
+            variant="elevated"
+            style={{ flex: 1, borderWidth: 1, borderColor: 'rgba(206,150,255,0.2)' }}
+            onPress={() => router.push('/(app)/shop' as any)}
           >
-            <View
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: 23,
-                backgroundColor: 'rgba(164,52,255,0.18)',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: 1,
-                borderColor: 'rgba(206,150,255,0.3)',
-              }}
-            >
-              <FontAwesome name="map-marker" size={20} color={VP.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 15, color: VP.textPri }}>Quests</Text>
-              <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: VP.textMuted, marginTop: 2 }}>
-                Navigate checkpoints · Earn rewards
+            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: VP.textPri, fontStyle: 'italic', textTransform: 'uppercase', marginBottom: 6 }}>
+              Shop
+            </Text>
+            <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, color: VP.gold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
+              Limited Skin
+            </Text>
+            <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: VP.textPri, marginBottom: 10 }}>
+              Neon Ronin V2
+            </Text>
+            <View style={{ backgroundColor: VP.gold, borderRadius: 10, paddingVertical: 6, alignItems: 'center' }}>
+              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, color: '#000', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+                View Deals
               </Text>
             </View>
-            <FontAwesome name="chevron-right" size={12} color={VP.primary} />
-          </Pressable>
+          </Card>
+
+          {/* Rankings */}
+          <Card
+            variant="elevated"
+            style={{ flex: 1, borderWidth: 1, borderColor: 'rgba(0,212,236,0.2)' }}
+            onPress={() => router.push('/(app)/leaderboard' as any)}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+              <FontAwesome name="trophy" size={14} color={VP.cyan} />
+              <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 14, color: VP.textPri, fontStyle: 'italic', textTransform: 'uppercase' }}>
+                Rankings
+              </Text>
+            </View>
+            <View style={{ gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: VP.textPri }} numberOfLines={1}>
+                  1. TitanX
+                </Text>
+                <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.gold }}>
+                  5.2k 🏆
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTopWidth: 1, borderTopColor: 'rgba(70,70,92,0.15)' }}>
+                <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 12, color: VP.primary }} numberOfLines={1}>
+                  2. {displayName}
+                </Text>
+                <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 10, color: VP.gold }}>
+                  {trophies} 🏆
+                </Text>
+              </View>
+            </View>
+          </Card>
         </Animated.View>
+
+        {/* Last Workout Stats */}
+        {!isGuest && workouts && workouts.length > 0 && (
+          <View style={{ marginHorizontal: Spacing.xl, marginTop: Spacing.md }}>
+            <LastWorkoutStatsCard workout={workouts[0]} />
+          </View>
+        )}
       </ScrollView>
 
       {/* ══ OVERLAYS ═══════════════════════════════════════════════════════════ */}

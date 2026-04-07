@@ -98,20 +98,22 @@ function isBodyweightExercise(name: string): boolean {
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
 const C = {
-  purple:    '#ce96ff',
-  purpleDim: '#a434ff',
-  teal:      '#81ecff',
-  gold:      '#ffd709',
-  surface:   '#0c0c1f',
-  container: '#17172f',
-  elevated:  '#23233f',
-  high:      '#1d1d37',
-  text:      '#e5e3ff',
-  muted:     '#aaa8c3',
-  outline:   '#74738b',
-  error:     '#ff6e84',
-  success:   '#22c55e',
+  purple:    Colors.primary.DEFAULT,
+  purpleDim: Colors.primary.dim,
+  teal:      Colors.tertiary.DEFAULT,
+  gold:      Colors.secondary.DEFAULT,
+  surface:   Colors.surface.DEFAULT,
+  container: Colors.surface.container,
+  elevated:  Colors.surface.containerHighest,
+  high:      Colors.surface.containerHigh,
+  text:      Colors.text.primary,
+  muted:     Colors.text.secondary,
+  outline:   Colors.text.muted,
+  error:     Colors.error.DEFAULT,
+  success:   Colors.success,
 } as const;
+
+const WORKOUT_VIDEO_BUCKET = 'workout-videos';
 
 // ─── Animated set row ─────────────────────────────────────────────────────────
 
@@ -565,13 +567,18 @@ export default function StrengthWorkoutScreen() {
       const blob      = await response.blob();
 
       const { error: uploadError } = await supabase.storage
-        .from('workout-videos')
+        .from(WORKOUT_VIDEO_BUCKET)
         .upload(fileName, blob, { contentType: 'video/mp4' });
 
-      if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+      if (uploadError) {
+        const message = uploadError.message.toLowerCase().includes('bucket')
+          ? 'Form check uploads are not configured. Create the Supabase storage bucket "workout-videos" and apply the storage migration.'
+          : `Upload failed: ${uploadError.message}`;
+        throw new Error(message);
+      }
 
       const { data: urlData } = supabase.storage
-        .from('workout-videos')
+        .from(WORKOUT_VIDEO_BUCKET)
         .getPublicUrl(fileName);
 
       setVideoStatus('analyzing');
@@ -625,17 +632,18 @@ export default function StrengthWorkoutScreen() {
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <ScreenBackground glowColor={C.purple} glowOpacity={0.14} glowPosition="top" withStarField>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
+    <ScreenBackground glowColor={C.purple} glowOpacity={0.14} glowPosition="top">
+      {!showCountdown ? (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 16 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 40, paddingHorizontal: 16 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
 
           {/* ── TOP APP BAR ────────────────────────────────────────────────── */}
           <Reanimated.View
@@ -730,6 +738,139 @@ export default function StrengthWorkoutScreen() {
               </Text>
             </View>
           </Card>
+
+          {/* ── VIDEO FORM CHECK ────────────────────────────────────────────── */}
+          <View style={{ marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+              <AccentLine />
+              <Text style={{ fontFamily: 'Epilogue-Bold', color: C.text, fontSize: 14 }}>Form Check</Text>
+            </View>
+
+            {videoStatus === 'idle' && (
+              <Pressable
+                onPress={handleRecordVideo}
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  backgroundColor: C.container,
+                  borderRadius: 14,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: 'rgba(206,150,255,0.12)',
+                  opacity: pressed ? 0.85 : 1,
+                })}
+              >
+                <View
+                  style={{
+                    width: 40, height: 40,
+                    borderRadius: 20,
+                    backgroundColor: C.high,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <FontAwesome name="video-camera" size={16} color={C.teal} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: C.text, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>
+                    Record Form Check
+                  </Text>
+                  <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 11, marginTop: 2 }}>
+                    AI rep counting, form scoring, and verification
+                  </Text>
+                </View>
+                <FontAwesome name="chevron-right" size={11} color={C.outline} />
+              </Pressable>
+            )}
+
+            {videoStatus === 'recording' && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.container, borderRadius: 14, padding: 14 }}>
+                <View style={{ borderColor: 'rgba(239,68,68,0.6)', borderWidth: 2, borderRadius: 20, padding: 4 }}>
+                  <ActivityIndicator color={C.error} />
+                </View>
+                <Text style={{ color: C.error, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Recording...</Text>
+              </View>
+            )}
+
+            {videoStatus === 'uploading' && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.container, borderRadius: 14, padding: 14, shadowColor: C.purple, shadowOpacity: 0.2, shadowRadius: 12, elevation: 6 }}>
+                <ActivityIndicator color={C.purple} />
+                <Text style={{ color: C.purple, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Uploading video...</Text>
+              </View>
+            )}
+
+            {videoStatus === 'analyzing' && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.container, borderRadius: 14, padding: 14 }}>
+                <ActivityIndicator color={C.gold} />
+                <View>
+                  <Text style={{ color: C.gold, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analyzing form...</Text>
+                  <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 11, marginTop: 2 }}>
+                    Counting reps, scoring form, checking technique
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {videoStatus === 'done' && analysisResult && (
+              <Card variant="recessed">
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <FontAwesome name="check-circle" size={14} color={C.success} />
+                    <Text style={{ color: C.success, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analysis Complete</Text>
+                  </View>
+                  <Pressable onPress={() => { setVideoStatus('idle'); setAnalysisResult(null); }}>
+                    <Text style={{ color: C.outline, fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>Record Again</Text>
+                  </Pressable>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  {[
+                    { label: 'Form',   value: analysisResult.form_score != null ? Math.round(analysisResult.form_score) : '—' },
+                    { label: 'Reps',   value: analysisResult.valid_rep_count ?? analysisResult.rep_count ?? '—' },
+                    { label: 'Status', value: analysisResult.verification_status === 'verified' ? 'Verified' : 'Review',
+                      color: analysisResult.verification_status === 'verified' ? C.success : C.gold },
+                  ].map((item) => (
+                    <View
+                      key={item.label}
+                      style={{
+                        flex: 1, alignItems: 'center',
+                        backgroundColor: C.surface,
+                        borderRadius: 10,
+                        paddingVertical: 10,
+                        borderWidth: 1,
+                        borderColor: 'rgba(34,197,94,0.18)',
+                      }}
+                    >
+                      <Text style={{ color: item.color ?? C.text, fontFamily: 'Epilogue-Bold', fontSize: 16 }}>
+                        {String(item.value)}
+                      </Text>
+                      <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 9 }}>
+                        {item.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            )}
+
+            {videoStatus === 'error' && (
+              <Card
+                variant="recessed"
+                style={{ borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <FontAwesome name="exclamation-circle" size={13} color={C.error} />
+                  <Text style={{ color: C.error, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analysis Failed</Text>
+                </View>
+                <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 11, marginBottom: 8 }}>
+                  {videoError}
+                </Text>
+                <Pressable onPress={() => { setVideoStatus('idle'); setVideoError(null); }}>
+                  <Text style={{ color: C.purple, fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Try Again</Text>
+                </Pressable>
+              </Card>
+            )}
+          </View>
 
           {/* ── GUEST BANNER ───────────────────────────────────────────────── */}
           {isGuest && (
@@ -1121,44 +1262,6 @@ export default function StrengthWorkoutScreen() {
               </View>
             </View>
 
-            <Divider />
-
-            {/* Level indicator */}
-            <View style={{ width: '100%', alignItems: 'center', gap: 12 }}>
-              {/* Level ring badge */}
-              <View style={{ position: 'relative', width: 90, height: 90, alignItems: 'center', justifyContent: 'center' }}>
-                <ScoreRing
-                  percentage={Math.min((xpEarned / xpMax) * 100, 100)}
-                  size={90}
-                  strokeWidth={7}
-                >
-                  <Text style={{ fontFamily: 'Epilogue-Black', fontSize: 18, color: C.text }}>
-                    LVL {lvl}
-                  </Text>
-                </ScoreRing>
-              </View>
-
-              {/* XP progress bar */}
-              <View style={{ width: '100%', gap: 6 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, color: C.outline, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-                    Next Level
-                  </Text>
-                  <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, color: C.outline }}>
-                    {xpEarned} / {xpMax} XP
-                  </Text>
-                </View>
-                <ProgressBar
-                  current={xpEarned}
-                  max={xpMax}
-                  color={C.purpleDim}
-                  height="md"
-                />
-                <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, color: C.gold, letterSpacing: 1, textAlign: 'center', textTransform: 'uppercase' }}>
-                  +{xpEarned} XP EARNED THIS SESSION
-                </Text>
-              </View>
-            </View>
           </Card>
 
           {/* ── CARDIO / GPS MINI PANEL ─────────────────────────────────────── */}
@@ -1293,139 +1396,6 @@ export default function StrengthWorkoutScreen() {
             </View>
           </Card>
 
-          {/* ── VIDEO FORM CHECK ────────────────────────────────────────────── */}
-          <View style={{ marginBottom: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-              <AccentLine />
-              <Text style={{ fontFamily: 'Epilogue-Bold', color: C.text, fontSize: 14 }}>Form Check</Text>
-            </View>
-
-            {videoStatus === 'idle' && (
-              <Pressable
-                onPress={handleRecordVideo}
-                style={({ pressed }) => ({
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  backgroundColor: C.container,
-                  borderRadius: 14,
-                  padding: 14,
-                  borderWidth: 1,
-                  borderColor: 'rgba(206,150,255,0.12)',
-                  opacity: pressed ? 0.85 : 1,
-                })}
-              >
-                <View
-                  style={{
-                    width: 40, height: 40,
-                    borderRadius: 20,
-                    backgroundColor: C.high,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FontAwesome name="video-camera" size={16} color={C.teal} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: C.text, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>
-                    Record Form Check
-                  </Text>
-                  <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 11, marginTop: 2 }}>
-                    AI rep counting, form scoring, and verification
-                  </Text>
-                </View>
-                <FontAwesome name="chevron-right" size={11} color={C.outline} />
-              </Pressable>
-            )}
-
-            {videoStatus === 'recording' && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.container, borderRadius: 14, padding: 14 }}>
-                <View style={{ borderColor: 'rgba(239,68,68,0.6)', borderWidth: 2, borderRadius: 20, padding: 4 }}>
-                  <ActivityIndicator color={C.error} />
-                </View>
-                <Text style={{ color: C.error, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Recording...</Text>
-              </View>
-            )}
-
-            {videoStatus === 'uploading' && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.container, borderRadius: 14, padding: 14, shadowColor: C.purple, shadowOpacity: 0.2, shadowRadius: 12, elevation: 6 }}>
-                <ActivityIndicator color={C.purple} />
-                <Text style={{ color: C.purple, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Uploading video...</Text>
-              </View>
-            )}
-
-            {videoStatus === 'analyzing' && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.container, borderRadius: 14, padding: 14 }}>
-                <ActivityIndicator color={C.gold} />
-                <View>
-                  <Text style={{ color: C.gold, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analyzing form...</Text>
-                  <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 11, marginTop: 2 }}>
-                    Counting reps, scoring form, checking technique
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {videoStatus === 'done' && analysisResult && (
-              <Card variant="recessed">
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <FontAwesome name="check-circle" size={14} color={C.success} />
-                    <Text style={{ color: C.success, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analysis Complete</Text>
-                  </View>
-                  <Pressable onPress={() => { setVideoStatus('idle'); setAnalysisResult(null); }}>
-                    <Text style={{ color: C.outline, fontFamily: 'Lexend-SemiBold', fontSize: 11 }}>Record Again</Text>
-                  </Pressable>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                  {[
-                    { label: 'Form',   value: analysisResult.form_score != null ? Math.round(analysisResult.form_score) : '—' },
-                    { label: 'Reps',   value: analysisResult.valid_rep_count ?? analysisResult.rep_count ?? '—' },
-                    { label: 'Status', value: analysisResult.verification_status === 'verified' ? 'Verified' : 'Review',
-                      color: analysisResult.verification_status === 'verified' ? C.success : C.gold },
-                  ].map((item) => (
-                    <View
-                      key={item.label}
-                      style={{
-                        flex: 1, alignItems: 'center',
-                        backgroundColor: C.surface,
-                        borderRadius: 10,
-                        paddingVertical: 10,
-                        borderWidth: 1,
-                        borderColor: 'rgba(34,197,94,0.18)',
-                      }}
-                    >
-                      <Text style={{ color: item.color ?? C.text, fontFamily: 'Epilogue-Bold', fontSize: 16 }}>
-                        {String(item.value)}
-                      </Text>
-                      <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 9 }}>
-                        {item.label}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </Card>
-            )}
-
-            {videoStatus === 'error' && (
-              <Card
-                variant="recessed"
-                style={{ borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <FontAwesome name="exclamation-circle" size={13} color={C.error} />
-                  <Text style={{ color: C.error, fontFamily: 'Lexend-SemiBold', fontSize: 13 }}>Analysis Failed</Text>
-                </View>
-                <Text style={{ color: C.outline, fontFamily: 'BeVietnamPro-Regular', fontSize: 11, marginBottom: 8 }}>
-                  {videoError}
-                </Text>
-                <Pressable onPress={() => { setVideoStatus('idle'); setVideoError(null); }}>
-                  <Text style={{ color: C.purple, fontFamily: 'Lexend-SemiBold', fontSize: 12 }}>Try Again</Text>
-                </Pressable>
-              </Card>
-            )}
-          </View>
-
           {/* ── FINISH BATTLE — hero button ─────────────────────────────────── */}
           <Reanimated.View style={[finishPress.animatedStyle, finishGlow.glowStyle]}>
             <Button
@@ -1441,8 +1411,9 @@ export default function StrengthWorkoutScreen() {
             </Button>
           </Reanimated.View>
 
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      ) : null}
 
       {/* ── Overlays ──────────────────────────────────────────────────────────── */}
 

@@ -2,25 +2,26 @@ import { Platform, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { usePressScale } from '@/hooks/use-press-scale';
 import { useGlowPulse } from '@/hooks/use-glow-pulse';
+import { Colors, Radius } from '@/constants/theme';
 
 // ─── Variant backgrounds ────────────────────────────────────────────────────
 const VARIANT_BG: Record<NonNullable<CardProps['variant']>, string> = {
-  default:  '#1d1d37',          // surface-container-high
-  glass:    'rgba(23,23,47,0.8)', // semi-transparent for layering
-  elevated: '#23233f',          // lifted off the canvas
-  recessed: '#000000',          // surface-container-lowest
+  default:  Colors.surface.containerHigh,    // #1d1d37
+  glass:    'rgba(23,23,47,0.8)',            // semi-transparent layering
+  elevated: Colors.surface.containerHighest, // #23233f
+  recessed: Colors.surface.containerLowest,  // #000000
 };
 
 // ─── Chromatic neon shadow per variant ──────────────────────────────────────
 const VARIANT_SHADOW: Record<NonNullable<CardProps['variant']>, object> = {
   default: Platform.OS === 'ios'
-    ? { shadowColor: '#ce96ff', shadowOpacity: 0.10, shadowRadius: 32, shadowOffset: { width: 0, height: 0 } }
+    ? { shadowColor: Colors.primary.DEFAULT, shadowOpacity: 0.10, shadowRadius: 32, shadowOffset: { width: 0, height: 0 } }
     : { elevation: 4 },
   glass: Platform.OS === 'ios'
-    ? { shadowColor: '#ce96ff', shadowOpacity: 0.08, shadowRadius: 24, shadowOffset: { width: 0, height: 0 } }
+    ? { shadowColor: Colors.primary.DEFAULT, shadowOpacity: 0.08, shadowRadius: 24, shadowOffset: { width: 0, height: 0 } }
     : { elevation: 3 },
   elevated: Platform.OS === 'ios'
-    ? { shadowColor: '#ce96ff', shadowOpacity: 0.18, shadowRadius: 48, shadowOffset: { width: 0, height: 4 } }
+    ? { shadowColor: Colors.primary.DEFAULT, shadowOpacity: 0.18, shadowRadius: 48, shadowOffset: { width: 0, height: 4 } }
     : { elevation: 8 },
   recessed: Platform.OS === 'ios'
     ? { shadowColor: '#000000', shadowOpacity: 0.60, shadowRadius: 16, shadowOffset: { width: 0, height: 4 } }
@@ -45,7 +46,7 @@ export function Card({
   variant = 'default',
   accentBorder,
   glowing = false,
-  glowColor = '#ce96ff',
+  glowColor = Colors.primary.DEFAULT,
   onPress,
   className = '',
   style,
@@ -56,7 +57,7 @@ export function Card({
   // Base static styles
   const baseStyle: object = {
     backgroundColor: VARIANT_BG[variant],
-    borderRadius: 14,
+    borderRadius: Radius.md,
     overflow: 'hidden' as const,
     ...(accentBorder
       ? { borderLeftWidth: 4, borderLeftColor: accentBorder }

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from 'react-native';
 import { usePressScale } from '@/hooks/use-press-scale';
 import { useGlowPulse } from '@/hooks/use-glow-pulse';
+import { Colors } from '@/constants/theme';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,9 +26,12 @@ interface ButtonProps {
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 
 /** Primary gradient: Elixir Purple top → deep violet bottom */
-const PRIMARY_GRADIENT = ['#ce96ff', '#a434ff'] as const;
+const PRIMARY_GRADIENT = [Colors.primary.DEFAULT, Colors.primary.dim] as const;
 /** Danger gradient: hot coral → crimson */
-const DANGER_GRADIENT = ['#ff6e84', '#d73357'] as const;
+const DANGER_GRADIENT = [Colors.error.DEFAULT, Colors.error.dim] as const;
+
+/** Minimum touch target per Apple HIG (44pt) / Material Design (48dp) */
+const MIN_TOUCH_TARGET = 44;
 
 /** Vertical padding per size */
 const PADDING_Y: Record<ButtonSize, number> = {
@@ -116,7 +120,7 @@ export function Button({
 
   // Breathing glow — only wires up when glowing=true & not disabled
   const { glowStyle } = useGlowPulse(
-    '#ce96ff',
+    Colors.primary.DEFAULT,
     0.3,
     0.75,
     2400,
@@ -135,16 +139,16 @@ export function Button({
     if (isDisabled) return '#6b698a';
     switch (variant) {
       case 'primary': return '#ffffff';
-      case 'secondary': return '#e5e3ff';
+      case 'secondary': return Colors.text.primary;
       case 'danger': return '#ffffff';
-      case 'ghost': return '#aaa8c3';
+      case 'ghost': return Colors.text.secondary;
     }
   })();
 
   // ── Spinner colour ──
   const spinnerColor = variant === 'primary' || variant === 'danger'
     ? '#ffffff'
-    : '#ce96ff';
+    : Colors.primary.DEFAULT;
 
   // ── Shared inner content ──
   const innerContent = loading ? (
@@ -190,7 +194,7 @@ export function Button({
           wrapperStyle,
           pressStyle,
           glowing && !isDisabled && glowStyle,
-          !isDisabled && buildNeonShadow('#ce96ff'),
+          !isDisabled && buildNeonShadow(Colors.primary.DEFAULT),
           { borderRadius: radius },
           isDisabled && { opacity: 0.5 },
         ]}
@@ -205,6 +209,7 @@ export function Button({
                 borderRadius: radius,
                 paddingVertical: py,
                 paddingHorizontal: px,
+                minHeight: MIN_TOUCH_TARGET,
                 alignItems: 'center',
                 justifyContent: 'center',
               },
@@ -266,7 +271,7 @@ export function Button({
           pressStyle,
           {
             borderRadius: radius,
-            backgroundColor: '#23233f',
+            backgroundColor: Colors.surface.containerHighest,
             borderWidth: 1,
             borderColor: isDisabled ? 'transparent' : 'rgba(70, 70, 92, 0.2)',
           },
@@ -279,6 +284,7 @@ export function Button({
           style={{
             paddingVertical: py,
             paddingHorizontal: px,
+            minHeight: MIN_TOUCH_TARGET,
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -306,6 +312,7 @@ export function Button({
         style={{
           paddingVertical: py,
           paddingHorizontal: px,
+          minHeight: MIN_TOUCH_TARGET,
           alignItems: 'center',
           justifyContent: 'center',
         }}

@@ -87,12 +87,22 @@ function ClanRow({
       >
         <ZoneIndicator zone={zone} />
         <MedalIcon position={index} />
-        <View className="flex-1 ml-3">
+        <View className="flex-1 ml-3" style={{ minWidth: 0 }}>
           <View className="flex-row items-center gap-2">
-            <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.name}</Text>
+            <Text
+              numberOfLines={1}
+              style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold', flexShrink: 1 }}
+              className="font-bold"
+            >
+              {item.name}
+            </Text>
             <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold' }} className="text-sm">[{item.tag}]</Text>
           </View>
-          <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
+          <Text
+            numberOfLines={1}
+            style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}
+            className="text-xs"
+          >
             {item.member_count} members · {item.war_wins ?? 0}W / {item.wars_played ?? 0} wars
           </Text>
         </View>
@@ -149,9 +159,19 @@ function PlayerRow({
       >
         <ZoneIndicator zone={zone} />
         <MedalIcon position={index} />
-        <View className="flex-1 ml-3">
-          <Text style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }} className="font-bold">{item.display_name || 'Warrior'}</Text>
-          <Text style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }} className="text-xs">
+        <View className="flex-1 ml-3" style={{ minWidth: 0 }}>
+          <Text
+            numberOfLines={1}
+            style={{ color: '#e5e3ff', fontFamily: 'Epilogue-Bold' }}
+            className="font-bold"
+          >
+            {item.display_name || 'Warrior'}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={{ color: '#74738b', fontFamily: 'BeVietnamPro-Regular' }}
+            className="text-xs"
+          >
             <Text style={{ color: rankConfig.color }}>{rankConfig.label}</Text> · Lv.{item.level ?? 1} · {item.current_streak ?? 0}d streak
           </Text>
         </View>
@@ -245,6 +265,7 @@ export default function LeaderboardScreen() {
   const router = useRouter();
   const accent = useAccent();
   const [tab, setTab] = useState<Tab>('clans');
+  const [scope, setScope] = useState<'local' | 'global'>('local');
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: profile } = useProfile();
@@ -358,6 +379,59 @@ export default function LeaderboardScreen() {
               </Text>
             </Pressable>
           ))}
+        </View>
+
+        {/* Scope Sub-Tabs: Local / Global */}
+        <View className="flex-row gap-2 mb-2">
+          {([
+            { key: 'local' as const, label: 'Local' },
+            { key: 'global' as const, label: 'Global' },
+          ]).map(({ key, label }) => (
+            <Pressable
+              key={key}
+              className="flex-1 items-center py-1.5 rounded-full"
+              style={{
+                backgroundColor: scope === key ? '#a434ff' : '#23233f',
+              }}
+              onPress={() => setScope(key)}
+            >
+              <Text
+                style={{ fontFamily: 'Lexend-SemiBold', fontSize: 12 }}
+                className={scope === key ? 'text-white font-bold' : 'text-[#aaa8c3]'}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Scope indicator */}
+        <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 11, color: '#74738b', textAlign: 'center', marginBottom: 4 }}>
+          {scope === 'local' ? '\u{1F3E0} Your Region' : '\u{1F30D} Worldwide'}
+        </Text>
+
+        {/* Your Rank Banner */}
+        <View
+          style={{
+            backgroundColor: '#17172f',
+            borderRadius: 12,
+            padding: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 16,
+            borderWidth: 1,
+            borderColor: 'rgba(206,150,255,0.15)',
+          }}
+        >
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 10, color: '#74738b', marginBottom: 2 }}>Your Rank</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 14, color: '#ffd709' }}>#12 National</Text>
+              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 12, color: '#74738b' }}>{'\u00B7'}</Text>
+              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 14, color: '#81ecff' }}>#3 Local</Text>
+            </View>
+          </View>
         </View>
       </Animated.View>
 

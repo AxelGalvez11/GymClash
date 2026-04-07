@@ -12,11 +12,11 @@ import { useEntrance } from '@/hooks/use-entrance';
 import { usePressScale } from '@/hooks/use-press-scale';
 
 const VP = {
-  surface:   '#0c0c1f',
-  highest:   '#23233f',
-  textPri:   '#e5e3ff',
-  textSec:   '#aaa8c3',
-  cyan:      '#81ecff',
+  surface: Colors.surface.DEFAULT,
+  highest: Colors.surface.containerHighest,
+  textPri: Colors.text.primary,
+  textSec: Colors.text.secondary,
+  cyan:    Colors.tertiary.DEFAULT,
 } as const;
 
 const cardBorder = {

@@ -11,3 +11,5 @@ export {
 
 export { createMockLocationAdapter } from './mock-location-adapter';
 export { createMockGymAdapter } from './mock-gym-adapter';
+export { createExpoLocationAdapter } from './expo-location-adapter';
+export { createLocationAdapter } from './create-location-adapter';

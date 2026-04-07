@@ -1,6 +1,9 @@
+import { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import type { OnboardingFormState } from './types';
 import { DrumPicker } from './DrumPicker';
+import { GymClashWheelModal } from '@/components/ui/GymClashWheelModal';
+import { GymClashWheelTrigger } from '@/components/ui/GymClashWheelTrigger';
 
 interface StepOneRepMaxProps {
   readonly form: OnboardingFormState;
@@ -63,6 +66,16 @@ function snapValue(raw: string, items: ReadonlyArray<{ label: string; value: str
 export function StepOneRepMax({ form, onUpdate, onNext }: StepOneRepMaxProps) {
   const unitLabel = form.unitSystem === 'imperial' ? 'lbs' : 'kg';
   const items = form.unitSystem === 'imperial' ? LBS_ITEMS : KG_ITEMS;
+  const [activeLiftKey, setActiveLiftKey] = useState<LiftField['key'] | null>(null);
+
+  const activeLift = useMemo(
+    () => LIFT_FIELDS.find((field) => field.key === activeLiftKey) ?? null,
+    [activeLiftKey],
+  );
+
+  const handleLiftChange = (key: LiftField['key'], nextValue: string) => {
+    onUpdate({ [key]: nextValue } as Partial<OnboardingFormState>);
+  };
 
   return (
     <ScrollView
@@ -93,36 +106,18 @@ export function StepOneRepMax({ form, onUpdate, onNext }: StepOneRepMaxProps) {
           lineHeight: 22,
         }}
       >
-        Optional — helps predict your output. Scroll to set, leave at — to skip.
+        Optional — helps predict your output. Tap to set each lift, or leave it blank to skip.
       </Text>
 
       {/* Lift pickers */}
       {LIFT_FIELDS.map((field) => (
         <View key={field.key} style={{ marginBottom: 24 }}>
-          <Text
-            style={{
-              fontFamily: 'Lexend-SemiBold',
-              fontSize: 13,
-              color: '#aaa8c3',
-              marginBottom: 10,
-            }}
-          >
-            {field.label} ({unitLabel})
-          </Text>
-          <View
-            style={{
-              backgroundColor: '#000000',
-              borderRadius: 16,
-              overflow: 'hidden',
-            }}
-          >
-            <DrumPicker
-              key={`${field.key}-${form.unitSystem}`}
-              items={items}
-              value={snapValue(form[field.key], items)}
-              onChange={(v) => onUpdate({ [field.key]: v })}
-            />
-          </View>
+          <GymClashWheelTrigger
+            label={`${field.label} (${unitLabel})`}
+            value={form[field.key] ? `${form[field.key]} ${unitLabel}` : ''}
+            placeholder="Tap to set or leave blank"
+            onPress={() => setActiveLiftKey(field.key)}
+          />
         </View>
       ))}
 
@@ -176,6 +171,23 @@ export function StepOneRepMax({ form, onUpdate, onNext }: StepOneRepMaxProps) {
           Skip this for now
         </Text>
       </Pressable>
+
+      <GymClashWheelModal
+        visible={activeLift !== null}
+        title={activeLift ? `${activeLift.label} (${unitLabel})` : '1 Rep Max'}
+        subtitle="Tap or slide until the lift target is centered."
+        onClose={() => setActiveLiftKey(null)}
+      >
+        {activeLift ? (
+          <DrumPicker
+            key={`${activeLift.key}-${form.unitSystem}`}
+            items={items}
+            value={snapValue(form[activeLift.key], items)}
+            onChange={(nextValue) => handleLiftChange(activeLift.key, nextValue)}
+            unit={unitLabel}
+          />
+        ) : null}
+      </GymClashWheelModal>
     </ScrollView>
   );
 }

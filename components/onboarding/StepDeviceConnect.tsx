@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,12 @@ import {
   ScrollView,
 } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import type { OnboardingFormState } from "./types";
 
 interface StepDeviceConnectProps {
-  onNext: () => void;
+  readonly form: OnboardingFormState;
+  readonly onUpdate: (updates: Partial<OnboardingFormState>) => void;
+  readonly onNext: () => void;
 }
 
 const DEVICES = [
@@ -30,6 +33,21 @@ const DEVICES = [
   },
 ] as const;
 
+function computeAge(birthDate: string): number | null {
+  const match = birthDate.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!match) return null;
+  const month = parseInt(match[1], 10);
+  const day = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+  const today = new Date();
+  const birth = new Date(year, month - 1, day);
+  let age = today.getFullYear() - birth.getFullYear();
+  const md = today.getMonth() - birth.getMonth();
+  if (md < 0 || (md === 0 && today.getDate() < birth.getDate())) age -= 1;
+  return age > 0 ? age : null;
+}
+
 function handleConnect() {
   Alert.alert(
     "Coming Soon",
@@ -37,7 +55,93 @@ function handleConnect() {
   );
 }
 
-export default function StepDeviceConnect({ onNext }: StepDeviceConnectProps) {
+function StatCard({
+  label,
+  value,
+  unit,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly unit: string;
+}) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "#1d1d37",
+        borderRadius: 12,
+        padding: 14,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(206,150,255,0.15)",
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: "Lexend-SemiBold",
+          fontSize: 9,
+          letterSpacing: 1.5,
+          textTransform: "uppercase",
+          color: "#74738b",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontFamily: "Epilogue-Bold",
+          fontSize: 22,
+          color: "#e5e3ff",
+        }}
+      >
+        {value}
+      </Text>
+      <Text
+        style={{
+          fontFamily: "Lexend-SemiBold",
+          fontSize: 9,
+          color: "#74738b",
+          marginTop: 2,
+        }}
+      >
+        {unit}
+      </Text>
+    </View>
+  );
+}
+
+export default function StepDeviceConnect({
+  form,
+  onUpdate,
+  onNext,
+}: StepDeviceConnectProps) {
+  const age = useMemo(() => computeAge(form.birthDate), [form.birthDate]);
+  const estimatedMaxHR = age !== null ? 220 - age : null;
+  const estimatedRestingHR = 72; // Average resting HR default
+
+  // Auto-set maxHR and restingHR if not already set
+  useMemo(() => {
+    if (estimatedMaxHR !== null && form.maxHROverride === "") {
+      onUpdate({ maxHROverride: String(estimatedMaxHR) });
+    }
+    if (form.restingHR === "") {
+      onUpdate({ restingHR: String(estimatedRestingHR) });
+    }
+  }, []);
+
+  const maxHR = form.maxHROverride
+    ? parseInt(form.maxHROverride, 10)
+    : estimatedMaxHR;
+  const restingHR = form.restingHR
+    ? parseInt(form.restingHR, 10)
+    : estimatedRestingHR;
+
+  const vo2max =
+    maxHR && restingHR && restingHR > 0
+      ? Math.round((15.3 * (maxHR / restingHR)) * 10) / 10
+      : null;
+
   return (
     <ScrollView
       className="flex-1"
@@ -102,6 +206,60 @@ export default function StepDeviceConnect({ onNext }: StepDeviceConnectProps) {
           </View>
         ))}
       </View>
+
+      {/* ── Estimated Stats ─────────────────────────────────────────── */}
+      {(maxHR || vo2max) && (
+        <View
+          style={{
+            marginTop: 8,
+            marginBottom: 16,
+            borderTopWidth: 1,
+            borderTopColor: "rgba(70,70,92,0.25)",
+            paddingTop: 20,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "Lexend-SemiBold",
+              fontSize: 10,
+              letterSpacing: 2,
+              textTransform: "uppercase",
+              color: "#aaa8c3",
+              marginBottom: 4,
+            }}
+          >
+            Your Estimated Stats
+          </Text>
+          <Text
+            style={{
+              fontFamily: "BeVietnamPro-Regular",
+              fontSize: 13,
+              color: "#74738b",
+              marginBottom: 16,
+            }}
+          >
+            Auto-calculated from your profile. Connect a device for more accurate data.
+          </Text>
+
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {maxHR && (
+              <StatCard label="Max HR" value={String(maxHR)} unit="bpm" />
+            )}
+            <StatCard
+              label="Resting HR"
+              value={String(restingHR)}
+              unit="bpm (est.)"
+            />
+            {vo2max && (
+              <StatCard
+                label="VO2 Max"
+                value={String(vo2max)}
+                unit="ml/kg/min"
+              />
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Info Note */}
       <Text

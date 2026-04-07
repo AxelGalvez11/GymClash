@@ -2,14 +2,15 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useOfflineQueueStore, isStaleWorkout } from '@/stores/offline-queue-store';
 import type { SyncStatus } from '@/stores/offline-queue-store';
+import { Colors } from '@/constants/theme';
 
-// ─── Victory Peak palette ───────────────────────────────
+// ─── Victory Peak palette — pulls from theme ───────────
 const VP = {
-  textPri:    '#e5e3ff',
-  textSec:    '#aaa8c3',
-  primaryDim: '#a434ff',
-  danger:     '#ef4444',
-  warning:    '#eab308',
+  textPri:    Colors.text.primary,
+  textSec:    Colors.text.secondary,
+  primaryDim: Colors.primary.dim,
+  danger:     Colors.error.DEFAULT,
+  warning:    Colors.warning,
 } as const;
 
 // ─── Banner config per sync status ──────────────────────

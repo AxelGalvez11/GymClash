@@ -22,15 +22,17 @@ import {
   resolveMuscleGroupFromBodyPart,
 } from './muscle-body-highlighter-adapter';
 
-// VP palette (match profile.tsx)
+import { Colors } from '@/constants/theme';
+
+// VP palette — pulls from theme
 const VP = {
-  textPri: '#e5e3ff',
-  textSec: '#aaa8c3',
-  textMuted: '#74738b',
-  primary: '#ce96ff',
-  surface: '#0c0c1f',
-  raised: '#1d1d37',
-  highest: '#23233f',
+  textPri:   Colors.text.primary,
+  textSec:   Colors.text.secondary,
+  textMuted: Colors.text.muted,
+  primary:   Colors.primary.DEFAULT,
+  surface:   Colors.surface.DEFAULT,
+  raised:    Colors.surface.containerHigh,
+  highest:   Colors.surface.containerHighest,
 } as const;
 
 interface MuscleHeatmapCardProps {

@@ -1,11 +1,13 @@
 export type ExperienceLevel = 'never_trained' | 'beginner' | 'intermediate' | 'advanced';
-export type SexOption = 'male' | 'female' | 'prefer_not_to_say';
+export type SexOption = 'male' | 'female';
 export type UnitSystem = 'metric' | 'imperial';
 
 export interface OnboardingFormState {
   readonly displayName: string;
   readonly bodyWeight: string;
   readonly height: string;
+  readonly heightFt: string;
+  readonly heightIn: string;
   readonly birthDate: string;
   readonly sex: SexOption | '';
   readonly unitSystem: UnitSystem;
@@ -26,6 +28,8 @@ export const INITIAL_FORM_STATE: OnboardingFormState = {
   displayName: '',
   bodyWeight: '',
   height: '',
+  heightFt: '',
+  heightIn: '',
   birthDate: '',
   sex: '',
   unitSystem: 'imperial',
@@ -47,11 +51,10 @@ export const STEP_LABELS = [
   'Body Data',
   'Experience',
   'Strength',
-  'Cardio',
   'Devices',
   'Privacy',
   'Summary',
 ] as const;
 
-export type OnboardingStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
-export const TOTAL_STEPS = 8;
+export type OnboardingStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export const TOTAL_STEPS = 7;

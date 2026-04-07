@@ -710,7 +710,7 @@ export function VictoryScreen({
             )}
 
             {/* Continue button */}
-            <Animated.View style={{ opacity: buttonOpacity }} className="w-full mt-6">
+            <Animated.View style={{ opacity: buttonOpacity, width: '100%', marginTop: 24, alignItems: 'center' }}>
               <Button
                 onPress={handleDismiss}
                 variant="primary"

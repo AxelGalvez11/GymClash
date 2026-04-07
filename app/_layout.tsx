@@ -38,7 +38,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, isLoading, isGuest, setSession } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
-  const { data: needsOnboarding } = useNeedsOnboarding();
+  const {
+    data: needsOnboarding,
+    isLoading: onboardingLoading,
+  } = useNeedsOnboarding();
 
   useEffect(() => {
     const {
@@ -52,6 +55,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return;
+    if (session && !isGuest && onboardingLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[1] === 'onboarding';
@@ -69,9 +73,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     } else if (session && !needsOnboarding && inAuthGroup && !inOnboarding) {
       router.replace('/(app)/home');
     }
-  }, [session, isLoading, isGuest, needsOnboarding, segments, router]);
+  }, [session, isLoading, isGuest, needsOnboarding, onboardingLoading, segments, router]);
 
-  if (isLoading) {
+  if (isLoading || (session && !isGuest && onboardingLoading)) {
     return <View className="flex-1 bg-surface" />;
   }
 

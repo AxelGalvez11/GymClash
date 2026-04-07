@@ -54,12 +54,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_video_analyses_unique_workout
 -- RLS: users can only read their own analyses
 ALTER TABLE workout_video_analyses ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY video_analyses_select_own ON workout_video_analyses
-  FOR SELECT USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY video_analyses_select_own ON workout_video_analyses
+    FOR SELECT USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Insert allowed for authenticated users (the Python service uses service_role)
-CREATE POLICY video_analyses_insert_service ON workout_video_analyses
-  FOR INSERT WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY video_analyses_insert_service ON workout_video_analyses
+    FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Update timestamp trigger
 CREATE OR REPLACE FUNCTION update_video_analysis_updated_at()
@@ -70,6 +76,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS video_analysis_updated_at ON workout_video_analyses;
 CREATE TRIGGER video_analysis_updated_at
   BEFORE UPDATE ON workout_video_analyses
   FOR EACH ROW

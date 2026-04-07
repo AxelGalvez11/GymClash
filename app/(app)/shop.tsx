@@ -890,12 +890,13 @@ function GetCurrencyBanner({ onPress }: { onPress: () => void }) {
       onPress={onPress}
       style={({ pressed }) => ({
         marginTop: 16,
+        marginHorizontal: 16,
         backgroundColor: '#17172f',
         borderRadius: 16,
-        padding: 14,
+        paddingVertical: 14,
+        paddingHorizontal: 14,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
         borderWidth: 1,
         borderColor: 'rgba(206,150,255,0.20)',
         opacity: pressed ? 0.85 : 1,
@@ -909,23 +910,39 @@ function GetCurrencyBanner({ onPress }: { onPress: () => void }) {
           : { elevation: 6 }),
       })}
     >
-      <FontAwesome name="diamond" size={18} color="#ce96ff" />
-      <View style={{ flex: 1 }}>
+      <View
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: 'rgba(206,150,255,0.12)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 12,
+        }}
+      >
+        <FontAwesome name="diamond" size={16} color="#ce96ff" />
+      </View>
+      <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
         <Text
+          numberOfLines={1}
           style={{
             color: '#e5e3ff',
             fontFamily: 'Epilogue-Bold',
             fontWeight: '700',
             fontSize: 14,
+            marginBottom: 2,
           }}
         >
           Get More Currency
         </Text>
         <Text
+          numberOfLines={2}
           style={{
             color: '#74738b',
             fontFamily: 'BeVietnamPro-Regular',
             fontSize: 11,
+            lineHeight: 14,
           }}
         >
           Buy diamonds, lifting &amp; cardio points

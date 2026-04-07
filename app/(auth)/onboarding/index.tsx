@@ -6,12 +6,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 import { updateProfile, updateBiodata } from '@/services/api';
+import { buildOnboardingBiodataPayload, hasOnboardingBiodataPayload } from '@/lib/onboarding';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { StepName } from '@/components/onboarding/StepName';
 import { StepBiodata } from '@/components/onboarding/StepBiodata';
 import StepExperience from '@/components/onboarding/StepExperience';
 import { StepOneRepMax } from '@/components/onboarding/StepOneRepMax';
-import StepCardioBaseline from '@/components/onboarding/StepCardioBaseline';
 import StepDeviceConnect from '@/components/onboarding/StepDeviceConnect';
 import StepConsent from '@/components/onboarding/StepConsent';
 import { StepSummary } from '@/components/onboarding/StepSummary';
@@ -20,8 +20,6 @@ import {
   type OnboardingFormState,
   type OnboardingStep,
 } from '@/components/onboarding/types';
-
-const LB_TO_KG = 0.453592;
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -36,7 +34,7 @@ export default function OnboardingScreen() {
   }, []);
 
   function goNext() {
-    setStep((prev) => Math.min(prev + 1, 7) as OnboardingStep);
+    setStep((prev) => Math.min(prev + 1, 6) as OnboardingStep);
   }
 
   function goBack() {
@@ -59,28 +57,10 @@ export default function OnboardingScreen() {
       // Non-critical: save biodata — failure here should NOT block entry
       // (user can update physical data later in Settings)
       try {
-        const hasBiodata =
-          form.bodyWeight || form.height || form.birthDate || form.sex;
+        const biodataPayload = buildOnboardingBiodataPayload(form);
 
-        if (hasBiodata) {
-          const isImperial = form.unitSystem === 'imperial';
-          const bwRaw = form.bodyWeight ? parseFloat(form.bodyWeight) : null;
-          const htRaw = form.height ? parseFloat(form.height) : null;
-          const bw = bwRaw !== null && bwRaw > 0 ? bwRaw : null;
-          const ht = htRaw !== null && htRaw > 0 ? htRaw : null;
-          const restingHRInt = form.restingHR
-            ? parseInt(form.restingHR, 10)
-            : null;
-
-          await updateBiodata({
-            body_weight_kg: bw !== null ? (isImperial ? bw * LB_TO_KG : bw) : null,
-            height_cm: ht !== null ? (isImperial ? ht * 2.54 : ht) : null,
-            birth_date: form.birthDate || null,
-            biological_sex: form.sex || null,
-            lifting_experience: form.liftingExperience || null,
-            running_experience: form.runningExperience || null,
-            resting_hr: restingHRInt !== null && !isNaN(restingHRInt) ? restingHRInt : null,
-          });
+        if (hasOnboardingBiodataPayload(biodataPayload)) {
+          await updateBiodata(biodataPayload);
         }
       } catch (biodataErr) {
         // Biodata save failed — not fatal, user can fill in Settings later
@@ -97,8 +77,7 @@ export default function OnboardingScreen() {
     }
   }
 
-  // Steps 1-5 show back button (not step 0 = name, not step 6 = summary)
-  const showBack = step > 0 && step < 7;
+  const showBack = step > 0;
 
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
@@ -109,9 +88,16 @@ export default function OnboardingScreen() {
       {showBack && (
         <Pressable
           onPress={goBack}
-          className="px-8 py-2 flex-row items-center active:scale-[0.98]"
+          hitSlop={12}
+          style={{
+            paddingHorizontal: 32,
+            paddingVertical: 12,
+            minHeight: 44,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
         >
-          <FontAwesome name="arrow-left" size={14} color="#aaa8c3" />
+          <FontAwesome name="arrow-left" size={18} color="#aaa8c3" />
           <Text
             className="ml-2"
             style={{
@@ -140,17 +126,12 @@ export default function OnboardingScreen() {
           <StepOneRepMax form={form} onUpdate={handleUpdate} onNext={goNext} />
         )}
         {step === 4 && (
-          <StepCardioBaseline
-            form={form}
-            onUpdate={handleUpdate}
-            onNext={goNext}
-          />
+          <StepDeviceConnect form={form} onUpdate={handleUpdate} onNext={goNext} />
         )}
-        {step === 5 && <StepDeviceConnect onNext={goNext} />}
-        {step === 6 && (
+        {step === 5 && (
           <StepConsent form={form} onUpdate={handleUpdate} onNext={goNext} />
         )}
-        {step === 7 && (
+        {step === 6 && (
           <StepSummary
             form={form}
             onFinish={handleFinish}

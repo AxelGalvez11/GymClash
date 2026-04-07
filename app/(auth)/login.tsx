@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Pressable, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Colors } from '@/constants/theme';
 import { supabase } from '@/services/supabase';
+import HeroAsciiOne from '@/components/ui/hero-ascii-one';
+import { performAppleSignIn, isAppleSignInAvailable } from '@/lib/auth/apple-sign-in';
+import { performGoogleSignIn } from '@/lib/auth/google-sign-in';
+import { signInWithProvider } from '@/lib/auth/sign-in-with-provider';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -12,22 +16,28 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(mode === 'signup');
-  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
-  async function handleOAuthSignIn(provider: 'apple' | 'google') {
+  async function handleNativeSignIn(provider: 'apple' | 'google') {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: 'gymclash://auth/callback',
-        },
-      });
-      if (error) Alert.alert('Error', error.message);
-    } catch {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      if (provider === 'apple') {
+        const { identityToken, nonce } = await performAppleSignIn();
+        const { error } = await signInWithProvider('apple', identityToken, nonce);
+        if (error) Alert.alert('Error', error);
+      } else {
+        const { idToken, nonce } = await performGoogleSignIn();
+        const { error } = await signInWithProvider('google', idToken, nonce);
+        if (error) Alert.alert('Error', error);
+      }
+      // Auth state change listener in _layout.tsx handles navigation
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      // Don't show alert for user cancellation
+      if (!message.includes('cancel')) {
+        Alert.alert('Error', message);
+      }
     } finally {
       setLoading(false);
     }
@@ -39,20 +49,12 @@ export default function LoginScreen() {
       return;
     }
 
-    if (isSignUp && !username.trim()) {
-      Alert.alert('Error', 'Please enter a username');
-      return;
-    }
-
     setLoading(true);
     try {
       const { error } = isSignUp
         ? await supabase.auth.signUp({
             email,
             password,
-            options: {
-              data: { display_name: username.trim() },
-            },
           })
         : await supabase.auth.signInWithPassword({ email, password });
 
@@ -70,11 +72,25 @@ export default function LoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0c0c1f]">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-      <View className="flex-1 px-8 justify-center">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32, paddingVertical: 24 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <Pressable onPress={() => router.back()} className="mb-8 active:scale-[0.98]">
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={12}
+          style={{
+            minHeight: 44,
+            justifyContent: 'center',
+            marginBottom: 32,
+          }}
+        >
           <Text style={{ color: '#aaa8c3', fontFamily: 'Lexend-SemiBold', fontSize: 16 }}>{'<'} BACK</Text>
         </Pressable>
+
+        {isSignUp && <HeroAsciiOne />}
 
         <Text
           className="text-3xl mb-2"
@@ -84,29 +100,12 @@ export default function LoginScreen() {
         </Text>
         <Text className="mb-8" style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
           {isSignUp
-            ? 'Start your fitness RPG journey'
+            ? 'Start your clash journey'
             : 'Continue your training'}
         </Text>
 
         {/* Form */}
         <View className="gap-4 mb-8">
-          {isSignUp && (
-            <TextInput
-              className="bg-[#000000] rounded-xl px-4 py-4 text-base"
-              style={{
-                color: '#e5e3ff',
-                fontFamily: 'BeVietnamPro-Regular',
-              }}
-              placeholder="Username"
-              placeholderTextColor="#74738b"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={20}
-              textContentType="username"
-            />
-          )}
           <TextInput
             className="bg-[#000000] rounded-xl px-4 py-4 text-base"
             style={{
@@ -184,7 +183,13 @@ export default function LoginScreen() {
                 setLoading(false);
               }
             }}
-            className="items-center mb-6"
+            hitSlop={10}
+            style={{
+              minHeight: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 24,
+            }}
             disabled={loading || resetSent}
           >
             <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular', fontSize: 14 }}>
@@ -209,28 +214,31 @@ export default function LoginScreen() {
 
         {/* SSO Buttons */}
         <View className="gap-3 mb-6">
-          <Pressable
-            className="flex-row items-center justify-center py-3.5 rounded-[2rem] active:scale-[0.98]"
-            style={{
-              backgroundColor: '#23233f',
-              borderWidth: 0.5,
-              borderColor: 'rgba(206,150,255,0.25)',
-            }}
-            onPress={() => handleOAuthSignIn('apple')}
-            disabled={loading}
-          >
-            <FontAwesome name="apple" size={18} color="#fff" style={{ marginRight: 10 }} />
-            <Text
+          {/* Apple Sign In — iOS only (App Store requirement) */}
+          {isAppleSignInAvailable() && (
+            <Pressable
+              className="flex-row items-center justify-center py-3.5 rounded-[2rem] active:scale-[0.98]"
               style={{
-                color: '#e5e3ff',
-                fontFamily: 'Lexend-SemiBold',
-                fontSize: 13,
-                letterSpacing: 1,
+                backgroundColor: '#23233f',
+                borderWidth: 0.5,
+                borderColor: 'rgba(206,150,255,0.25)',
               }}
+              onPress={() => handleNativeSignIn('apple')}
+              disabled={loading}
             >
-              CONTINUE WITH APPLE
-            </Text>
-          </Pressable>
+              <FontAwesome name="apple" size={18} color="#fff" style={{ marginRight: 10 }} />
+              <Text
+                style={{
+                  color: '#e5e3ff',
+                  fontFamily: 'Lexend-SemiBold',
+                  fontSize: 13,
+                  letterSpacing: 1,
+                }}
+              >
+                CONTINUE WITH APPLE
+              </Text>
+            </Pressable>
+          )}
 
           <Pressable
             className="flex-row items-center justify-center py-3.5 rounded-[2rem] active:scale-[0.98]"
@@ -239,7 +247,7 @@ export default function LoginScreen() {
               borderWidth: 0.5,
               borderColor: 'rgba(206,150,255,0.25)',
             }}
-            onPress={() => handleOAuthSignIn('google')}
+            onPress={() => handleNativeSignIn('google')}
             disabled={loading}
           >
             <FontAwesome name="google" size={18} color="#fff" style={{ marginRight: 10 }} />
@@ -261,16 +269,16 @@ export default function LoginScreen() {
           onPress={() => setIsSignUp((prev) => !prev)}
           className="items-center"
         >
-          <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
-            {isSignUp
-              ? 'Already have an account? '
-              : "Don't have an account? "}
+            <Text style={{ color: '#aaa8c3', fontFamily: 'BeVietnamPro-Regular' }}>
+              {isSignUp
+                ? 'Already have an account? '
+                : "Don't have an account? "}
             <Text style={{ color: '#e5e3ff', fontFamily: 'BeVietnamPro-Bold', fontWeight: '700' }}>
               {isSignUp ? 'Log In' : 'Sign Up'}
             </Text>
           </Text>
         </Pressable>
-      </View>
+      </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

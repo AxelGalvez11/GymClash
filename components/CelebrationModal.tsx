@@ -230,7 +230,7 @@ export function CelebrationModal({
             )}
 
             {/* Continue button */}
-            <View className="w-full mt-8">
+            <View style={{ width: '100%', marginTop: 32, alignItems: 'center' }}>
               <Button
                 onPress={onDismiss}
                 variant="primary"

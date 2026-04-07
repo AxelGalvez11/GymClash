@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGpsStore } from '@/stores/gps-store';
-import { createMockLocationAdapter } from '@/lib/gps/mock-location-adapter';
+import { createLocationAdapter } from '@/lib/gps/create-location-adapter';
 import { calculateTotalDistance, calculateAvgPace, buildGpsRoute } from '@/lib/gps/route-calculator';
 import { GPS_CONFIG } from '@/constants/gps';
 import type { GpsRoute, GpsTrackingStatus } from '@/types';
@@ -18,7 +18,7 @@ interface UseGpsTrackingReturn {
 }
 
 export function useGpsTracking(): UseGpsTrackingReturn {
-  const adapterRef = useRef<LocationAdapter>(createMockLocationAdapter());
+  const adapterRef = useRef<LocationAdapter>(createLocationAdapter());
   const unsubRef = useRef<(() => void) | null>(null);
   const startTimeRef = useRef<number | null>(null);
 

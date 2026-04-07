@@ -46,3 +46,12 @@ coverage/
 # generated native folders
 /ios
 /android
+
+# Python backend
+backend/venv/
+backend/**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Office temp files
+~$*

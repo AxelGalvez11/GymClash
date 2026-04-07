@@ -4,20 +4,21 @@ import { useRouter } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useActiveWar, useWarContributions, useMyClan } from '@/hooks/use-clan';
 import { BiColorBar } from '@/components/BiColorBar';
+import { Colors } from '@/constants/theme';
 
-// ── Victory Peak palette ────────────────────────────────
+// ── Victory Peak palette — pulls from theme ─────────────
 const VP = {
-  surface:    '#0c0c1f',
-  raised:     '#17172f',
-  active:     '#1d1d37',
-  highest:    '#23233f',
-  textPri:    '#e5e3ff',
-  textSec:    '#aaa8c3',
-  textMuted:  '#74738b',
-  primary:    '#ce96ff',
-  primaryDim: '#a434ff',
-  gold:       '#ffd709',
-  cyan:       '#81ecff',
+  surface:    Colors.surface.DEFAULT,
+  raised:     Colors.surface.container,
+  active:     Colors.surface.containerHigh,
+  highest:    Colors.surface.containerHighest,
+  textPri:    Colors.text.primary,
+  textSec:    Colors.text.secondary,
+  textMuted:  Colors.text.muted,
+  primary:    Colors.primary.DEFAULT,
+  primaryDim: Colors.primary.dim,
+  gold:       Colors.secondary.DEFAULT,
+  cyan:       Colors.tertiary.DEFAULT,
 } as const;
 
 interface WarContribution {
