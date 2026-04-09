@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import type { PlayerType } from '@/types';
+import type { EquippedItem } from '@/lib/character/types';
 import {
   CharacterDisplay,
   getCharacterTier,
   getCharacterBuild,
 } from '@/components/ui/CharacterDisplay';
 import { CharacterScene } from './CharacterScene';
+import { CharacterWithEquipment } from './CharacterWithEquipment';
 
 interface CharacterDisplay3DProps {
   readonly level: number;
@@ -15,6 +17,8 @@ interface CharacterDisplay3DProps {
   readonly isWorkingOut?: boolean;
   readonly size?: 'sm' | 'md' | 'lg' | 'xl';
   readonly playerType?: PlayerType;
+  readonly sex?: 'male' | 'female' | null;
+  readonly equipment?: readonly EquippedItem[];
 }
 
 const SIZE_PX: Record<'sm' | 'md' | 'lg' | 'xl', number> = {
@@ -36,6 +40,8 @@ export function CharacterDisplay3D({
   isWorkingOut = false,
   size = 'md',
   playerType,
+  sex,
+  equipment = [],
 }: CharacterDisplay3DProps) {
   const [use3D, setUse3D] = useState(false);
 
@@ -79,12 +85,26 @@ export function CharacterDisplay3D({
         : 'balanced')
     : getCharacterBuild(strengthCount, scoutCount);
 
+  if (equipment.length > 0) {
+    return (
+      <CharacterWithEquipment
+        build={build}
+        tier={tier}
+        equipment={equipment}
+        size={SIZE_PX[size]}
+        enableRotation={!isWorkingOut}
+        sex={sex}
+      />
+    );
+  }
+
   return (
     <CharacterScene
       build={build}
       tier={tier}
       size={SIZE_PX[size]}
       enableRotation={!isWorkingOut}
+      sex={sex}
     />
   );
 }

@@ -39,6 +39,8 @@ const chromaticShadow = {
   elevation: 8,
 } as const;
 
+type StatsTab = 'lifts' | 'cardio';
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
@@ -46,6 +48,13 @@ export default function ProfileScreen() {
   const { data: workouts } = useMyWorkouts(100);
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [statsTab, setStatsTab] = useState<StatsTab>('lifts');
+
+  // Filter workouts by tab
+  const filteredWorkouts = (workouts ?? []).filter((w: any) => {
+    if (statsTab === 'lifts') return w.type === 'strength';
+    return w.type === 'scout' || w.type === 'hiit';
+  });
 
   // ── Entrance animations ────────────────────────────────────────────────────
   const radarEntrance = useEntrance(0, 'fade-slide', 280);
@@ -107,6 +116,64 @@ export default function ProfileScreen() {
               }}
             />
           </View>
+        </View>
+
+        {/* ─── Lifts / Cardio Segmented Toggle ──────────────────────── */}
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: VP.raised,
+            borderRadius: Radius.pill,
+            padding: 4,
+            marginBottom: Spacing.lg,
+            borderWidth: 1,
+            borderColor: 'rgba(206,150,255,0.15)',
+          }}
+        >
+          {(['lifts', 'cardio'] as const).map((tab) => {
+            const isActive = statsTab === tab;
+            const tabColor = tab === 'lifts' ? VP.primary : VP.cyan;
+            return (
+              <Pressable
+                key={tab}
+                onPress={() => setStatsTab(tab)}
+                style={{
+                  flex: 1,
+                  paddingVertical: 12,
+                  borderRadius: Radius.pill,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 8,
+                  backgroundColor: isActive ? tabColor : 'transparent',
+                  ...(isActive && {
+                    shadowColor: tabColor,
+                    shadowOpacity: 0.5,
+                    shadowRadius: 12,
+                    shadowOffset: { width: 0, height: 0 },
+                    elevation: 6,
+                  }),
+                }}
+              >
+                <FontAwesome
+                  name={tab === 'lifts' ? 'trophy' : 'heartbeat'}
+                  size={13}
+                  color={isActive ? '#0c0c1f' : VP.textMuted}
+                />
+                <Text
+                  style={{
+                    fontFamily: 'Epilogue-Bold',
+                    fontSize: 13,
+                    letterSpacing: 1.5,
+                    textTransform: 'uppercase',
+                    color: isActive ? '#0c0c1f' : VP.textMuted,
+                  }}
+                >
+                  {tab === 'lifts' ? 'Lifts' : 'Cardio'}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* Performance Radar */}
@@ -217,45 +284,132 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* Muscle Heatmap */}
-        <Animated.View style={heatmapEntrance.animatedStyle}>
-          <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
-            <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Muscle Heatmap</Text>
-            <MuscleHeatmapCard
-              workouts={workouts ?? []}
-              bodyWeightKg={profile?.body_weight_kg ?? null}
-              biologicalSex={profile?.biological_sex ?? null}
-            />
-          </View>
-
-          {/* Weekly Volume Chart */}
-          <WeeklyVolumeChart workouts={workouts ?? []} />
-        </Animated.View>
-
-        {/* Strength Benchmarks / Personal Records */}
-        <Animated.View style={recordsEntrance.animatedStyle}>
-          {records && records.length > 0 && (
-            <View className="mb-4">
-              <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 18, color: VP.textPri, fontWeight: 'bold', marginBottom: 12 }}>Personal Records</Text>
-              <View className="gap-2">
-                {records.slice(0, 5).map((r: any) => (
-                  <View
-                    key={r.id}
-                    className="bg-[#1d1d37] rounded-2xl p-3 flex-row items-center"
-                    style={chromaticShadow}
-                  >
-                    <FontAwesome name="trophy" size={14} color={VP.gold} />
-                    <Text className="font-bold ml-3 flex-1" style={{ color: VP.textPri }}>{r.exercise}</Text>
-                    <Text className="font-bold" style={{ color: '#ffffff' }}>{Math.round(r.best_estimated_1rm)} kg</Text>
-                  </View>
-                ))}
-              </View>
+        {/* Muscle Heatmap — only on Lifts tab */}
+        {statsTab === 'lifts' && (
+          <Animated.View style={heatmapEntrance.animatedStyle}>
+            <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
+              <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Muscle Heatmap</Text>
+              <MuscleHeatmapCard
+                workouts={filteredWorkouts}
+                bodyWeightKg={profile?.body_weight_kg ?? null}
+                biologicalSex={profile?.biological_sex ?? null}
+              />
             </View>
-          )}
+          </Animated.View>
+        )}
 
-          {/* Strength Benchmarks */}
-          <OneRMBenchmarkBars records={records ?? []} bodyWeightKg={profile?.body_weight_kg ?? null} />
+        {/* Weekly Volume Chart — both tabs, filtered */}
+        <Animated.View style={heatmapEntrance.animatedStyle}>
+          <WeeklyVolumeChart workouts={filteredWorkouts} />
         </Animated.View>
+
+        {/* Strength Benchmarks / Personal Records — only on Lifts tab */}
+        {statsTab === 'lifts' && (
+          <Animated.View style={recordsEntrance.animatedStyle}>
+            {records && records.length > 0 && (
+              <View className="mb-4">
+                <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 18, color: VP.textPri, fontWeight: 'bold', marginBottom: 12 }}>Personal Records</Text>
+                <View className="gap-2">
+                  {records.slice(0, 5).map((r: any) => (
+                    <View
+                      key={r.id}
+                      className="bg-[#1d1d37] rounded-2xl p-3 flex-row items-center"
+                      style={chromaticShadow}
+                    >
+                      <FontAwesome name="trophy" size={14} color={VP.gold} />
+                      <Text className="font-bold ml-3 flex-1" style={{ color: VP.textPri }}>{r.exercise}</Text>
+                      <Text className="font-bold" style={{ color: '#ffffff' }}>{Math.round(r.best_estimated_1rm)} kg</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Strength Benchmarks */}
+            <OneRMBenchmarkBars records={records ?? []} bodyWeightKg={profile?.body_weight_kg ?? null} />
+          </Animated.View>
+        )}
+
+        {/* Cardio Stats — only on Cardio tab */}
+        {statsTab === 'cardio' && (
+          <Animated.View style={recordsEntrance.animatedStyle}>
+            <View className="bg-[#1d1d37] rounded-2xl p-4 mb-4" style={chromaticShadow}>
+              <Text style={{ fontFamily: 'Epilogue-Bold', fontSize: 16, color: VP.textPri, marginBottom: 12 }}>Cardio Summary</Text>
+              {(() => {
+                const cardio = filteredWorkouts;
+                const totalKm = cardio.reduce((sum: number, w: any) => sum + (w.route_data?.distance_km ?? 0), 0);
+                const totalMin = cardio.reduce((sum: number, w: any) => sum + (w.duration_seconds ?? 0), 0) / 60;
+                const avgPace = totalKm > 0 ? totalMin / totalKm : 0;
+                const sessions = cardio.length;
+                const formatPace = (p: number) => {
+                  if (p <= 0) return '--:--';
+                  const m = Math.floor(p);
+                  const s = Math.round((p - m) * 60);
+                  return `${m}:${s.toString().padStart(2, '0')}`;
+                };
+                return (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                    {[
+                      { label: 'Sessions', value: String(sessions), unit: '' },
+                      { label: 'Total Distance', value: totalKm.toFixed(1), unit: 'km' },
+                      { label: 'Total Time', value: Math.round(totalMin).toString(), unit: 'min' },
+                      { label: 'Avg Pace', value: formatPace(avgPace), unit: 'min/km' },
+                    ].map((stat) => (
+                      <View
+                        key={stat.label}
+                        style={{
+                          flex: 1,
+                          minWidth: '45%',
+                          backgroundColor: VP.surface,
+                          borderRadius: Radius.md,
+                          padding: 14,
+                          borderWidth: 1,
+                          borderColor: 'rgba(129,236,255,0.2)',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: 'Lexend-SemiBold',
+                            fontSize: 9,
+                            letterSpacing: 1.5,
+                            textTransform: 'uppercase',
+                            color: VP.textMuted,
+                            marginBottom: 6,
+                          }}
+                        >
+                          {stat.label}
+                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                          <Text
+                            style={{
+                              fontFamily: 'Epilogue-Bold',
+                              fontSize: 22,
+                              color: VP.cyan,
+                              letterSpacing: -0.5,
+                            }}
+                          >
+                            {stat.value}
+                          </Text>
+                          {stat.unit && (
+                            <Text
+                              style={{
+                                fontFamily: 'Lexend-SemiBold',
+                                fontSize: 10,
+                                color: VP.textMuted,
+                              }}
+                            >
+                              {stat.unit}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                );
+              })()}
+            </View>
+          </Animated.View>
+        )}
 
         {/* Workout Calendar */}
         <Animated.View style={calendarEntrance.animatedStyle}>

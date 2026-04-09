@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  Image,
+  type ImageSourcePropType,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -36,6 +38,8 @@ import { Button } from '@/components/ui/Button';
 import FeaturedBanner from '@/components/shop/FeaturedBanner';
 import CratePreview from '@/components/shop/CratePreview';
 import PowerUpPreview from '@/components/shop/PowerUpPreview';
+import { CosmeticPreviewModal } from '@/components/shop/CosmeticPreviewModal';
+import { LOCAL_COSMETICS, type LocalCosmetic } from '@/lib/shop/local-cosmetics';
 import type { CosmeticRarity } from '@/types';
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -70,6 +74,38 @@ const SHOP_TABS: { key: ShopTab; label: string }[] = [
   { key: 'powerups',  label: 'Power Ups' },
   { key: 'crates',    label: 'Crates'    },
 ];
+
+const THUMBNAIL_OVERRIDES: ReadonlyArray<{
+  readonly match: string;
+  readonly source: ImageSourcePropType;
+}> = [
+  {
+    match: 'sword',
+    source: require('../../assets/models/cosmetics/thumbs/sword.png'),
+  },
+  {
+    match: 'wings',
+    source: require('../../assets/models/cosmetics/thumbs/wings.png'),
+  },
+];
+
+function getCosmeticThumbnailSource(item: any): ImageSourcePropType | null {
+  const searchText = `${item?.id ?? ''} ${item?.name ?? ''}`.toLowerCase();
+  const override = THUMBNAIL_OVERRIDES.find(({ match }) => searchText.includes(match));
+  if (override) {
+    return override.source;
+  }
+
+  if (item?.thumbnail) {
+    return item.thumbnail;
+  }
+
+  if (typeof item?.preview_url === 'string' && item.preview_url.trim().length > 0) {
+    return { uri: item.preview_url };
+  }
+
+  return null;
+}
 
 // ─── Daily deal items (static, matches reference image feel) ─────────────────
 const DAILY_DEALS = [
@@ -451,6 +487,7 @@ function FeaturedItemCard({
   const rarityColor = RARITY_COLORS[(item.rarity as CosmeticRarity) ?? 'common'] ?? '#aaa8c3';
   const glow        = RARITY_GLOW[(item.rarity as CosmeticRarity) ?? 'common'] ?? RARITY_GLOW.common;
   const { animatedStyle: staggerStyle } = useStaggerEntrance(index, 70, 280);
+  const thumbnailSource = getCosmeticThumbnailSource(item);
 
   return (
     <Animated.View style={[{ flex: 1, minWidth: 155 }, staggerStyle]}>
@@ -519,7 +556,15 @@ function FeaturedItemCard({
               opacity: 0.08,
             }}
           />
-          <FontAwesome name="gift" size={44} color={rarityColor} />
+          {thumbnailSource ? (
+            <Image
+              source={thumbnailSource}
+              resizeMode="contain"
+              style={{ width: '100%', height: '100%' }}
+            />
+          ) : (
+            <FontAwesome name="gift" size={44} color={rarityColor} />
+          )}
         </View>
 
         {/* Content */}
@@ -1041,6 +1086,7 @@ function CosmeticsTabContent({
   isLoading,
   ownedIds,
   onPurchase,
+  onPreviewLocal,
   purchaseLoading,
   accentColor,
 }: {
@@ -1048,6 +1094,7 @@ function CosmeticsTabContent({
   isLoading: boolean;
   ownedIds: Set<string>;
   onPurchase: (item: any) => void;
+  onPreviewLocal: (cosmetic: LocalCosmetic) => void;
   purchaseLoading: boolean;
   accentColor: string;
 }) {
@@ -1059,9 +1106,12 @@ function CosmeticsTabContent({
     );
   }
 
+  // Merge server catalog with locally-bundled cosmetics (new .glb items).
+  const mergedData: any[] = [...LOCAL_COSMETICS, ...catalog];
+
   return (
     <FlatList
-      data={catalog}
+      data={mergedData}
       keyExtractor={(item: any) => item.id}
       numColumns={2}
       showsVerticalScrollIndicator={false}
@@ -1072,8 +1122,13 @@ function CosmeticsTabContent({
           item={item}
           index={index}
           owned={ownedIds.has(item.id)}
-          onPress={() => onPurchase(item)}
-          disabled={purchaseLoading || ownedIds.has(item.id) || !item.price_coins}
+          onPress={() =>
+            item.isLocal ? onPreviewLocal(item as LocalCosmetic) : onPurchase(item)
+          }
+          disabled={
+            !item.isLocal &&
+            (purchaseLoading || ownedIds.has(item.id) || !item.price_coins)
+          }
         />
       )}
       ListEmptyComponent={
@@ -1118,6 +1173,7 @@ export default function ShopScreen() {
 
   const [activeTab, setActiveTab] = useState<ShopTab>('featured');
   const [tabKey, setTabKey]       = useState(0);
+  const [previewCosmetic, setPreviewCosmetic] = useState<LocalCosmetic | null>(null);
 
   // Header entrance
   const { animatedStyle: headerStyle } = useEntrance(0, 'fade-slide', 280);
@@ -1253,6 +1309,7 @@ export default function ShopScreen() {
             isLoading={isLoading}
             ownedIds={ownedIds}
             onPurchase={handlePurchase}
+            onPreviewLocal={(c) => setPreviewCosmetic(c)}
             purchaseLoading={purchaseMutation.isPending}
             accentColor={accent.DEFAULT}
           />
@@ -1280,6 +1337,18 @@ export default function ShopScreen() {
           </ScrollView>
         ) : null}
       </TabContentFade>
+
+      <CosmeticPreviewModal
+        cosmetic={previewCosmetic}
+        visible={previewCosmetic !== null}
+        onClose={() => setPreviewCosmetic(null)}
+        onBuy={() => {
+          Alert.alert(
+            'Coming Soon',
+            'This cosmetic will be purchasable once it is added to the live catalog.'
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }

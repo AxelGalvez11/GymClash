@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, Alert, Animated, ScrollView, Modal } from 'react-native';
+import { View, Text, Pressable, Alert, Animated, ScrollView, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Colors } from '@/constants/theme';
 import { supabase } from '@/services/supabase';
 import { useProfile } from '@/hooks/use-profile';
+import { updateProfile } from '@/services/api';
 import { useAccent, useAccentStore, ACCENT_OPTIONS, type AccentKey } from '@/stores/accent-store';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -140,12 +142,48 @@ function AccentColorPicker() {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: profile } = useProfile();
   const { session } = useAuthStore();
   const accent = useAccent();
   const [showAccountInfo, setShowAccountInfo] = useState(false);
+  const [showNameEditor, setShowNameEditor] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   const biodataStatus = profile?.body_weight_kg ? 'Complete' : 'Incomplete';
+
+  function openNameEditor() {
+    setNameDraft(profile?.display_name ?? '');
+    setShowNameEditor(true);
+  }
+
+  async function handleSaveName() {
+    const trimmed = nameDraft.trim();
+    if (trimmed.length === 0) {
+      Alert.alert('Error', 'Name cannot be empty.');
+      return;
+    }
+    if (trimmed.length > 20) {
+      Alert.alert('Error', 'Name must be 20 characters or less.');
+      return;
+    }
+    if (trimmed === profile?.display_name) {
+      setShowNameEditor(false);
+      return;
+    }
+
+    setSavingName(true);
+    try {
+      await updateProfile({ display_name: trimmed });
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+      setShowNameEditor(false);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to update name.');
+    } finally {
+      setSavingName(false);
+    }
+  }
 
   async function handleSignOut() {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -353,6 +391,22 @@ export default function SettingsScreen() {
                   <Text style={{ fontFamily: 'Lexend-SemiBold', fontSize: 9, letterSpacing: 1, color: '#74738b', textTransform: 'uppercase' }}>Name</Text>
                   <Text style={{ fontFamily: 'BeVietnamPro-Regular', fontSize: 14, color: '#e5e3ff' }}>{profile?.display_name || 'Not set'}</Text>
                 </View>
+                <Pressable
+                  onPress={() => {
+                    setShowAccountInfo(false);
+                    openNameEditor();
+                  }}
+                  hitSlop={10}
+                  style={{
+                    minWidth: 44,
+                    minHeight: 44,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 22,
+                  }}
+                >
+                  <FontAwesome name="pencil" size={14} color="#ce96ff" />
+                </Pressable>
               </View>
               <View className="flex-row items-center gap-3">
                 <FontAwesome name="envelope" size={14} color="#aaa8c3" />
@@ -377,6 +431,152 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+        </Pressable>
+      </Modal>
+
+      {/* ─── Edit Display Name Modal ─────────────────────────────── */}
+      <Modal visible={showNameEditor} animationType="fade" transparent>
+        <Pressable
+          className="flex-1 items-center justify-center"
+          style={{ backgroundColor: 'rgba(12,12,31,0.85)' }}
+          onPress={() => !savingName && setShowNameEditor(false)}
+        >
+          <Pressable
+            className="bg-[#1d1d37] rounded-2xl p-6 mx-8 w-[85%]"
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              shadowColor: '#ce96ff',
+              shadowOffset: { width: 0, height: 4 },
+              shadowRadius: 16,
+              shadowOpacity: 0.18,
+              elevation: 8,
+            }}
+          >
+            <View className="flex-row items-center justify-between mb-5">
+              <Text style={{ fontFamily: 'Epilogue-Bold', color: '#e5e3ff', fontSize: 18 }}>
+                Change Name
+              </Text>
+              <Pressable
+                onPress={() => !savingName && setShowNameEditor(false)}
+                hitSlop={10}
+                style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <FontAwesome name="times" size={18} color="#74738b" />
+              </Pressable>
+            </View>
+
+            <Text
+              style={{
+                fontFamily: 'Lexend-SemiBold',
+                fontSize: 9,
+                letterSpacing: 1.5,
+                color: '#74738b',
+                textTransform: 'uppercase',
+                marginBottom: 8,
+              }}
+            >
+              Warrior Name
+            </Text>
+
+            <TextInput
+              value={nameDraft}
+              onChangeText={setNameDraft}
+              placeholder="Enter your warrior name"
+              placeholderTextColor="#74738b"
+              maxLength={20}
+              autoFocus
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!savingName}
+              style={{
+                backgroundColor: '#000000',
+                color: '#e5e3ff',
+                fontFamily: 'BeVietnamPro-Regular',
+                fontSize: 16,
+                borderRadius: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                minHeight: 48,
+                borderWidth: 1,
+                borderColor: 'rgba(206,150,255,0.25)',
+              }}
+            />
+
+            <Text
+              style={{
+                fontFamily: 'BeVietnamPro-Regular',
+                fontSize: 11,
+                color: '#74738b',
+                marginTop: 6,
+                textAlign: 'right',
+              }}
+            >
+              {nameDraft.length}/20
+            </Text>
+
+            <View className="flex-row gap-3 mt-6">
+              <Pressable
+                onPress={() => !savingName && setShowNameEditor(false)}
+                disabled={savingName}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 24,
+                  backgroundColor: '#23233f',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 44,
+                  borderWidth: 1,
+                  borderColor: 'rgba(70,70,92,0.3)',
+                  opacity: savingName ? 0.5 : 1,
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#aaa8c3',
+                    fontFamily: 'Lexend-SemiBold',
+                    fontSize: 13,
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Cancel
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleSaveName}
+                disabled={savingName || nameDraft.trim().length === 0}
+                style={{
+                  flex: 1,
+                  paddingVertical: 14,
+                  borderRadius: 24,
+                  backgroundColor: '#a434ff',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 44,
+                  shadowColor: '#a434ff',
+                  shadowOpacity: 0.4,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 4 },
+                  elevation: 8,
+                  opacity: savingName || nameDraft.trim().length === 0 ? 0.5 : 1,
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#ffffff',
+                    fontFamily: 'Epilogue-Bold',
+                    fontSize: 13,
+                    letterSpacing: 1.5,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {savingName ? 'Saving…' : 'Save'}
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
         </Pressable>
       </Modal>
     </SafeAreaView>

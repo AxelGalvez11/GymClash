@@ -7,7 +7,7 @@ import { Colors } from '@/constants/theme';
 import { supabase } from '@/services/supabase';
 import HeroAsciiOne from '@/components/ui/hero-ascii-one';
 import { performAppleSignIn, isAppleSignInAvailable } from '@/lib/auth/apple-sign-in';
-import { performGoogleSignIn } from '@/lib/auth/google-sign-in';
+import { performGoogleSignIn, isGoogleSignInConfigured } from '@/lib/auth/google-sign-in';
 import { signInWithProvider } from '@/lib/auth/sign-in-with-provider';
 
 export default function LoginScreen() {
@@ -20,6 +20,15 @@ export default function LoginScreen() {
   const [resetSent, setResetSent] = useState(false);
 
   async function handleNativeSignIn(provider: 'apple' | 'google') {
+    // Friendly guard for unconfigured Google OAuth
+    if (provider === 'google' && !isGoogleSignInConfigured()) {
+      Alert.alert(
+        'Google Sign-In not configured',
+        'Google OAuth credentials have not been set up yet. Please use email or Apple Sign-In for now.'
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       if (provider === 'apple') {

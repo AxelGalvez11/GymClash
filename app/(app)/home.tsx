@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/Button';
 import { ResourcePill } from '@/components/ui/ResourcePill';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { useProfile } from '@/hooks/use-profile';
+import { useEquippedCosmetics } from '@/hooks/use-equipped-cosmetics';
 import { useEntrance } from '@/hooks/use-entrance';
 import { useMyWorkouts } from '@/hooks/use-workouts';
 import { useMyClan } from '@/hooks/use-clan';
@@ -185,6 +186,7 @@ export default function HomeScreen() {
   const { isGuest } = useAuthStore();
   const { guestWorkouts } = useGuestWorkoutStore();
   const { data: profile, isLoading: profileLoading } = useProfile();
+  const { data: equippedCosmetics = [] } = useEquippedCosmetics();
   const { data: workouts } = useMyWorkouts(3);
   const { data: myClan } = useMyClan();
   const { isActive: isWorkingOut } = useWorkoutStore();
@@ -483,6 +485,8 @@ export default function HomeScreen() {
               scoutCount={profile?.scout_workout_count ?? 0}
               isWorkingOut={useWorkoutStore.getState().isActive}
               size="xl"
+              sex={(profile?.biological_sex as 'male' | 'female' | null) ?? null}
+              equipment={equippedCosmetics}
             />
           </View>
 

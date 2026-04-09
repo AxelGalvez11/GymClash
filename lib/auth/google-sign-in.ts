@@ -15,10 +15,24 @@ const GOOGLE_CLIENT_ID_ANDROID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROI
 const GOOGLE_CLIENT_ID_WEB = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB ?? '';
 
 /**
+ * Returns true if Google OAuth credentials are configured in env.
+ * Used to gate the sign-in button so users don't see Google's raw 400 error.
+ */
+export function isGoogleSignInConfigured(): boolean {
+  return GOOGLE_CLIENT_ID_WEB.length > 0;
+}
+
+/**
  * Performs Google Sign In using expo-auth-session.
  * Uses authorization code flow with PKCE + nonce for Supabase OIDC.
  */
 export async function performGoogleSignIn(): Promise<GoogleSignInResult> {
+  if (!GOOGLE_CLIENT_ID_WEB) {
+    throw new Error(
+      'Google Sign-In not configured yet. Set EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB in .env and rebuild.'
+    );
+  }
+
   const rawNonce = Crypto.randomUUID();
   const hashedNonce = await Crypto.digestStringAsync(
     Crypto.CryptoDigestAlgorithm.SHA256,

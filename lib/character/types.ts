@@ -3,11 +3,20 @@ import type { CharacterBuild, CharacterTier } from '@/types';
 export type EquipmentSlot = 'head' | 'chest' | 'hands' | 'feet' | 'accessory';
 export type CharacterModelId = 'starter';
 
+export interface EquipmentTransform {
+  readonly targetHeight: number;
+  readonly position: readonly [number, number, number];
+  readonly rotation?: readonly [number, number, number];
+  readonly scaleMultiplier?: number;
+}
+
 export interface EquippedItem {
   readonly id: string;
   readonly slot: EquipmentSlot;
-  readonly modelPath: string;
   readonly name: string;
+  readonly assetSource: number;
+  readonly modelPath?: string;
+  readonly transform: EquipmentTransform;
 }
 
 export interface CharacterModelConfig {
@@ -16,6 +25,7 @@ export interface CharacterModelConfig {
   readonly tier: CharacterTier;
   readonly modelPath: string;
   readonly assetSource: number;
+  readonly resourceAssets?: Readonly<Record<string, number>>;
   readonly scale: number;
   readonly idleAnimationSpeed: number;
 }

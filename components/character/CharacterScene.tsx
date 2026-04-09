@@ -1,19 +1,138 @@
+// IMPORTANT: polyfill must be installed before any code touches `three`.
+import { installThreeRNPolyfills } from '@/lib/three/rn-polyfills';
+installThreeRNPolyfills();
+
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { View, Platform, PanResponder } from 'react-native';
+import { parseGlbRN } from '@/lib/three/glb-preprocess';
 import type { CharacterBuild, CharacterTier } from '@/types';
-import type { CharacterModelConfig } from '@/lib/character/types';
-import { getCharacterModelConfig } from '@/lib/character/model-registry';
+import type { CharacterModelConfig, EquippedItem } from '@/lib/character/types';
+import { getCharacterModelConfig, type BiologicalSex } from '@/lib/character/model-registry';
 
 // Lazy imports for 3D
 let GLView: any = null;
 let THREE: any = null;
 let ExpoTHREE: any = null;
+let GLTFLoader: any = null;
+let Asset: any = null;
+let FileSystem: any = null;
+
+const STARTER_MODEL_COLOR = 0xc7ccd8;
 
 interface CharacterSceneProps {
   readonly build: CharacterBuild;
   readonly tier: CharacterTier;
   readonly size: number;
   readonly enableRotation?: boolean;
+  readonly sex?: BiologicalSex;
+  readonly equipment?: readonly EquippedItem[];
+}
+
+function decodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
+  if (typeof globalThis.atob === 'function') {
+    const binary = globalThis.atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+    return bytes.buffer;
+  }
+
+  const bufferCtor = (globalThis as any).Buffer;
+  if (bufferCtor?.from) {
+    const decoded = bufferCtor.from(base64, 'base64');
+    return decoded.buffer.slice(
+      decoded.byteOffset,
+      decoded.byteOffset + decoded.byteLength
+    );
+  }
+
+  throw new Error('No base64 decoder available for character model');
+}
+
+async function loadBinaryGlbAsset(assetSource: number): Promise<ArrayBuffer> {
+  if (!Asset || !FileSystem) {
+    throw new Error('3D asset loaders not initialized');
+  }
+
+  const [asset] = await Asset.loadAsync([assetSource]);
+  const uri = asset.localUri || asset.uri;
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return decodeBase64ToArrayBuffer(base64);
+}
+
+async function parseBundledGlbAsset(assetSource: number): Promise<any> {
+  if (!GLTFLoader) {
+    throw new Error('GLTFLoader not initialized');
+  }
+
+  const loader = new GLTFLoader();
+  const arrayBuffer = await loadBinaryGlbAsset(assetSource);
+  console.log('[CharacterScene] GLB loaded bytes:', arrayBuffer.byteLength);
+  return parseGlbRN(loader, arrayBuffer);
+}
+
+function prepareLoadedModel(model: any) {
+  if (!THREE) return;
+
+  model.traverse((child: any) => {
+    if (!child.isMesh) return;
+
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    for (const material of materials) {
+      if (!material) continue;
+      if (material.map) {
+        try { material.map.colorSpace = THREE.SRGBColorSpace; } catch {}
+        material.map.needsUpdate = true;
+      }
+      if (material.emissiveMap) material.emissiveMap.needsUpdate = true;
+      if (material.normalMap) material.normalMap.needsUpdate = true;
+      if (material.roughnessMap) material.roughnessMap.needsUpdate = true;
+      if (material.metalnessMap) material.metalnessMap.needsUpdate = true;
+      material.needsUpdate = true;
+    }
+    child.frustumCulled = false;
+    child.visible = true;
+  });
+}
+
+function normalizeCharacterModel(model: any, scaleMultiplier: number) {
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const targetHeight = 2.0;
+  const scaleFactor = targetHeight / Math.max(size.y, 0.001);
+  model.scale.setScalar(scaleFactor * scaleMultiplier);
+
+  const scaledBox = new THREE.Box3().setFromObject(model);
+  const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+  model.position.x -= scaledCenter.x;
+  model.position.y -= scaledBox.min.y;
+  model.position.z -= scaledCenter.z;
+}
+
+function placeAttachmentModel(model: any, item: EquippedItem) {
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const scaleFactor =
+    item.transform.targetHeight / Math.max(size.y, 0.001);
+
+  model.scale.setScalar(scaleFactor * (item.transform.scaleMultiplier ?? 1));
+
+  const centeredBox = new THREE.Box3().setFromObject(model);
+  const centeredCenter = centeredBox.getCenter(new THREE.Vector3());
+  model.position.x -= centeredCenter.x;
+  model.position.y -= centeredCenter.y;
+  model.position.z -= centeredCenter.z;
+
+  const [rx = 0, ry = 0, rz = 0] = item.transform.rotation ?? [0, 0, 0];
+  model.rotation.set(rx, ry, rz);
+
+  const [px, py, pz] = item.transform.position;
+  model.position.x += px;
+  model.position.y += py;
+  model.position.z += pz;
 }
 
 export function CharacterScene({
@@ -21,6 +140,8 @@ export function CharacterScene({
   tier,
   size,
   enableRotation = true,
+  sex,
+  equipment = [],
 }: CharacterSceneProps) {
   const [glReady, setGlReady] = useState(false);
   const rendererRef = useRef<any>(null);
@@ -31,7 +152,7 @@ export function CharacterScene({
   const clockRef = useRef<any>(null);
   const frameRef = useRef<number>(0);
   const configRef = useRef<CharacterModelConfig>(
-    getCharacterModelConfig(build, tier)
+    getCharacterModelConfig(build, tier, sex)
   );
 
   // Touch rotation
@@ -70,8 +191,10 @@ export function CharacterScene({
     try {
       GLView = require('expo-gl').GLView;
       THREE = require('three');
-      // expo-three default export includes loadAsync + the texture polyfill
       ExpoTHREE = require('expo-three');
+      GLTFLoader = require('three/examples/jsm/loaders/GLTFLoader').GLTFLoader;
+      Asset = require('expo-asset').Asset;
+      FileSystem = require('expo-file-system');
       setGlReady(true);
     } catch (e) {
       console.warn('[CharacterScene] Failed to load 3D libs:', e);
@@ -80,13 +203,13 @@ export function CharacterScene({
   }, []);
 
   useEffect(() => {
-    configRef.current = getCharacterModelConfig(build, tier);
-  }, [build, tier]);
+    configRef.current = getCharacterModelConfig(build, tier, sex);
+  }, [build, tier, sex]);
 
   const onContextCreate = useCallback(
     async (gl: any) => {
-      if (!THREE || !ExpoTHREE) {
-        console.warn('[CharacterScene] THREE or ExpoTHREE not loaded');
+      if (!THREE || !ExpoTHREE || !GLTFLoader || !Asset || !FileSystem) {
+        console.warn('[CharacterScene] 3D dependencies not loaded');
         return;
       }
 
@@ -94,9 +217,10 @@ export function CharacterScene({
       sceneRef.current = scene;
 
       const aspect = gl.drawingBufferWidth / gl.drawingBufferHeight;
-      const camera = new THREE.PerspectiveCamera(28, aspect, 0.1, 100);
-      camera.position.set(0, 1.1, 3.2);
-      camera.lookAt(0, 0.85, 0);
+      // Camera framing is recomputed after the model loads (see fitCameraToModel).
+      const camera = new THREE.PerspectiveCamera(35, aspect, 0.01, 1000);
+      camera.position.set(0, 1.0, 5);
+      camera.lookAt(0, 1.0, 0);
       cameraRef.current = camera;
 
       const renderer = new ExpoTHREE.Renderer({ gl });
@@ -123,15 +247,12 @@ export function CharacterScene({
       const clock = new THREE.Clock();
       clockRef.current = clock;
 
-      // Load model using expo-three's loadAsync — handles textures correctly
       try {
         await loadCharacterModel(scene, renderer, camera);
-        console.log('[CharacterScene] ✅ Model loaded successfully');
-      } catch (err) {
-        console.warn('[CharacterScene] ❌ Model load failed:', err);
-        // Fallback: visible capsule so we know it failed
+      } catch (err: any) {
+        console.warn('[CharacterScene] Model load failed:', err?.message ?? err, err?.stack);
         const geo = new THREE.CapsuleGeometry(0.3, 0.8, 8, 16);
-        const mat = new THREE.MeshStandardMaterial({ color: getTierColor(tier) });
+        const mat = new THREE.MeshStandardMaterial({ color: STARTER_MODEL_COLOR });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(0, 0.7, 0);
         scene.add(mesh);
@@ -144,70 +265,120 @@ export function CharacterScene({
           mixerRef.current.update(clockRef.current.getDelta());
         }
         if (modelRef.current && autoRotateRef.current && !isDraggingRef.current) {
-          modelRef.current.rotation.y += 0.005 * configRef.current.idleAnimationSpeed;
+          modelRef.current.rotation.y += 0.012;
         }
         renderer.render(scene, camera);
         gl.endFrameEXP();
       };
       animate();
     },
-    [build, tier, enableRotation]
+    [build, tier, enableRotation, equipment]
   );
 
   async function loadCharacterModel(scene: any, renderer: any, camera: any) {
-    if (!ExpoTHREE || !THREE) throw new Error('ExpoTHREE/THREE not initialized');
+    if (!THREE || !GLTFLoader || !Asset || !FileSystem) {
+      throw new Error('3D model loaders not initialized');
+    }
 
-    console.log('[CharacterScene] Calling ExpoTHREE.loadAsync...');
+    const resourceAssets = configRef.current.resourceAssets ?? {};
+    const resourceEntries = Object.entries(resourceAssets);
+    const isBinaryGlb =
+      resourceEntries.length === 0 &&
+      configRef.current.modelPath.toLowerCase().endsWith('.glb');
 
-    // ExpoTHREE.loadAsync handles:
-    //  - Asset resolution (require → local URI)
-    //  - .glb binary loading via fetch().arrayBuffer()
-    //  - GLTFLoader.parse() with the correct callback signature
-    //  - Texture polyfill via polyfillTextureLoader.fx
-    const gltf = await ExpoTHREE.loadAsync(
-      configRef.current.assetSource,
-      undefined, // onProgress
-      undefined  // onAssetRequested
-    );
+    const [gltfAsset] = await Asset.loadAsync([configRef.current.assetSource]);
+    const gltfUri = gltfAsset.localUri || gltfAsset.uri;
 
-    console.log('[CharacterScene] loadAsync returned, gltf:', !!gltf, 'scene:', !!gltf?.scene);
+    let gltf: any;
+    if (isBinaryGlb) {
+      gltf = await parseBundledGlbAsset(configRef.current.assetSource);
+    } else {
+      // Legacy path: .gltf + external .bin/textures
+      const loadedResourceAssets = await Asset.loadAsync(
+        resourceEntries.map(([, moduleId]) => moduleId)
+      );
+      const gltfJson = await FileSystem.readAsStringAsync(gltfUri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      const bufferUriMap = Object.fromEntries(
+        resourceEntries
+          .filter(([name]) => name.endsWith('.bin'))
+          .map(([name], index) => {
+            const asset = loadedResourceAssets[index];
+            return [name, asset.localUri || asset.uri];
+          })
+      );
+      const textureAssetMap = Object.fromEntries(
+        resourceEntries
+          .filter(([name]) => !name.endsWith('.bin'))
+          .map(([name, moduleId]) => [name, moduleId])
+      );
+
+      const manager = new THREE.LoadingManager();
+      manager.setURLModifier((url: string) => bufferUriMap[url] ?? url);
+
+      const loader = new GLTFLoader(manager);
+      loader.register((parser: any) => {
+        parser.textureLoader.setPath(textureAssetMap);
+        return { name: 'GYMCLASH_NATIVE_TEXTURES' };
+      });
+      gltf = await new Promise<any>((resolve, reject) => {
+        loader.parse(gltfJson, '', resolve, reject);
+      });
+    }
 
     const model = gltf.scene || gltf.scenes?.[0];
     if (!model) throw new Error('GLTF has no scene');
 
-    // Force SRGB on diffuse maps
+    let meshCount = 0;
     model.traverse((child: any) => {
-      if (!child.isMesh) return;
-      const materials = Array.isArray(child.material) ? child.material : [child.material];
-      for (const mat of materials) {
-        if (!mat) continue;
-        if (mat.map) {
-          mat.map.colorSpace = THREE.SRGBColorSpace;
-          mat.map.needsUpdate = true;
-        }
-        if (mat.emissiveMap) mat.emissiveMap.needsUpdate = true;
-        if (mat.normalMap) mat.normalMap.needsUpdate = true;
-        if (mat.roughnessMap) mat.roughnessMap.needsUpdate = true;
-        if (mat.metalnessMap) mat.metalnessMap.needsUpdate = true;
-        mat.needsUpdate = true;
-      }
+      if (child.isMesh) meshCount += 1;
     });
+    prepareLoadedModel(model);
+    console.log('[CharacterScene] mesh count:', meshCount);
 
-    // Auto-center and scale
-    const box = new THREE.Box3().setFromObject(model);
-    const center = box.getCenter(new THREE.Vector3());
-    const sz = box.getSize(new THREE.Vector3());
+    normalizeCharacterModel(model, configRef.current.scale);
 
-    const targetHeight = 2.0;
-    const scaleFactor = targetHeight / sz.y;
-    model.scale.setScalar(scaleFactor * configRef.current.scale);
-
-    model.position.x = -center.x * scaleFactor;
-    model.position.y = -box.min.y * scaleFactor;
-    model.position.z = -center.z * scaleFactor;
+    for (const item of equipment) {
+      try {
+        const attachmentGltf = await parseBundledGlbAsset(item.assetSource);
+        const attachment = attachmentGltf.scene || attachmentGltf.scenes?.[0];
+        if (!attachment) {
+          continue;
+        }
+        prepareLoadedModel(attachment);
+        placeAttachmentModel(attachment, item);
+        model.add(attachment);
+      } catch (error: any) {
+        console.warn(
+          `[CharacterScene] Equipment load failed for ${item.id}:`,
+          error?.message ?? error
+        );
+      }
+    }
 
     scene.add(model);
     modelRef.current = model;
+
+    // Fit camera so the entire bounding sphere is visible at every Y rotation
+    // (Fortnite-style — no cutoffs when spinning).
+    const finalBox = new THREE.Box3().setFromObject(model);
+    const sphere = finalBox.getBoundingSphere(new THREE.Sphere());
+    const fov = camera.fov * (Math.PI / 180);
+    const fitHeight = sphere.radius / Math.sin(fov / 2);
+    const fitWidth = fitHeight / Math.min(camera.aspect, 1);
+    const distance = Math.max(fitHeight, fitWidth) * 1.35; // 35% margin
+    camera.position.set(sphere.center.x, sphere.center.y, sphere.center.z + distance);
+    camera.lookAt(sphere.center);
+    camera.near = Math.max(0.01, distance / 100);
+    camera.far = distance * 10;
+    camera.updateProjectionMatrix();
+    console.log(
+      '[CharacterScene] fit: radius=',
+      sphere.radius.toFixed(2),
+      'distance=',
+      distance.toFixed(2)
+    );
 
     // Force texture upload to GPU
     if (renderer.compile) {

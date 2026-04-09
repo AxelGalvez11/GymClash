@@ -2,12 +2,18 @@ import type { CharacterBuild, CharacterTier } from '@/types';
 import type { CharacterModelConfig, CharacterModelId, EquipmentSlot } from './types';
 
 /**
- * Every player starts on the same base 3D body.
- * Future unlocks/shop purchases can swap this id for owned models.
+ * Character model selection.
+ * - Male (default) → finalmalemodel1.glb
+ * - Female         → femalemodel1.glb
+ * Both are self-contained binary .glb files (no external .bin/textures).
  */
 const EQUIPMENT_BASE_PATH = 'assets/models/equipment';
-const STARTER_MODEL_PATH = 'assets/models/characters/model2.glb';
-const STARTER_MODEL_ASSET = require('../../assets/models/characters/model2.glb');
+
+const MALE_MODEL_PATH = 'assets/models/characters/finalmalemodel1.glb';
+const MALE_MODEL_ASSET = require('../../assets/models/characters/finalmalemodel1.glb');
+
+const FEMALE_MODEL_PATH = 'assets/models/characters/femalemodel1.glb';
+const FEMALE_MODEL_ASSET = require('../../assets/models/characters/femalemodel1.glb');
 
 export const DEFAULT_CHARACTER_MODEL_ID: CharacterModelId = 'starter';
 
@@ -29,16 +35,21 @@ const TIER_ANIMATION_SPEED: Record<CharacterTier, number> = {
   mythic: 0.6,
 };
 
+export type BiologicalSex = 'male' | 'female' | null | undefined;
+
 export function getCharacterModelConfig(
   build: CharacterBuild,
-  tier: CharacterTier
+  tier: CharacterTier,
+  sex?: BiologicalSex
 ): CharacterModelConfig {
+  const isFemale = sex === 'female';
   return {
     id: DEFAULT_CHARACTER_MODEL_ID,
     build,
     tier,
-    modelPath: STARTER_MODEL_PATH,
-    assetSource: STARTER_MODEL_ASSET,
+    modelPath: isFemale ? FEMALE_MODEL_PATH : MALE_MODEL_PATH,
+    assetSource: isFemale ? FEMALE_MODEL_ASSET : MALE_MODEL_ASSET,
+    resourceAssets: {},
     scale: TIER_SCALE[tier],
     idleAnimationSpeed: TIER_ANIMATION_SPEED[tier],
   };
